@@ -1,7 +1,8 @@
+
 export interface QuestionOption {
   id: string;
   text: string;
-  isCorrect?: boolean;
+  isCorrect: boolean; // Changed from optional to required
 }
 
 export type QuestionType = 'multiple-choice' | 'drag-and-drop' | 'text-input';
