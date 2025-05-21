@@ -25,7 +25,7 @@ export default function LoginPage() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <Link href="#" className="text-sm text-primary hover:underline">
+              <Link href="/login" className="text-sm text-primary hover:underline">
                 Forgot password?
               </Link>
             </div>
@@ -33,7 +33,9 @@ export default function LoginPage() {
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
-          <Button className="w-full">Login</Button>
+          <Button className="w-full" asChild>
+            <Link href="/dashboard">Login</Link>
+          </Button>
           <Button variant="outline" className="w-full" asChild>
             <Link href="/dashboard">Try Demo</Link>
           </Button>
