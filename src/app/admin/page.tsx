@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Database, Save, ListChecks, History, FileText } from 'lucide-react';
+import { Database, Save, ListChecks, History, FileText, FileClock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 export default function AdminPage() {
@@ -184,51 +184,55 @@ export default function AdminPage() {
           </CardContent>
         </Card>
 
-        {/* Version Rollbacks Card */}
+        {/* Test Version Management Card */}
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center">
-              <History className="mr-2 h-6 w-6 text-primary" />
-              {t('adminPanel.rollbacks.title', {defaultValue: 'Version Rollbacks'})}
+              <FileClock className="mr-2 h-6 w-6 text-primary" />
+              {t('adminPanel.testRollbacks.title', {defaultValue: 'Test Version Management'})}
             </CardTitle>
             <CardDescription>
-              {t('adminPanel.rollbacks.description', {defaultValue: 'Manage and rollback to previous application versions. (Placeholder UI)'})}
+              {t('adminPanel.testRollbacks.description', {defaultValue: 'Review and revert tests to their previous saved states. (Placeholder UI)'})}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Mock Test Version 1 */}
             <div className="border rounded-md p-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="font-medium">{t('adminPanel.rollbacks.versionLabel', {version: '1.2.3 (Current)', defaultValue: 'Version 1.2.3 (Current)'})}</p>
-                  <p className="text-sm text-muted-foreground">{t('adminPanel.rollbacks.deployedDateLabel', {date: 'October 27, 2023', defaultValue: 'Deployed: October 27, 2023'})}</p>
+                  <p className="font-medium">{t('adminPanel.testRollbacks.testVersionLabel', {testName: 'History of Ancient Rome', versionNumber: '3 (Current)', defaultValue: 'Test: History of Ancient Rome - Version 3 (Current)'})}</p>
+                  <p className="text-sm text-muted-foreground">{t('adminPanel.testRollbacks.savedDateLabel', {date: 'October 27, 2023', defaultValue: 'Saved: October 27, 2023'})}</p>
                 </div>
                 <Button variant="outline" disabled className="opacity-50">
-                  {t('adminPanel.rollbacks.currentButton', {defaultValue: 'Current'})}
+                  {t('adminPanel.testRollbacks.currentButton', {defaultValue: 'Current'})}
                 </Button>
               </div>
             </div>
+             {/* Mock Test Version 2 */}
             <div className="border rounded-md p-4 hover:bg-accent/30 transition-colors">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="font-medium">{t('adminPanel.rollbacks.versionLabel', {version: '1.2.2', defaultValue: 'Version 1.2.2'})}</p>
-                  <p className="text-sm text-muted-foreground">{t('adminPanel.rollbacks.deployedDateLabel', {date: 'October 25, 2023', defaultValue: 'Deployed: October 25, 2023'})}</p>
+                  <p className="font-medium">{t('adminPanel.testRollbacks.testVersionLabel', {testName: 'History of Ancient Rome', versionNumber: '2', defaultValue: 'Test: History of Ancient Rome - Version 2'})}</p>
+                  <p className="text-sm text-muted-foreground">{t('adminPanel.testRollbacks.savedDateLabel', {date: 'October 25, 2023', defaultValue: 'Saved: October 25, 2023'})}</p>
                 </div>
-                <Button onClick={() => handleActionNotImplemented(t('adminPanel.rollbacks.rollbackToButton', {version: '1.2.2', defaultValue: 'Rollback to 1.2.2'}))}>
-                  {t('adminPanel.rollbacks.rollbackButton', {defaultValue: 'Rollback'})}
+                <Button onClick={() => handleActionNotImplemented(t('adminPanel.testRollbacks.rollbackToTestVersionButton', {testName: 'History of Ancient Rome', versionNumber: '2', defaultValue: 'Rollback "History of Ancient Rome" to Version 2'}))}>
+                  {t('adminPanel.testRollbacks.rollbackButton', {defaultValue: 'Rollback'})}
                 </Button>
               </div>
             </div>
+             {/* Mock Test Version 3 */}
             <div className="border rounded-md p-4 hover:bg-accent/30 transition-colors">
               <div className="flex justify-between items-center">
                 <div>
-                  <p className="font-medium">{t('adminPanel.rollbacks.versionLabel', {version: '1.2.1', defaultValue: 'Version 1.2.1'})}</p>
-                  <p className="text-sm text-muted-foreground">{t('adminPanel.rollbacks.deployedDateLabel', {date: 'October 23, 2023', defaultValue: 'Deployed: October 23, 2023'})}</p>
+                   <p className="font-medium">{t('adminPanel.testRollbacks.testVersionLabel', {testName: 'Basic Algebra Quiz', versionNumber: '1 (Current)', defaultValue: 'Test: Basic Algebra Quiz - Version 1 (Current)'})}</p>
+                  <p className="text-sm text-muted-foreground">{t('adminPanel.testRollbacks.savedDateLabel', {date: 'October 23, 2023', defaultValue: 'Saved: October 23, 2023'})}</p>
                 </div>
-                <Button onClick={() => handleActionNotImplemented(t('adminPanel.rollbacks.rollbackToButton', {version: '1.2.1', defaultValue: 'Rollback to 1.2.1'}))}>
-                   {t('adminPanel.rollbacks.rollbackButton', {defaultValue: 'Rollback'})}
+                 <Button variant="outline" disabled className="opacity-50">
+                  {t('adminPanel.testRollbacks.currentButton', {defaultValue: 'Current'})}
                 </Button>
               </div>
             </div>
+            {/* Add more mock test versions as needed */}
           </CardContent>
         </Card>
 
