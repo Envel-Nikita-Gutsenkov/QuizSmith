@@ -8,137 +8,184 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle } from 'lucide-react';
+import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import type { Question, QuestionOption } from '@/lib/types'; // Import types
+import type { Question, QuestionOption } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
 
-// Helper to generate unique IDs
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-export default function NewTestEditorPage() {
-  const [testName, setTestName] = useState('');
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [htmlContent, setHtmlContent] = useState(
-`<!-- Your HTML structure here -->
-<!-- Use data attributes to target elements for dynamic content -->
-<div class="quiz-container p-6 rounded-lg shadow-lg bg-card text-card-foreground">
-  <h1 data-quiz-title class="text-2xl font-bold mb-6 text-primary">Sample Quiz Title</h1>
+const defaultHtmlContent = `
+<div class="quiz-container p-8 rounded-xl shadow-2xl bg-card text-card-foreground max-w-2xl mx-auto my-10">
+  <h1 data-quiz-title class="text-3xl font-bold mb-8 text-primary text-center">Your Quiz Title</h1>
   
-  <!-- Question Block: Repeat this structure for each question -->
-  <div data-quiz-question-id="q1" class="mb-8 p-4 border border-border rounded-md">
-    <h2 data-quiz-question-text="q1" class="text-lg font-semibold mb-4 text-foreground">1. What is the capital of France?</h2>
-    <div data-quiz-options-for-question="q1" class="space-y-2">
-      <!-- Option Button: Repeat for each option -->
-      <button data-quiz-answer-option="q1.A" class="w-full text-left p-3 border border-border rounded-md hover:bg-secondary transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary">
-        A) Berlin
-      </button>
-      <button data-quiz-answer-option="q1.B" class="w-full text-left p-3 border border-border rounded-md hover:bg-secondary transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary">
-        B) Madrid
-      </button>
-      <button data-quiz-answer-option="q1.C" class="w-full text-left p-3 border border-border rounded-md hover:bg-secondary transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary">
-        C) Paris
-      </button>
-      <button data-quiz-answer-option="q1.D" class="w-full text-left p-3 border border-border rounded-md hover:bg-secondary transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary">
-        D) Rome
+  <!-- Question Block Template: This structure will be used for each question -->
+  <div data-quiz-question-id="q_template_id" class="question-block mb-10 p-6 bg-background/70 border border-border rounded-lg shadow-md transition-all duration-300 hover:shadow-lg">
+    <h2 data-quiz-question-text="q_template_id" class="text-xl font-semibold mb-6 text-foreground">Sample Question: What is 2 + 2?</h2>
+    <div data-quiz-options-for-question="q_template_id" class="options-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Option Button Template: This will be repeated for each answer option -->
+      <button data-quiz-answer-option="q_template_id.opt_template_id" 
+              class="option-button w-full text-left p-4 border border-border rounded-md text-foreground
+                     hover:bg-secondary hover:border-primary hover:shadow-md 
+                     focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
+                     transition-all duration-200 ease-in-out transform hover:scale-105">
+        Sample Option Text
       </button>
     </div>
   </div>
-  <!-- End Question Block -->
+  <!-- End Question Block Template -->
 
-  <!-- Example of another question structure if needed -->
-  <!-- <div data-quiz-question-id="q2" class="mb-8 p-4 border rounded-md"> ... </div> -->
-
+  <!-- Dynamically generated questions will be inserted above this comment by the preview logic -->
 </div>
-`
-  );
-  const [cssContent, setCssContent] = useState(
-`/* Your CSS styles here - Use HSL variables from globals.css for theme consistency */
+`;
+
+const defaultCssContent = `
+/* Custom CSS for Quiz - Leverages HSL variables from globals.css */
 .quiz-container {
   font-family: var(--font-geist-sans), sans-serif;
 }
 
-[data-quiz-title] {
-  /* Already styled by Tailwind, but you can add more if needed */
+.question-block {
+  /* Base styles in HTML via Tailwind */
 }
 
-[data-quiz-question-text] {
-  /* Already styled by Tailwind */
+.option-button {
+  /* Base styles in HTML via Tailwind */
+  cursor: pointer;
 }
 
-[data-quiz-answer-option] {
-  /* Base styles applied via Tailwind classes in HTML */
-  /* Add custom styles for selected/correct/incorrect states */
-}
-
-[data-quiz-answer-option]:hover {
-  /* Tailwind hover:bg-secondary is used in HTML */
-  /* You could add transform effects here if desired */
-  /* transform: translateY(-2px); */
-}
-
-[data-quiz-answer-option].selected {
+/* Example of a 'selected' state for an option */
+.option-button.selected {
   background-color: hsl(var(--accent));
   color: hsl(var(--accent-foreground));
-  border-color: hsl(var(--accent));
+  border-color: hsl(var(--accent) / 0.8);
+  box-shadow: 0 0 0 2px hsl(var(--accent) / 0.5);
+  transform: scale(1.02); /* Slight emphasis */
 }
 
-[data-quiz-answer-option].correct {
-  background-color: hsl(var(--primary)); /* Or a success color */
+/* Example of a 'correct' state (if you implement feedback logic) */
+.option-button.correct {
+  background-color: hsl(var(--primary) / 0.9); /* Using primary, could be a specific success color */
   color: hsl(var(--primary-foreground));
   border-color: hsl(var(--primary));
 }
 
-[data-quiz-answer-option].incorrect {
-  background-color: hsl(var(--destructive));
+/* Example of an 'incorrect' state */
+.option-button.incorrect {
+  background-color: hsl(var(--destructive) / 0.8);
   color: hsl(var(--destructive-foreground));
   border-color: hsl(var(--destructive));
+  opacity: 0.7;
 }
 
-/* Animation example */
-[data-quiz-answer-option] {
-  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+/* Subtle animation for question blocks appearing, if dynamically added */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-[data-quiz-answer-option]:active {
-  transform: scale(0.98);
+
+.question-block {
+  animation: fadeIn 0.5s ease-out forwards;
 }
-`
-  );
+`;
+
+export default function NewTestEditorPage() {
+  const [testName, setTestName] = useState('My Awesome Quiz');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [htmlContent, setHtmlContent] = useState(defaultHtmlContent);
+  const [cssContent, setCssContent] = useState(defaultCssContent);
   const [previewContent, setPreviewContent] = useState('');
+  const { toast } = useToast();
 
   const updatePreview = useCallback(() => {
-    // For now, preview uses the static HTML/CSS.
-    // Later, this could inject dynamic question data into a template.
-    const fullHtml = `
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlContent, 'text/html');
+
+    const titleElement = doc.querySelector('[data-quiz-title]');
+    if (titleElement) {
+      titleElement.textContent = testName || 'Quiz Title';
+    }
+
+    const questionHost = doc.querySelector('.quiz-container'); // Assuming questions are direct children or placed specifically
+    const questionTemplate = doc.querySelector('[data-quiz-question-id]');
+
+    if (questionHost && questionTemplate) {
+      const templateQuestionElement = questionTemplate.cloneNode(true) as HTMLElement;
+      
+      // Remove the template itself from the live DOM before adding new ones
+      questionTemplate.remove();
+
+      questions.forEach(question => {
+        const newQuestionElement = templateQuestionElement.cloneNode(true) as HTMLElement;
+        newQuestionElement.setAttribute('data-quiz-question-id', question.id);
+
+        const questionTextEl = newQuestionElement.querySelector('[data-quiz-question-text]');
+        if (questionTextEl) {
+          questionTextEl.textContent = question.text;
+          questionTextEl.setAttribute('data-quiz-question-text', question.id);
+        }
+
+        const optionsContainerEl = newQuestionElement.querySelector('[data-quiz-options-for-question]');
+        const optionTemplateEl = optionsContainerEl?.querySelector('[data-quiz-answer-option]');
+
+        if (optionsContainerEl && optionTemplateEl) {
+          const templateOptionElement = optionTemplateEl.cloneNode(true) as HTMLElement;
+          // Clear template options from this new question block
+          optionsContainerEl.innerHTML = ''; 
+          
+          question.options.forEach(option => {
+            const newOptionElement = templateOptionElement.cloneNode(true) as HTMLElement;
+            newOptionElement.setAttribute('data-quiz-answer-option', `${question.id}.${option.id}`);
+            newOptionElement.textContent = option.text;
+            // Example: Add 'selected' class if option were interactive in preview
+            // if (option.isCorrect) { // This is for marking, not selection state
+            //    newOptionElement.classList.add('selected'); // Example for visual cue
+            // }
+            optionsContainerEl.appendChild(newOptionElement);
+          });
+        }
+        questionHost.appendChild(newQuestionElement);
+      });
+    }
+    
+    const finalHtml = doc.documentElement.innerHTML;
+
+    const stylingVariables = `
+      :root {
+        --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
+        --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
+        --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
+        --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
+        --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
+        --primary-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
+        --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
+        --secondary-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary-foreground').trim()};
+        --accent: ${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
+        --accent-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
+        --destructive: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
+        --destructive-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
+        --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
+        --input: ${getComputedStyle(document.documentElement).getPropertyValue('--input').trim()};
+        --ring: ${getComputedStyle(document.documentElement).getPropertyValue('--ring').trim()};
+        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim()};
+      }
+    `;
+
+    setPreviewContent(`
       <html>
         <head>
           <style>
-            /* Minimal reset and theme variables for iframe */
-            body { margin: 0; font-family: var(--font-geist-sans, sans-serif); background-color: hsl(var(--background)); }
-            :root {
-              --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
-              --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
-              --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
-              --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
-              --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
-              --primary-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
-              --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
-              --secondary-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary-foreground').trim()};
-              --accent: ${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
-              --accent-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
-              --destructive: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
-              --destructive-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
-              --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
-              --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim()};
-            }
+            body { margin: 0; font-family: var(--font-geist-sans, sans-serif); background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
+            ${stylingVariables}
             ${cssContent}
           </style>
+          <script src="https://cdn.tailwindcss.com"></script>
         </head>
-        <body>${htmlContent}</body>
+        <body>${finalHtml}</body>
       </html>
-    `;
-    setPreviewContent(fullHtml);
-  }, [htmlContent, cssContent]);
+    `);
+  }, [htmlContent, cssContent, testName, questions]);
 
   useEffect(() => {
     updatePreview();
@@ -148,12 +195,12 @@ export default function NewTestEditorPage() {
     const newQuestion: Question = {
       id: generateId(),
       type: 'multiple-choice',
-      text: 'New Question',
+      text: `New Question ${questions.length + 1}`,
       options: [
-        { id: generateId(), text: 'Option 1', isCorrect: false },
-        { id: generateId(), text: 'Option 2', isCorrect: false },
-        { id: generateId(), text: 'Option 3', isCorrect: false },
-        { id: generateId(), text: 'Option 4', isCorrect: false },
+        { id: generateId(), text: 'Option A', isCorrect: false },
+        { id: generateId(), text: 'Option B', isCorrect: false },
+        { id: generateId(), text: 'Option C', isCorrect: false },
+        { id: generateId(), text: 'Option D', isCorrect: false },
       ],
     };
     setQuestions((prevQuestions) => [...prevQuestions, newQuestion]);
@@ -209,27 +256,40 @@ export default function NewTestEditorPage() {
   const handleRemoveOption = (questionId: string, optionId: string) => {
     setQuestions(prevQuestions => prevQuestions.map(q => {
       if (q.id === questionId) {
-        // Prevent removing the last option if desired, or ensure at least one option.
-        // For now, allows removing until 0.
-        return { ...q, options: q.options.filter(opt => opt.id !== optionId) };
+        if (q.options.length > 1) { // Ensure at least one option remains
+          return { ...q, options: q.options.filter(opt => opt.id !== optionId) };
+        }
       }
       return q;
     }));
   };
 
-
   const handleDeleteQuestion = (questionId: string) => {
     setQuestions((prevQuestions) => prevQuestions.filter((q) => q.id !== questionId));
+  };
+
+  const handleSaveTest = () => {
+    const testData = {
+      testName,
+      questions,
+      htmlContent,
+      cssContent,
+    };
+    console.log("Saving test data:", JSON.stringify(testData, null, 2));
+    toast({
+      title: "Test Data Logged (Mock Save)",
+      description: "Your test configuration has been logged to the console. Backend integration is needed for actual saving.",
+    });
   };
 
   return (
     <AppLayout currentPageTitle={testName || "Create New Test"}>
       <div className="flex flex-col h-full">
         <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">{testName || "New Test Editor"}</h1>
-          <div className="space-x-2">
+          <h1 className="text-2xl font-semibold truncate pr-4">{testName || "New Test Editor"}</h1>
+          <div className="space-x-2 flex-shrink-0">
             <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> Update Preview</Button>
-            <Button><Save className="mr-2 h-4 w-4" /> Save Test</Button>
+            <Button onClick={handleSaveTest}><Save className="mr-2 h-4 w-4" /> Save Test</Button>
           </div>
         </header>
 
@@ -238,7 +298,7 @@ export default function NewTestEditorPage() {
           <Card className="md:col-span-1 flex flex-col shadow-lg">
              <CardHeader>
                 <CardTitle className="flex items-center"><Settings2 className="mr-2 h-5 w-5 text-primary" />Configuration</CardTitle>
-                <CardDescription>Basic settings and design inputs for your test.</CardDescription>
+                <CardDescription>Basic settings, design inputs, and embed information for your test.</CardDescription>
               </CardHeader>
             <ScrollArea className="flex-grow">
               <CardContent className="space-y-6 p-4">
@@ -275,6 +335,23 @@ export default function NewTestEditorPage() {
                     rows={10}
                   />
                 </div>
+                <Separator />
+                 <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center"><Code className="mr-2 h-4 w-4" /> Embed Your Test</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      After saving your test (backend integration required), your embed code will appear here.
+                    </p>
+                    <Textarea 
+                      readOnly 
+                      value="<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>" 
+                      className="mt-2 font-mono text-xs bg-muted/50 cursor-not-allowed" 
+                      rows={3}
+                    />
+                  </CardContent>
+                </Card>
               </CardContent>
             </ScrollArea>
           </Card>
@@ -283,14 +360,14 @@ export default function NewTestEditorPage() {
           <Card className="md:col-span-1 flex flex-col overflow-hidden shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center"><Eye className="mr-2 h-5 w-5 text-primary" />Live Preview</CardTitle>
-              <CardDescription>Rendered output of your HTML and CSS design.</CardDescription>
+              <CardDescription>Rendered output of your HTML, CSS, and questions.</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow p-0 m-0">
               <iframe
                 srcDoc={previewContent}
                 title="Test Preview"
                 className="w-full h-full border-0"
-                sandbox="allow-scripts allow-same-origin"
+                sandbox="allow-scripts allow-same-origin" // allow-same-origin is needed for scripts if any, and for styles to apply correctly from parent context vars
               />
             </CardContent>
           </Card>
@@ -317,7 +394,7 @@ export default function NewTestEditorPage() {
                   </div>
                 ) : (
                   questions.map((question, qIndex) => (
-                    <Card key={question.id} className="shadow-md">
+                    <Card key={question.id} className="shadow-md bg-card/50">
                       <CardHeader>
                         <div className="flex justify-between items-center">
                           <CardTitle className="text-lg">Question {qIndex + 1}</CardTitle>
@@ -346,6 +423,7 @@ export default function NewTestEditorPage() {
                               size="icon"
                               className="text-muted-foreground hover:text-primary"
                               onClick={() => handleSetCorrectOption(question.id, option.id)}
+                              title={option.isCorrect ? "Mark as incorrect" : "Mark as correct"}
                             >
                               {option.isCorrect ? <CheckCircle className="h-5 w-5 text-primary" /> : <Circle className="h-5 w-5" />}
                             </Button>
@@ -355,7 +433,7 @@ export default function NewTestEditorPage() {
                               placeholder="Option text"
                               className="flex-grow"
                             />
-                            <Button variant="ghost" size="icon" onClick={() => handleRemoveOption(question.id, option.id)} disabled={question.options.length <= 1}>
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveOption(question.id, option.id)} disabled={question.options.length <= 1} title="Remove option">
                               <Trash2 className="h-4 w-4 text-destructive/70 hover:text-destructive" />
                             </Button>
                           </div>
@@ -375,3 +453,5 @@ export default function NewTestEditorPage() {
     </AppLayout>
   );
 }
+
+    
