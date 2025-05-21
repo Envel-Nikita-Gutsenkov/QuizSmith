@@ -137,7 +137,7 @@ export const pageTemplates: PageTemplate[] = [
 </div>
     `,
     cssContent: `
-    ${defaultCssContent}
+    ${defaultCssContent} /* Inherit base styles */
     .sleek-text-mcq .option-button { letter-spacing: 0.5px; }
     .sleek-text-mcq .question-block { box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     `,
@@ -172,7 +172,7 @@ export const pageTemplates: PageTemplate[] = [
 </div>
     `,
     cssContent: `
-    ${defaultCssContent}
+    ${defaultCssContent} /* Inherit base styles */
     .image-grid-mcq .option-button.image-option { 
         min-height: 150px; /* Ensure space for image + text */
         background-color: hsl(var(--background));
@@ -206,7 +206,7 @@ export const pageTemplates: PageTemplate[] = [
 </div>
     `,
     cssContent: `
-    ${defaultCssContent}
+    ${defaultCssContent} /* Inherit base styles */
     .matching-zone .matching-area { display: flex; flex-direction: column; gap: 1rem; }
     .matching-zone .matching-prompts .p-3 { background-color: hsl(var(--secondary)); }
     .matching-zone .matching-targets .option-button { border-style: dashed; }
@@ -237,7 +237,7 @@ export const pageTemplates: PageTemplate[] = [
 </div>
     `,
     cssContent: `
-    ${defaultCssContent}
+    ${defaultCssContent} /* Inherit base styles */
     .drag-drop-arena .drag-items-container { 
         display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; 
         padding: 1rem; margin-bottom: 1.5rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius); 
@@ -260,3 +260,5 @@ export const pageTemplates: PageTemplate[] = [
     tags: ['Drag & Drop', 'Interactive', 'Dynamic'],
   },
 ];
+
+    
