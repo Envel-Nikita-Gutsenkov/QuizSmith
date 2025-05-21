@@ -3,7 +3,7 @@ import type { PageTemplate } from './types';
 
 export const DEFAULT_TEMPLATE_ID = 'tpl-blank-canvas';
 
-const defaultHtmlContent = \`
+const defaultHtmlContent = `
 <div class="quiz-container p-8 rounded-xl shadow-2xl bg-card text-card-foreground max-w-2xl mx-auto my-10">
   <h1 data-quiz-title class="text-3xl font-bold mb-8 text-primary text-center">Your Quiz Title</h1>
   
@@ -29,9 +29,9 @@ const defaultHtmlContent = \`
   <script id="quiz-data" type="application/json"></script>
   <div id="quiz-end-message-text" style="display:none;"></div>
 </div>
-\`;
+`;
 
-const defaultCssContent = \`
+const defaultCssContent = `
 body {
   background-color: hsl(var(--background)); 
   color: hsl(var(--foreground));
@@ -97,7 +97,7 @@ body {
 .matching-targets .option-button { margin-bottom: 0.5rem; }
 .drag-items-container .p-3 { background-color: hsl(var(--muted)); }
 .drop-targets-container .p-6 { background-color: hsl(var(--background)); }
-\`;
+`;
 
 
 export const pageTemplates: PageTemplate[] = [
@@ -115,7 +115,7 @@ export const pageTemplates: PageTemplate[] = [
     id: 'tpl-text-mcq-sleek',
     name: 'Sleek Text MCQ',
     description: 'A modern, minimalist design for text-based multiple-choice questions.',
-    htmlContent: \`
+    htmlContent: `
 <div class="quiz-container sleek-text-mcq p-6 md:p-10 rounded-lg shadow-xl bg-card text-card-foreground max-w-xl mx-auto my-8 border border-border">
   <h1 data-quiz-title class="text-2xl md:text-3xl font-bold mb-8 text-primary text-center">Sleek Quiz Title</h1>
   <div id="quiz-content-host">
@@ -135,12 +135,12 @@ export const pageTemplates: PageTemplate[] = [
   <script id="quiz-data" type="application/json"></script>
   <div id="quiz-end-message-text" style="display:none;"></div>
 </div>
-    \`,
-    cssContent: \`
-    \${defaultCssContent}
+    `,
+    cssContent: `
+    ${defaultCssContent}
     .sleek-text-mcq .option-button { letter-spacing: 0.5px; }
     .sleek-text-mcq .question-block { box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-    \`,
+    `,
     previewImageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'minimalist modern',
     tags: ['Text MCQ', 'Minimalist'],
@@ -149,7 +149,7 @@ export const pageTemplates: PageTemplate[] = [
     id: 'tpl-image-grid-mcq',
     name: 'Visual Image Grid MCQ',
     description: 'Showcases image options in a responsive grid. Ideal for visual quizzes.',
-    htmlContent: \`
+    htmlContent: `
 <div class="quiz-container image-grid-mcq p-5 md:p-8 rounded-lg shadow-2xl bg-gradient-to-br from-primary/5 via-background to-background text-card-foreground max-w-3xl mx-auto my-8">
   <h1 data-quiz-title class="text-3xl font-bold mb-8 text-primary text-center">Image Quiz</h1>
   <div id="quiz-content-host">
@@ -170,9 +170,9 @@ export const pageTemplates: PageTemplate[] = [
   <script id="quiz-data" type="application/json"></script>
   <div id="quiz-end-message-text" style="display:none;"></div>
 </div>
-    \`,
-    cssContent: \`
-    \${defaultCssContent}
+    `,
+    cssContent: `
+    ${defaultCssContent}
     .image-grid-mcq .option-button.image-option { 
         min-height: 150px; /* Ensure space for image + text */
         background-color: hsl(var(--background));
@@ -180,7 +180,7 @@ export const pageTemplates: PageTemplate[] = [
     .image-grid-mcq .option-button.image-option img { max-height: 120px; object-fit: contain; margin-bottom: 0.5rem; border-radius: 0.25rem; }
     .image-grid-mcq .option-button.image-option p { font-size: 0.875rem; color: hsl(var(--muted-foreground)); }
     .image-grid-mcq .option-button.selected { border-width: 2px; }
-    \`,
+    `,
     previewImageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'image gallery quiz',
     tags: ['Image MCQ', 'Grid', 'Visual'],
@@ -189,7 +189,7 @@ export const pageTemplates: PageTemplate[] = [
     id: 'tpl-matching-interactive',
     name: 'Interactive Matching Zone',
     description: 'A clear layout for text-to-text matching questions.',
-     htmlContent: \`
+     htmlContent: `
 <div class="quiz-container matching-zone p-8 rounded-xl shadow-lg bg-card text-card-foreground max-w-2xl mx-auto my-10">
   <h1 data-quiz-title class="text-3xl font-bold mb-8 text-primary text-center">Matching Challenge</h1>
   <div id="quiz-content-host">
@@ -204,14 +204,14 @@ export const pageTemplates: PageTemplate[] = [
   <script id="quiz-data" type="application/json"></script>
   <div id="quiz-end-message-text" style="display:none;"></div>
 </div>
-    \`,
-    cssContent: \`
-    \${defaultCssContent}
+    `,
+    cssContent: `
+    ${defaultCssContent}
     .matching-zone .matching-area { display: flex; flex-direction: column; gap: 1rem; }
     .matching-zone .matching-prompts .p-3 { background-color: hsl(var(--secondary)); }
     .matching-zone .matching-targets .option-button { border-style: dashed; }
     .matching-zone .option-button:hover { border-style: solid; }
-    \`,
+    `,
     previewImageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'matching pairs',
     tags: ['Matching', 'Interactive'],
@@ -220,7 +220,7 @@ export const pageTemplates: PageTemplate[] = [
     id: 'tpl-drag-drop-dynamic',
     name: 'Dynamic Drag & Drop Arena',
     description: 'Designed for engaging drag and drop interactions.',
-    htmlContent: \`
+    htmlContent: `
 <div class="quiz-container drag-drop-arena p-8 rounded-lg shadow-xl bg-gradient-to-b from-background to-secondary/30 text-card-foreground max-w-3xl mx-auto my-10">
   <h1 data-quiz-title class="text-3xl font-bold mb-10 text-primary text-center">Drag & Drop Challenge</h1>
   <div id="quiz-content-host">
@@ -235,9 +235,9 @@ export const pageTemplates: PageTemplate[] = [
   <script id="quiz-data" type="application/json"></script>
   <div id="quiz-end-message-text" style="display:none;"></div>
 </div>
-    \`,
-    cssContent: \`
-    \${defaultCssContent}
+    `,
+    cssContent: `
+    ${defaultCssContent}
     .drag-drop-arena .drag-items-container { 
         display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; 
         padding: 1rem; margin-bottom: 1.5rem; border: 1px solid hsl(var(--border)); border-radius: var(--radius); 
@@ -254,7 +254,7 @@ export const pageTemplates: PageTemplate[] = [
         border-color: hsl(var(--primary)); min-height: 80px;
         display: flex; align-items: center; justify-content: center;
     }
-    \`,
+    `,
     previewImageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'drag drop ui',
     tags: ['Drag & Drop', 'Interactive', 'Dynamic'],
