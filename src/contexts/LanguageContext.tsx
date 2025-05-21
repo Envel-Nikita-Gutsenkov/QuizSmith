@@ -3,7 +3,7 @@
 
 import type { ReactNode }
 from 'react';
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, Suspense } from 'react'; // Added Suspense
 
 // Define available languages
 type Language = 'en' | 'ru';
@@ -30,12 +30,13 @@ const translations: Translations = {
 
     'nav.dashboard': 'Dashboard',
     'nav.myTests': 'My Tests',
-    'nav.myTemplates': 'My Templates',
+    'nav.myPageTemplates': 'My Page Templates', // Changed
     'nav.newTest': 'New Test',
-    'nav.newTemplate': 'New Template',
+    'nav.newPageTemplate': 'New Page Template', // Changed
     'nav.settings': 'Settings',
     'nav.adminPanel': 'Admin Panel',
     'nav.createNew': 'Create New',
+    'nav.explorePageTemplates': 'Explore Page Templates', // Added
 
     'dashboard.pageTitle': 'Dashboard',
     'dashboard.myTests.heading': 'My Tests',
@@ -43,13 +44,13 @@ const translations: Translations = {
     'dashboard.myTests.noTests.title': 'No tests created yet',
     'dashboard.myTests.noTests.description': 'Start by creating your first masterpiece!',
     'dashboard.myTests.noTests.button': 'Create Your First Test',
-    'dashboard.myTemplates.heading': 'My Templates',
-    'dashboard.myTemplates.create': 'Create New Template',
-    'dashboard.myTemplates.noTemplates.title': 'No templates created yet',
-    'dashboard.myTemplates.noTemplates.description': 'Build reusable designs for your quizzes.',
-    'dashboard.myTemplates.noTemplates.button': 'Create Your First Template',
+    'dashboard.myPageTemplates.heading': 'My Page Templates', // Changed
+    'dashboard.myPageTemplates.create': 'Create New Page Template', // Changed
+    'dashboard.myPageTemplates.noPageTemplates.title': 'No page templates created yet', // Changed
+    'dashboard.myPageTemplates.noPageTemplates.description': 'Build reusable page designs for your quizzes.', // Changed
+    'dashboard.myPageTemplates.noPageTemplates.button': 'Create Your First Page Template', // Changed
     'dashboard.editTest': 'Edit Test',
-    'dashboard.editTemplate': 'Edit Template',
+    'dashboard.editPageTemplate': 'Edit Page Template', // Changed
 
 
     'myTests.pageTitle': 'My Tests',
@@ -63,20 +64,21 @@ const translations: Translations = {
     'myTests.statusLabel': 'Status',
     'myTests.lastModifiedLabel': 'Last modified',
 
-    'myTemplates.pageTitle': 'My Templates',
-    'myTemplates.create': 'Create New Template',
-    'myTemplates.noTemplates.title': "You haven't created any templates yet.",
-    'myTemplates.noTemplates.description': 'Templates help you build quizzes faster with consistent designs.',
-    'myTemplates.noTemplates.button': 'Create Your First Template',
-    'myTemplates.edit': 'Edit Template',
-    'myTemplates.usageCountLabel': 'Used',
-    'myTemplates.timesLabel': 'times',
-    'myTemplates.lastModifiedLabel': 'Last modified',
+    'myPageTemplates.pageTitle': 'My Page Templates', // Changed
+    'myPageTemplates.create': 'Create New Page Template', // Changed
+    'myPageTemplates.noPageTemplates.title': "You haven't created any page templates yet.", // Changed
+    'myPageTemplates.noPageTemplates.description': 'Page templates help you build quizzes faster with consistent page designs.', // Changed
+    'myPageTemplates.noPageTemplates.button': 'Create Your First Page Template', // Changed
+    'myPageTemplates.edit': 'Edit Page Template', // Changed
+    'myPageTemplates.usageCountLabel': 'Used',
+    'myPageTemplates.timesLabel': 'times',
+    'myPageTemplates.lastModifiedLabel': 'Last modified',
 
     'settings.pageTitle': 'Settings',
 
     'editor.defaultTestName': 'My Awesome Quiz',
     'editor.defaultTestNameExisting': 'Test {{testId}}',
+    'editor.defaultTestNameFromTemplate': 'Quiz from {{templateName}}',
     'editor.defaultEndMessage': 'Congratulations! Score: {{score}}/{{total}}.',
     'editor.quizTitlePlaceholder': 'Quiz Title',
     'editor.pageTitleNew': 'Create New Test',
@@ -85,15 +87,15 @@ const translations: Translations = {
     'editor.refreshPreview': 'Refresh Preview',
     'editor.fullScreenPreview': 'Full Screen Preview',
     'editor.saveTest': 'Save Test',
-    'editor.config.title': 'Configuration',
-    'editor.config.description': 'Basic settings, design inputs, and embed information.',
+    'editor.config.title': 'Configuration & Page Style',
+    'editor.config.description': 'Basic settings, page style (HTML/CSS), and embed information.',
     'editor.config.testNameLabel': 'Test Name',
     'editor.config.testNamePlaceholder': 'e.g., General Knowledge',
     'editor.config.endMessageLabel': 'Quiz End Message',
     'editor.config.endMessagePlaceholder': 'e.g., Congrats! Score: {{score}}/{{total}}',
     'editor.config.endMessageHint': 'Use {{score}} and {{total}} as placeholders.',
-    'editor.config.htmlLabel': 'HTML Structure',
-    'editor.config.cssLabel': 'CSS Styles',
+    'editor.config.htmlLabel': 'Page HTML Structure',
+    'editor.config.cssLabel': 'Page CSS Styles',
     'editor.config.embedTitle': 'Embed Your Test',
     'editor.config.embedDescription': 'After saving, embed code will appear here.',
     'editor.preview.title': 'Live Preview',
@@ -104,14 +106,31 @@ const translations: Translations = {
     'editor.questions.noQuestions': 'No questions added yet.',
     'editor.questions.addFirstQuestion': 'Add First Question',
     'editor.questions.questionLabel': 'Question {{number}}',
+    'editor.questions.questionTypeLabel': 'Question Type',
     'editor.questions.questionTextLabel': 'Question Text',
     'editor.questions.questionTextPlaceholder': 'Enter question text',
     'editor.questions.optionsLabel': 'Options:',
     'editor.questions.markIncorrect': 'Mark as incorrect',
     'editor.questions.markCorrect': 'Mark as correct',
     'editor.questions.optionTextPlaceholder': 'Option text',
+    'editor.questions.optionImageUrlPlaceholder': 'Image URL (optional)',
     'editor.questions.removeOption': 'Remove option',
     'editor.questions.addOption': 'Add Option',
+    'editor.questions.matchingPairsLabel': 'Matching Pairs:',
+    'editor.questions.addMatchPair': 'Add Pair',
+    'editor.questions.matchPromptPlaceholder': 'Prompt Text',
+    'editor.questions.matchTargetPlaceholder': 'Target Text',
+    'editor.questions.removeMatchPair': 'Remove Pair',
+    'editor.questions.dragItemsLabel': 'Draggable Items:',
+    'editor.questions.addDragItem': 'Add Item',
+    'editor.questions.dragItemPlaceholder': 'Draggable Item Text',
+    'editor.questions.removeDragItem': 'Remove Item',
+    'editor.questions.dropTargetsLabel': 'Drop Targets:',
+    'editor.questions.addDropTarget': 'Add Target',
+    'editor.questions.dropTargetPlaceholder': 'Drop Target Text',
+    'editor.questions.removeDropTarget': 'Remove Target',
+    'editor.questions.configNotAvailable': 'Configuration for this question type is not yet fully available.',
+
     'editor.newQuestionText': 'New Question {{number}}',
     'editor.optionPlaceholder': 'Option {{letter}}',
     'editor.newOptionText': 'New Option {{number}}',
@@ -121,30 +140,40 @@ const translations: Translations = {
     'editor.toast.saveSuccessDescriptionExisting': 'Test {{testId}} configuration logged to console.',
     'editor.toast.popupBlockedTitle': 'Popup Blocked',
     'editor.toast.popupBlockedDescription': 'Please allow popups for this site to use full screen preview.',
+    'editor.toast.templateNotFoundTitle': 'Page Template Not Found',
+    'editor.toast.templateNotFoundDescription': 'The page template "{{templateId}}" was not found. Loaded default blank canvas.',
 
 
-    'templateEditor.new.pageTitle': 'New Template Editor',
-    'templateEditor.edit.pageTitle': 'Edit Template: {{templateIdOrName}}',
-    'templateEditor.updatePreview': 'Update Preview',
-    'templateEditor.saveTemplate': 'Save Template',
-    'templateEditor.details.title': 'Template Details & Design',
-    'templateEditor.details.description': 'Define the structure and style of your reusable quiz template.',
-    'templateEditor.details.nameLabel': 'Template Name',
-    'templateEditor.details.namePlaceholder': 'e.g., Modern MCQ Template',
-    'templateEditor.details.loadedNamePlaceholder': 'Template {{templateId}}',
-    'templateEditor.details.descriptionLabel': 'Description (Optional)',
-    'templateEditor.details.descriptionPlaceholder': 'A brief description of what this template is best for...',
-    'templateEditor.details.htmlLabel': 'HTML Structure',
-    'templateEditor.details.htmlPlaceholder': 'Enter template HTML...\n<!-- Use placeholders like {{question_text}}, {{option_text}}, <div data-quiz-options-host> etc. -->',
-    'templateEditor.details.cssLabel': 'CSS Styles',
-    'templateEditor.details.cssPlaceholder': 'Enter template CSS...\n/* Style your template elements */',
-    'templateEditor.preview.titlePane': 'Template Preview',
-    'templateEditor.preview.descriptionPane': 'This is how your template structure will look with sample content.',
-    'templateEditor.preview.iframeTitle': 'Template Preview',
-    'templateEditor.preview.sampleTitle': 'Sample Template Title',
-    'templateEditor.preview.sampleQuestion': 'This is a sample question text.',
-    'templateEditor.preview.sampleOption1': 'Sample Option 1',
-    'templateEditor.preview.sampleOption2': 'Sample Option 2',
+    'pageTemplateEditor.new.pageTitle': 'New Page Style Template Editor',
+    'pageTemplateEditor.edit.pageTitle': 'Edit Page Style Template: {{templateIdOrName}}',
+    'pageTemplateEditor.updatePreview': 'Update Preview',
+    'pageTemplateEditor.saveTemplate': 'Save Page Template',
+    'pageTemplateEditor.details.title': 'Page Style Template Details & Design',
+    'pageTemplateEditor.details.description': 'Define the HTML structure and CSS style of your reusable quiz page template.',
+    'pageTemplateEditor.details.nameLabel': 'Page Template Name',
+    'pageTemplateEditor.details.namePlaceholder': 'e.g., Modern MCQ Page Style',
+    'pageTemplateEditor.details.loadedNamePlaceholder': 'Page Template {{templateId}}',
+    'pageTemplateEditor.details.descriptionLabel': 'Description (Optional)',
+    'pageTemplateEditor.details.descriptionPlaceholder': 'A brief description of what this page template is best for...',
+    'pageTemplateEditor.details.htmlLabel': 'Page HTML Structure',
+    'pageTemplateEditor.details.htmlPlaceholder': 'Enter page template HTML...\n<!-- Ensure it includes placeholders like <div id="quiz-content-host"> for questions -->',
+    'pageTemplateEditor.details.cssLabel': 'Page CSS Styles',
+    'pageTemplateEditor.details.cssPlaceholder': 'Enter page template CSS...\n/* Style your page template elements */',
+    'pageTemplateEditor.preview.titlePane': 'Page Template Preview',
+    'pageTemplateEditor.preview.descriptionPane': 'This is how your page template structure will look with sample content.',
+    'pageTemplateEditor.preview.iframeTitle': 'Page Template Preview',
+    'pageTemplateEditor.preview.sampleTitle': 'Sample Page Template Title',
+    'pageTemplateEditor.preview.sampleQuestion': 'This is where question content would appear.',
+    'pageTemplateEditor.preview.sampleOption1': 'Option A',
+    'pageTemplateEditor.preview.sampleOption2': 'Option B',
+
+    'pageTemplates.explore.pageTitle': 'Explore Page Style Templates', // Changed
+    'pageTemplates.explore.createButton': 'Create New Page Template', // Changed
+    'pageTemplates.explore.useThisTemplate': 'Use This Page Template', // Changed
+    'pageTemplates.explore.preview': 'Preview Page Style', // Changed
+    'pageTemplates.explore.noTemplates.title': 'No Page Templates Available Yet',
+    'pageTemplates.explore.noTemplates.description': 'Be the first to create a stunning page template for QuizSmith!',
+    'pageTemplates.explore.noTemplates.button': 'Create Your First Page Template',
 
     'testResults.pageTitle': 'Results: {{testId}}',
     'testResults.summaryTitle': 'Test Summary',
@@ -183,6 +212,11 @@ const translations: Translations = {
     'adminPanel.logs.placeholder': 'Log entries would appear here...\n[INFO] 2023-10-27 10:00:00 - Application started.\n[WARN] 2023-10-27 10:05:23 - User login attempt failed.\n...',
     'adminPanel.logs.refreshButton': 'Refresh Logs',
 
+    'questionType.multiple-choice-text': 'Multiple Choice (Text)',
+    'questionType.multiple-choice-image': 'Multiple Choice (Image)',
+    'questionType.matching-text-text': 'Matching (Text-to-Text)',
+    'questionType.drag-and-drop-text-text': 'Drag & Drop (Text-on-Text)',
+
   },
   ru: {
     'appHeader.myAccount': 'Мой аккаунт',
@@ -197,12 +231,13 @@ const translations: Translations = {
 
     'nav.dashboard': 'Панель',
     'nav.myTests': 'Мои тесты',
-    'nav.myTemplates': 'Мои шаблоны',
+    'nav.myPageTemplates': 'Мои шаблоны страниц', // Changed
     'nav.newTest': 'Новый тест',
-    'nav.newTemplate': 'Новый шаблон',
+    'nav.newPageTemplate': 'Новый шаблон страницы', // Changed
     'nav.settings': 'Настройки',
     'nav.adminPanel': 'Панель администратора',
     'nav.createNew': 'Создать',
+    'nav.explorePageTemplates': 'Обзор шаблонов страниц', // Added
 
     'dashboard.pageTitle': 'Панель',
     'dashboard.myTests.heading': 'Мои тесты',
@@ -210,13 +245,13 @@ const translations: Translations = {
     'dashboard.myTests.noTests.title': 'Тесты еще не созданы',
     'dashboard.myTests.noTests.description': 'Начните с создания вашего первого шедевра!',
     'dashboard.myTests.noTests.button': 'Создать первый тест',
-    'dashboard.myTemplates.heading': 'Мои шаблоны',
-    'dashboard.myTemplates.create': 'Создать новый шаблон',
-    'dashboard.myTemplates.noTemplates.title': 'Шаблоны еще не созданы',
-    'dashboard.myTemplates.noTemplates.description': 'Создавайте многоразовые дизайны для ваших викторин.',
-    'dashboard.myTemplates.noTemplates.button': 'Создать первый шаблон',
+    'dashboard.myPageTemplates.heading': 'Мои шаблоны страниц', // Changed
+    'dashboard.myPageTemplates.create': 'Создать новый шаблон страницы', // Changed
+    'dashboard.myPageTemplates.noPageTemplates.title': 'Шаблоны страниц еще не созданы', // Changed
+    'dashboard.myPageTemplates.noPageTemplates.description': 'Создавайте многоразовые дизайны страниц для ваших викторин.', // Changed
+    'dashboard.myPageTemplates.noPageTemplates.button': 'Создать первый шаблон страницы', // Changed
     'dashboard.editTest': 'Редактировать тест',
-    'dashboard.editTemplate': 'Редактировать шаблон',
+    'dashboard.editPageTemplate': 'Редактировать шаблон страницы', // Changed
 
     'myTests.pageTitle': 'Мои тесты',
     'myTests.create': 'Создать новый тест',
@@ -229,20 +264,21 @@ const translations: Translations = {
     'myTests.statusLabel': 'Статус',
     'myTests.lastModifiedLabel': 'Последнее изменение',
 
-    'myTemplates.pageTitle': 'Мои шаблоны',
-    'myTemplates.create': 'Создать новый шаблон',
-    'myTemplates.noTemplates.title': 'Вы еще не создали ни одного шаблона.',
-    'myTemplates.noTemplates.description': 'Шаблоны помогут вам быстрее создавать викторины с единым дизайном.',
-    'myTemplates.noTemplates.button': 'Создать свой первый шаблон',
-    'myTemplates.edit': 'Редактировать шаблон',
-    'myTemplates.usageCountLabel': 'Использовано',
-    'myTemplates.timesLabel': 'раз',
-    'myTemplates.lastModifiedLabel': 'Последнее изменение',
+    'myPageTemplates.pageTitle': 'Мои шаблоны страниц', // Changed
+    'myPageTemplates.create': 'Создать новый шаблон страницы', // Changed
+    'myPageTemplates.noPageTemplates.title': 'Вы еще не создали ни одного шаблона страницы.', // Changed
+    'myPageTemplates.noPageTemplates.description': 'Шаблоны страниц помогут вам быстрее создавать викторины с единым дизайном страниц.', // Changed
+    'myPageTemplates.noPageTemplates.button': 'Создать свой первый шаблон страницы', // Changed
+    'myPageTemplates.edit': 'Редактировать шаблон страницы', // Changed
+    'myPageTemplates.usageCountLabel': 'Использовано',
+    'myPageTemplates.timesLabel': 'раз',
+    'myPageTemplates.lastModifiedLabel': 'Последнее изменение',
 
     'settings.pageTitle': 'Настройки',
 
     'editor.defaultTestName': 'Моя классная викторина',
     'editor.defaultTestNameExisting': 'Тест {{testId}}',
+    'editor.defaultTestNameFromTemplate': 'Викторина из {{templateName}}',
     'editor.defaultEndMessage': 'Поздравляем! Результат: {{score}}/{{total}}.',
     'editor.quizTitlePlaceholder': 'Название викторины',
     'editor.pageTitleNew': 'Создать новый тест',
@@ -251,15 +287,15 @@ const translations: Translations = {
     'editor.refreshPreview': 'Обновить предпросмотр',
     'editor.fullScreenPreview': 'Полноэкранный предпросмотр',
     'editor.saveTest': 'Сохранить тест',
-    'editor.config.title': 'Конфигурация',
-    'editor.config.description': 'Основные настройки, дизайн и информация для встраивания.',
+    'editor.config.title': 'Конфигурация и стиль страницы',
+    'editor.config.description': 'Основные настройки, стиль страницы (HTML/CSS) и информация для встраивания.',
     'editor.config.testNameLabel': 'Название теста',
     'editor.config.testNamePlaceholder': 'например, Общие знания',
     'editor.config.endMessageLabel': 'Сообщение о завершении викторины',
     'editor.config.endMessagePlaceholder': 'например, Поздравляем! Результат: {{score}}/{{total}}',
     'editor.config.endMessageHint': 'Используйте {{score}} и {{total}} как плейсхолдеры.',
-    'editor.config.htmlLabel': 'Структура HTML',
-    'editor.config.cssLabel': 'Стили CSS',
+    'editor.config.htmlLabel': 'Структура HTML страницы',
+    'editor.config.cssLabel': 'Стили CSS страницы',
     'editor.config.embedTitle': 'Встроить ваш тест',
     'editor.config.embedDescription': 'После сохранения здесь появится код для встраивания.',
     'editor.preview.title': 'Живой предпросмотр',
@@ -270,14 +306,31 @@ const translations: Translations = {
     'editor.questions.noQuestions': 'Вопросы еще не добавлены.',
     'editor.questions.addFirstQuestion': 'Добавить первый вопрос',
     'editor.questions.questionLabel': 'Вопрос {{number}}',
+    'editor.questions.questionTypeLabel': 'Тип вопроса',
     'editor.questions.questionTextLabel': 'Текст вопроса',
     'editor.questions.questionTextPlaceholder': 'Введите текст вопроса',
     'editor.questions.optionsLabel': 'Варианты:',
     'editor.questions.markIncorrect': 'Отметить как неверный',
     'editor.questions.markCorrect': 'Отметить как верный',
     'editor.questions.optionTextPlaceholder': 'Текст варианта',
+    'editor.questions.optionImageUrlPlaceholder': 'URL изображения (необязательно)',
     'editor.questions.removeOption': 'Удалить вариант',
     'editor.questions.addOption': 'Добавить вариант',
+    'editor.questions.matchingPairsLabel': 'Пары для сопоставления:',
+    'editor.questions.addMatchPair': 'Добавить пару',
+    'editor.questions.matchPromptPlaceholder': 'Текст подсказки',
+    'editor.questions.matchTargetPlaceholder': 'Текст цели',
+    'editor.questions.removeMatchPair': 'Удалить пару',
+    'editor.questions.dragItemsLabel': 'Перетаскиваемые элементы:',
+    'editor.questions.addDragItem': 'Добавить элемент',
+    'editor.questions.dragItemPlaceholder': 'Текст перетаскиваемого элемента',
+    'editor.questions.removeDragItem': 'Удалить элемент',
+    'editor.questions.dropTargetsLabel': 'Цели для перетаскивания:',
+    'editor.questions.addDropTarget': 'Добавить цель',
+    'editor.questions.dropTargetPlaceholder': 'Текст цели для перетаскивания',
+    'editor.questions.removeDropTarget': 'Удалить цель',
+    'editor.questions.configNotAvailable': 'Конфигурация для этого типа вопроса пока недоступна.',
+
     'editor.newQuestionText': 'Новый вопрос {{number}}',
     'editor.optionPlaceholder': 'Вариант {{letter}}',
     'editor.newOptionText': 'Новый вариант {{number}}',
@@ -287,29 +340,39 @@ const translations: Translations = {
     'editor.toast.saveSuccessDescriptionExisting': 'Конфигурация теста {{testId}} записана в консоль.',
     'editor.toast.popupBlockedTitle': 'Всплывающее окно заблокировано',
     'editor.toast.popupBlockedDescription': 'Пожалуйста, разрешите всплывающие окна для этого сайта, чтобы использовать полноэкранный предпросмотр.',
+    'editor.toast.templateNotFoundTitle': 'Шаблон страницы не найден',
+    'editor.toast.templateNotFoundDescription': 'Шаблон страницы "{{templateId}}" не найден. Загружен пустой шаблон по умолчанию.',
 
-    'templateEditor.new.pageTitle': 'Редактор нового шаблона',
-    'templateEditor.edit.pageTitle': 'Редактировать шаблон: {{templateIdOrName}}',
-    'templateEditor.updatePreview': 'Обновить предпросмотр',
-    'templateEditor.saveTemplate': 'Сохранить шаблон',
-    'templateEditor.details.title': 'Детали шаблона и дизайн',
-    'templateEditor.details.description': 'Определите структуру и стиль вашего многоразового шаблона викторины.',
-    'templateEditor.details.nameLabel': 'Название шаблона',
-    'templateEditor.details.namePlaceholder': 'например, Современный MCQ шаблон',
-    'templateEditor.details.loadedNamePlaceholder': 'Шаблон {{templateId}}',
-    'templateEditor.details.descriptionLabel': 'Описание (необязательно)',
-    'templateEditor.details.descriptionPlaceholder': 'Краткое описание, для чего лучше всего подходит этот шаблон...',
-    'templateEditor.details.htmlLabel': 'Структура HTML',
-    'templateEditor.details.htmlPlaceholder': 'Введите HTML шаблона...\n<!-- Используйте плейсхолдеры типа {{question_text}}, {{option_text}}, <div data-quiz-options-host> и т.д. -->',
-    'templateEditor.details.cssLabel': 'Стили CSS',
-    'templateEditor.details.cssPlaceholder': 'Введите CSS шаблона...\n/* Стилизуйте элементы вашего шаблона */',
-    'templateEditor.preview.titlePane': 'Предпросмотр шаблона',
-    'templateEditor.preview.descriptionPane': 'Так будет выглядеть структура вашего шаблона с образцом содержимого.',
-    'templateEditor.preview.iframeTitle': 'Предпросмотр шаблона',
-    'templateEditor.preview.sampleTitle': 'Пример названия шаблона',
-    'templateEditor.preview.sampleQuestion': 'Это пример текста вопроса.',
-    'templateEditor.preview.sampleOption1': 'Пример варианта 1',
-    'templateEditor.preview.sampleOption2': 'Пример варианта 2',
+    'pageTemplateEditor.new.pageTitle': 'Редактор нового шаблона стиля страницы',
+    'pageTemplateEditor.edit.pageTitle': 'Редактировать шаблон стиля страницы: {{templateIdOrName}}',
+    'pageTemplateEditor.updatePreview': 'Обновить предпросмотр',
+    'pageTemplateEditor.saveTemplate': 'Сохранить шаблон страницы',
+    'pageTemplateEditor.details.title': 'Детали и дизайн шаблона стиля страницы',
+    'pageTemplateEditor.details.description': 'Определите структуру HTML и стиль CSS вашего многоразового шаблона страницы викторины.',
+    'pageTemplateEditor.details.nameLabel': 'Название шаблона страницы',
+    'pageTemplateEditor.details.namePlaceholder': 'например, Современный стиль страницы MCQ',
+    'pageTemplateEditor.details.loadedNamePlaceholder': 'Шаблон страницы {{templateId}}',
+    'pageTemplateEditor.details.descriptionLabel': 'Описание (необязательно)',
+    'pageTemplateEditor.details.descriptionPlaceholder': 'Краткое описание, для чего лучше всего подходит этот шаблон страницы...',
+    'pageTemplateEditor.details.htmlLabel': 'Структура HTML страницы',
+    'pageTemplateEditor.details.htmlPlaceholder': 'Введите HTML шаблона страницы...\n<!-- Убедитесь, что он содержит плейсхолдеры, такие как <div id="quiz-content-host"> для вопросов -->',
+    'pageTemplateEditor.details.cssLabel': 'Стили CSS страницы',
+    'pageTemplateEditor.details.cssPlaceholder': 'Введите CSS шаблона страницы...\n/* Стилизуйте элементы вашего шаблона страницы */',
+    'pageTemplateEditor.preview.titlePane': 'Предпросмотр шаблона страницы',
+    'pageTemplateEditor.preview.descriptionPane': 'Так будет выглядеть структура вашего шаблона страницы с образцом содержимого.',
+    'pageTemplateEditor.preview.iframeTitle': 'Предпросмотр шаблона страницы',
+    'pageTemplateEditor.preview.sampleTitle': 'Пример названия шаблона страницы',
+    'pageTemplateEditor.preview.sampleQuestion': 'Здесь будет отображаться содержимое вопроса.',
+    'pageTemplateEditor.preview.sampleOption1': 'Вариант А',
+    'pageTemplateEditor.preview.sampleOption2': 'Вариант Б',
+
+    'pageTemplates.explore.pageTitle': 'Обзор шаблонов стилей страниц', // Changed
+    'pageTemplates.explore.createButton': 'Создать новый шаблон страницы', // Changed
+    'pageTemplates.explore.useThisTemplate': 'Использовать этот шаблон страницы', // Changed
+    'pageTemplates.explore.preview': 'Предпросмотр стиля страницы', // Changed
+    'pageTemplates.explore.noTemplates.title': 'Доступных шаблонов страниц пока нет',
+    'pageTemplates.explore.noTemplates.description': 'Станьте первым, кто создаст потрясающий шаблон страницы для QuizSmith!',
+    'pageTemplates.explore.noTemplates.button': 'Создать свой первый шаблон страницы',
 
     'testResults.pageTitle': 'Результаты: {{testId}}',
     'testResults.summaryTitle': 'Сводка по тесту',
@@ -348,6 +411,10 @@ const translations: Translations = {
     'adminPanel.logs.placeholder': 'Записи логов будут отображаться здесь...\n[ИНФО] 2023-10-27 10:00:00 - Приложение запущено.\n[ПРЕДУПР.] 2023-10-27 10:05:23 - Неудачная попытка входа пользователя.\n...',
     'adminPanel.logs.refreshButton': 'Обновить логи',
 
+    'questionType.multiple-choice-text': 'Один из многих (Текст)',
+    'questionType.multiple-choice-image': 'Один из многих (Изображение)',
+    'questionType.matching-text-text': 'Сопоставление (Текст-Текст)',
+    'questionType.drag-and-drop-text-text': 'Перетаскивание (Текст-на-Текст)',
   },
 };
 
@@ -399,3 +466,9 @@ export function useLanguage() {
   }
   return context;
 }
+
+// Helper component for Suspense boundary if needed directly in context consumers, though typically not.
+// export const ClientLanguageConsumer = ({ children }: { children: (value: LanguageContextType) => ReactNode }) => {
+//   const contextValue = useLanguage();
+//   return <>{children(contextValue)}</>;
+// };
