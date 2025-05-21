@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -53,7 +54,7 @@ export default function HomePage() {
               QuizSmith empowers you to build any type of quiz with any design. Your content, your rules.
             </p>
             <Button size="lg" asChild className="shadow-lg hover:shadow-primary/30 transition-shadow">
-              <Link href="/dashboard">Get Started Free</Link>
+              <Link href="/signup">Get Started Free</Link>
             </Button>
             <div className="mt-16">
               <Image
@@ -104,7 +105,7 @@ export default function HomePage() {
               Join QuizSmith today and unlock a new level of creativity and engagement for your tests.
             </p>
             <Button size="lg" asChild className="shadow-lg hover:shadow-primary/30 transition-shadow">
-              <Link href="/dashboard">Start Creating Now</Link>
+              <Link href="/signup">Start Creating Now</Link>
             </Button>
           </div>
         </section>
