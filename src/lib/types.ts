@@ -2,7 +2,7 @@
 export interface QuestionOption {
   id: string;
   text: string;
-  isCorrect: boolean; // Changed from optional to required
+  isCorrect: boolean; 
 }
 
 export type QuestionType = 'multiple-choice' | 'drag-and-drop' | 'text-input';
@@ -22,9 +22,11 @@ export interface Test {
   htmlContent: string;
   cssContent: string;
   questions: Question[];
-  templateId?: string; // Optional: if created from a template
-  createdAt: string;
-  updatedAt: string;
+  quizEndMessage: string; // Added for customizable end message
+  templateId?: string; 
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  // Potentially add 'status' (Draft, Published), 'imageUrl', 'aiHint' if these were part of mock data consistently
 }
 
 export interface Template {
@@ -33,9 +35,8 @@ export interface Template {
   description?: string;
   htmlContent: string;
   cssContent: string;
-  // Placeholders might be defined here or inferred from HTML
-  // e.g., placeholderCount: number;
-  previewImageUrl?: string;
-  createdAt: string;
-  updatedAt: string;
+  previewImageUrl?: string; // For display on template selection pages
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  // Potentially add 'tags', 'aiHint' if these were part of mock data consistently
 }

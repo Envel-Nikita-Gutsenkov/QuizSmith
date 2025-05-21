@@ -7,19 +7,24 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Layers, PlusCircle, Edit3 } from 'lucide-react';
 import Image from 'next/image';
-import { useLanguage } from '@/contexts/LanguageContext'; // Added
+import { useLanguage } from '@/contexts/LanguageContext'; 
+import type { Template } from '@/lib/types';
+import { useState, useEffect } from 'react';
 
-// Mock data for templates
-const mockTemplates = [
-  { id: 'tpl1', name: 'Minimalist Multiple Choice', description: 'A clean template for simple MCQs.', lastModified: '3 days ago', usageCount: 12, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'simple clean' },
-  { id: 'tpl2', name: 'Interactive Drag & Drop', description: 'Engaging template for DnD questions.', lastModified: '1 week ago', usageCount: 5, imageUrl: 'https://placehold.co/600x400.png', aiHint: 'puzzle pieces' },
-];
 
 export default function MyTemplatesPage() {
-  const { t } = useLanguage(); // Added
+  const { t } = useLanguage(); 
+  const [templates, setTemplates] = useState<Template[]>([]);
+
+  // In a real app, this useEffect would fetch data
+  useEffect(() => {
+    // Placeholder: Simulate fetching or set to empty to show "no data" state
+    // setTemplates(mockTemplates);
+    setTemplates([]);
+  }, []);
 
   return (
-    <AppLayout currentPageTitleKey="myTemplates.pageTitle"> {/* Changed to currentPageTitleKey */}
+    <AppLayout currentPageTitleKey="myTemplates.pageTitle"> 
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-semibold tracking-tight">{t('myTemplates.pageTitle')}</h1>
         <Button asChild>
@@ -29,19 +34,29 @@ export default function MyTemplatesPage() {
         </Button>
       </div>
 
-      {mockTemplates.length > 0 ? (
+      {templates.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockTemplates.map((template) => (
+          {templates.map((template) => (
             <Card key={template.id} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
                <CardHeader>
-                <Image src={template.imageUrl} alt={template.name} width={600} height={400} className="rounded-t-md object-cover aspect-[16/9]" data-ai-hint={template.aiHint} />
-                <CardTitle className="mt-4">{template.name}</CardTitle> {/* Mock data, not translated */}
+                <Image 
+                  src={template.previewImageUrl || "https://placehold.co/600x400.png"} 
+                  alt={template.name} 
+                  width={600} height={400} 
+                  className="rounded-t-md object-cover aspect-[16/9]" 
+                  data-ai-hint={(template as any).aiHint || "simple clean"}
+                />
+                <CardTitle className="mt-4">{template.name}</CardTitle> 
                 <CardDescription>
-                  {template.description} {/* Mock data, not translated */}
+                  {template.description} 
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
-                 <p className="text-sm text-muted-foreground">{t('myTemplates.usageCountLabel')} {template.usageCount} {t('myTemplates.timesLabel')}. {t('myTemplates.lastModifiedLabel')}: {template.lastModified}</p>
+                 {/* Usage count and last modified would come from real data */}
+                 <p className="text-sm text-muted-foreground">
+                   {/* {t('myTemplates.usageCountLabel')} {(template as any).usageCount || 0} {t('myTemplates.timesLabel')}.  */}
+                   {t('myTemplates.lastModifiedLabel')}: {new Date(template.updatedAt).toLocaleDateString()}
+                 </p>
               </CardContent>
               <CardFooter>
                 <Button variant="outline" asChild className="w-full">

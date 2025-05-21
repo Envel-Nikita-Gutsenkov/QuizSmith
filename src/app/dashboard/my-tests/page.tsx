@@ -7,20 +7,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, PlusCircle, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
-import { useLanguage } from '@/contexts/LanguageContext'; // Added
-
-// Mock data for tests
-const mockTests = [
-  { id: 'test1', name: 'My First Amazing Quiz', lastModified: '2 days ago', questions: 10, status: 'Published', imageUrl: 'https://placehold.co/600x400.png', aiHint: 'certificate design' },
-  { id: 'test2', name: 'Advanced JavaScript Challenge', lastModified: '5 days ago', questions: 25, status: 'Draft', imageUrl: 'https://placehold.co/600x400.png', aiHint: 'programming code' },
-  { id: 'test3', name: 'History of Ancient Rome', lastModified: '1 week ago', questions: 15, status: 'Published', imageUrl: 'https://placehold.co/600x400.png', aiHint: 'rome colosseum' },
-];
+import { useLanguage } from '@/contexts/LanguageContext'; 
+import type { Test } from '@/lib/types';
+import { useState, useEffect } from 'react';
 
 export default function MyTestsPage() {
-  const { t } = useLanguage(); // Added
+  const { t } = useLanguage(); 
+  const [tests, setTests] = useState<Test[]>([]);
+
+  // In a real app, this useEffect would fetch data
+  useEffect(() => {
+    // Placeholder: Simulate fetching or set to empty to show "no data" state
+    // setTests(mockTests);
+    setTests([]);
+  }, []);
 
   return (
-    <AppLayout currentPageTitleKey="myTests.pageTitle"> {/* Changed to currentPageTitleKey */}
+    <AppLayout currentPageTitleKey="myTests.pageTitle"> 
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-semibold tracking-tight">{t('myTests.pageTitle')}</h1>
         <Button asChild>
@@ -30,15 +33,24 @@ export default function MyTestsPage() {
         </Button>
       </div>
 
-      {mockTests.length > 0 ? (
+      {tests.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {mockTests.map((test) => (
+          {tests.map((test) => (
             <Card key={test.id} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
               <CardHeader>
-                <Image src={test.imageUrl} alt={test.name} width={600} height={400} className="rounded-t-md object-cover aspect-[16/9]" data-ai-hint={test.aiHint} />
-                <CardTitle className="mt-4">{test.name}</CardTitle> {/* Mock data, not translated */}
+                <Image 
+                  src={(test as any).imageUrl || "https://placehold.co/600x400.png"} 
+                  alt={test.name} 
+                  width={600} height={400} 
+                  className="rounded-t-md object-cover aspect-[16/9]" 
+                  data-ai-hint={(test as any).aiHint || "quiz document"}
+                />
+                <CardTitle className="mt-4">{test.name}</CardTitle> 
                 <CardDescription>
-                  {test.questions} {t('myTests.questionsLabel')} &bull; {t('myTests.statusLabel')}: {test.status} &bull; {t('myTests.lastModifiedLabel')}: {test.lastModified}
+                  {test.questions.length} {t('myTests.questionsLabel')} &bull; 
+                  {/* Status property not in Test type, add if needed or remove */}
+                  {/* {t('myTests.statusLabel')}: {(test as any).status} &bull;  */}
+                  {t('myTests.lastModifiedLabel')}: {new Date(test.updatedAt).toLocaleDateString()}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">

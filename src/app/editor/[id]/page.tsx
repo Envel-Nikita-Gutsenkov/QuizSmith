@@ -261,9 +261,25 @@ export default function EditTestEditorPage() {
 
   // In a real app, this useEffect would fetch data for `testId`
   useEffect(() => {
-    setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: `Test ${testId}` }));
+    // Simulate loading data for an existing test
+    if (testId && testId !== 'new') { // 'new' might be implicitly handled by new/page.tsx
+      setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: `Test ${testId}` }));
+      // For now, we'll still use default HTML/CSS and empty questions
+      // as we don't have actual data fetching.
+      // If you had data fetching:
+      // fetchTestData(testId).then(data => {
+      //   setTestName(data.name);
+      //   setQuestions(data.questions);
+      //   setHtmlContent(data.htmlContent);
+      //   setCssContent(data.cssContent);
+      //   setQuizEndMessage(data.quizEndMessage);
+      // });
+    } else {
+      // This case might not be hit if 'new' uses a different page,
+      // but good for robustness or if route structure changes.
+      setTestName(t('editor.defaultTestName', {defaultValue: 'My Awesome Quiz'}));
+    }
     setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: 'Congratulations! Score: {{score}}/{{total}}.'}));
-    // Potentially load questions, htmlContent, cssContent for testId here
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [testId, t]);
 
@@ -329,9 +345,9 @@ export default function EditTestEditorPage() {
   const handleDeleteQuestion = (questionId: string) => setQuestions((prev) => prev.filter((q) => q.id !== questionId));
 
   const handleSaveTest = () => {
-    const testData = { testId, testName, questions, htmlContent, cssContent, quizEndMessage };
+    const testData = { testId, testName, questions, htmlContent, cssContent, quizEndMessage, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     console.log("Saving test data (existing):", JSON.stringify(testData, null, 2));
-    toast({ title: t('editor.toast.saveSuccessTitleExisting', {defaultValue: "Existing Test Data Logged"}), description: t('editor.toast.saveSuccessDescriptionExisting', {defaultValue: `Test ${testId} config logged to console.`}) });
+    toast({ title: t('editor.toast.saveSuccessTitleExisting', {defaultValue: "Existing Test Data Logged"}), description: t('editor.toast.saveSuccessDescriptionExisting', {testId: testId, defaultValue: `Test ${testId} config logged to console.`}) });
   };
   
   const pageTitleKeyToUse = "editor.pageTitleExisting";
@@ -384,6 +400,7 @@ export default function EditTestEditorPage() {
                   <CardHeader><CardTitle className="text-base flex items-center"><Code className="mr-2 h-4 w-4" /> {t('editor.config.embedTitle', {defaultValue: 'Embed Your Test'})}</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{t('editor.config.embedDescription', {defaultValue: 'After saving, embed code will appear here.'})}</p>
+                    {/* For existing tests, the embed code can be shown */}
                     <Textarea readOnly value={`<iframe src="/test/${testId}/player" width="100%" height="600px" frameborder="0"></iframe>`} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
                   </CardContent>
                 </Card>
@@ -455,5 +472,3 @@ export default function EditTestEditorPage() {
     </AppLayout>
   );
 }
-
-    
