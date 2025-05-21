@@ -1,9 +1,13 @@
+
+'use client'; // Required for useLanguage hook
+
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Layers, PlusCircle, Edit3 } from 'lucide-react';
 import Image from 'next/image';
+import { useLanguage } from '@/contexts/LanguageContext'; // Added
 
 // Mock data for templates
 const mockTemplates = [
@@ -12,13 +16,15 @@ const mockTemplates = [
 ];
 
 export default function MyTemplatesPage() {
+  const { t } = useLanguage(); // Added
+
   return (
-    <AppLayout currentPageTitle="My Templates">
+    <AppLayout currentPageTitleKey="myTemplates.pageTitle"> {/* Changed to currentPageTitleKey */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight">My Templates</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t('myTemplates.pageTitle')}</h1>
         <Button asChild>
           <Link href="/templates/editor/new">
-            <PlusCircle className="mr-2 h-4 w-4" /> Create New Template
+            <PlusCircle className="mr-2 h-4 w-4" /> {t('myTemplates.create')}
           </Link>
         </Button>
       </div>
@@ -29,18 +35,18 @@ export default function MyTemplatesPage() {
             <Card key={template.id} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
                <CardHeader>
                 <Image src={template.imageUrl} alt={template.name} width={600} height={400} className="rounded-t-md object-cover aspect-[16/9]" data-ai-hint={template.aiHint} />
-                <CardTitle className="mt-4">{template.name}</CardTitle>
+                <CardTitle className="mt-4">{template.name}</CardTitle> {/* Mock data, not translated */}
                 <CardDescription>
-                  {template.description}
+                  {template.description} {/* Mock data, not translated */}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
-                 <p className="text-sm text-muted-foreground">Used {template.usageCount} times. Last modified: {template.lastModified}</p>
+                 <p className="text-sm text-muted-foreground">{t('myTemplates.usageCountLabel')} {template.usageCount} {t('myTemplates.timesLabel')}. {t('myTemplates.lastModifiedLabel')}: {template.lastModified}</p>
               </CardContent>
               <CardFooter>
                 <Button variant="outline" asChild className="w-full">
                   <Link href={`/templates/editor/${template.id}`}>
-                    <Edit3 className="mr-2 h-4 w-4" /> Edit Template
+                    <Edit3 className="mr-2 h-4 w-4" /> {t('myTemplates.edit')}
                   </Link>
                 </Button>
               </CardFooter>
@@ -51,13 +57,13 @@ export default function MyTemplatesPage() {
         <Card className="text-center py-16">
           <CardHeader>
             <Layers className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-            <CardTitle className="text-xl">You haven&apos;t created any templates yet.</CardTitle>
-            <CardDescription>Templates help you build quizzes faster with consistent designs.</CardDescription>
+            <CardTitle className="text-xl">{t('myTemplates.noTemplates.title')}</CardTitle>
+            <CardDescription>{t('myTemplates.noTemplates.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button size="lg" asChild>
               <Link href="/templates/editor/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Create Your First Template
+                <PlusCircle className="mr-2 h-4 w-4" /> {t('myTemplates.noTemplates.button')}
               </Link>
             </Button>
           </CardContent>

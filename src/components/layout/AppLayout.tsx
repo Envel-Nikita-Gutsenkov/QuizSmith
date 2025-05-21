@@ -1,3 +1,4 @@
+
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Home, FileText, Layers, PlusCircle, Settings, PanelLeft } from 'lucide-react';
@@ -13,32 +14,35 @@ import {
   SidebarInset,
   SidebarTrigger,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons/Logo';
 import { AppHeader } from './AppHeader';
+import { useLanguage } from '@/contexts/LanguageContext'; // Added
 
 interface AppLayoutProps {
   children: ReactNode;
-  currentPageTitle?: string;
+  currentPageTitleKey?: string; // Changed from currentPageTitle to currentPageTitleKey
 }
 
-const mainNavItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: <Home /> },
-  { href: '/dashboard/my-tests', label: 'My Tests', icon: <FileText /> },
-  { href: '/dashboard/my-templates', label: 'My Templates', icon: <Layers /> },
-];
+export function AppLayout({ children, currentPageTitleKey }: AppLayoutProps) {
+  const { t } = useLanguage(); // Added
 
-const createNavItems = [
-  { href: '/editor/new', label: 'New Test', icon: <PlusCircle /> },
-  { href: '/templates/editor/new', label: 'New Template', icon: <PlusCircle /> },
-];
+  const mainNavItems = [
+    { href: '/dashboard', labelKey: 'nav.dashboard', icon: <Home /> },
+    { href: '/dashboard/my-tests', labelKey: 'nav.myTests', icon: <FileText /> },
+    { href: '/dashboard/my-templates', labelKey: 'nav.myTemplates', icon: <Layers /> },
+  ];
 
-const secondaryNavItems = [
- { href: '/dashboard/settings', label: 'Settings', icon: <Settings /> },
-];
+  const createNavItems = [
+    { href: '/editor/new', labelKey: 'nav.newTest', icon: <PlusCircle /> },
+    { href: '/templates/editor/new', labelKey: 'nav.newTemplate', icon: <PlusCircle /> },
+  ];
 
+  const secondaryNavItems = [
+    { href: '/dashboard/settings', labelKey: 'nav.settings', icon: <Settings /> },
+  ];
 
-export function AppLayout({ children, currentPageTitle }: AppLayoutProps) {
+  const pageTitle = currentPageTitleKey ? t(currentPageTitleKey) : undefined;
+
   return (
     <SidebarProvider defaultOpen>
       <Sidebar variant="sidebar" collapsible="icon" className="border-r">
@@ -53,11 +57,11 @@ export function AppLayout({ children, currentPageTitle }: AppLayoutProps) {
         <SidebarContent className="p-2">
           <SidebarMenu>
             {mainNavItems.map((item) => (
-              <SidebarMenuItem key={item.label}>
-                <SidebarMenuButton asChild tooltip={item.label}>
+              <SidebarMenuItem key={item.labelKey}>
+                <SidebarMenuButton asChild tooltip={t(item.labelKey)}>
                   <Link href={item.href}>
                     {item.icon}
-                    <span>{item.label}</span>
+                    <span>{t(item.labelKey)}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -65,15 +69,15 @@ export function AppLayout({ children, currentPageTitle }: AppLayoutProps) {
           </SidebarMenu>
           
           <div className="mt-4 mb-2 px-2 text-xs font-semibold uppercase text-muted-foreground group-data-[collapsible=icon]:hidden">
-            Create New
+            {t('nav.createNew')}
           </div>
           <SidebarMenu>
             {createNavItems.map((item) => (
-              <SidebarMenuItem key={item.label}>
-                <SidebarMenuButton asChild tooltip={item.label}>
+              <SidebarMenuItem key={item.labelKey}>
+                <SidebarMenuButton asChild tooltip={t(item.labelKey)}>
                   <Link href={item.href}>
                     {item.icon}
-                    <span>{item.label}</span>
+                    <span>{t(item.labelKey)}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -83,11 +87,11 @@ export function AppLayout({ children, currentPageTitle }: AppLayoutProps) {
         <SidebarFooter className="p-2 border-t">
            <SidebarMenu>
             {secondaryNavItems.map((item) => (
-              <SidebarMenuItem key={item.label}>
-                <SidebarMenuButton asChild tooltip={item.label}>
+              <SidebarMenuItem key={item.labelKey}>
+                <SidebarMenuButton asChild tooltip={t(item.labelKey)}>
                   <Link href={item.href}>
                     {item.icon}
-                    <span>{item.label}</span>
+                    <span>{t(item.labelKey)}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -96,7 +100,7 @@ export function AppLayout({ children, currentPageTitle }: AppLayoutProps) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="flex flex-col">
-        <AppHeader title={currentPageTitle} />
+        <AppHeader title={pageTitle} />
         <main className="flex-1 overflow-y-auto p-6 bg-secondary/30">
           {children}
         </main>

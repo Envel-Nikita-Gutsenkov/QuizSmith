@@ -1,8 +1,10 @@
+
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
+import { LanguageProvider } from '@/contexts/LanguageContext'; // Added import
 
 const geistSans = GeistSans; // Use the imported object directly
 const geistMono = GeistMono;
@@ -20,8 +22,10 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}>
-        {children}
-        <Toaster />
+        <LanguageProvider> {/* Added LanguageProvider */}
+          {children}
+          <Toaster />
+        </LanguageProvider>
       </body>
     </html>
   );

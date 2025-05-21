@@ -1,9 +1,13 @@
+
+'use client'; // Required for useLanguage hook
+
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Layers, PlusCircle, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
+import { useLanguage } from '@/contexts/LanguageContext'; // Added
 
 // Mock data - replace with actual data fetching
 const mockTests = [
@@ -16,15 +20,17 @@ const mockTemplates = [
 ];
 
 export default function DashboardPage() {
+  const { t } = useLanguage(); // Added
+
   return (
-    <AppLayout currentPageTitle="Dashboard">
+    <AppLayout currentPageTitleKey="dashboard.pageTitle"> {/* Changed to currentPageTitleKey */}
       <div className="space-y-8">
         <section>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold tracking-tight">My Tests</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{t('dashboard.myTests.heading')}</h2>
             <Button asChild>
               <Link href="/editor/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Create New Test
+                <PlusCircle className="mr-2 h-4 w-4" /> {t('dashboard.myTests.create')}
               </Link>
             </Button>
           </div>
@@ -34,15 +40,15 @@ export default function DashboardPage() {
                 <Card key={test.id} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <Image src={test.imageUrl} alt={test.name} width={600} height={400} className="rounded-t-md object-cover aspect-[16/9]" data-ai-hint={test.aiHint} />
-                    <CardTitle className="mt-4">{test.name}</CardTitle>
-                    <CardDescription>{test.questions} questions - Last modified: {test.lastModified}</CardDescription>
+                    <CardTitle className="mt-4">{test.name}</CardTitle> {/* Mock data, not translated */}
+                    <CardDescription>{test.questions} {t('myTests.questionsLabel')} - {t('myTests.lastModifiedLabel')}: {test.lastModified}</CardDescription> {/* Mock data, not translated */}
                   </CardHeader>
                   <CardContent className="flex-grow">
                     {/* Potentially some stats or quick info */}
                   </CardContent>
                   <CardFooter>
                     <Button variant="outline" asChild className="w-full">
-                      <Link href={`/editor/${test.id}`}>Edit Test <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                      <Link href={`/editor/${test.id}`}>{t('dashboard.editTest')} <ArrowRight className="ml-2 h-4 w-4" /></Link>
                     </Button>
                   </CardFooter>
                 </Card>
@@ -52,13 +58,13 @@ export default function DashboardPage() {
             <Card className="text-center py-12">
               <CardHeader>
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <CardTitle>No tests created yet</CardTitle>
-                <CardDescription>Start by creating your first masterpiece!</CardDescription>
+                <CardTitle>{t('dashboard.myTests.noTests.title')}</CardTitle>
+                <CardDescription>{t('dashboard.myTests.noTests.description')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button asChild>
                   <Link href="/editor/new">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Create Your First Test
+                    <PlusCircle className="mr-2 h-4 w-4" /> {t('dashboard.myTests.noTests.button')}
                   </Link>
                 </Button>
               </CardContent>
@@ -68,10 +74,10 @@ export default function DashboardPage() {
 
         <section>
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-semibold tracking-tight">My Templates</h2>
+            <h2 className="text-2xl font-semibold tracking-tight">{t('dashboard.myTemplates.heading')}</h2>
             <Button asChild>
               <Link href="/templates/editor/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Create New Template
+                <PlusCircle className="mr-2 h-4 w-4" /> {t('dashboard.myTemplates.create')}
               </Link>
             </Button>
           </div>
@@ -81,15 +87,15 @@ export default function DashboardPage() {
                 <Card key={template.id} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
                   <CardHeader>
                      <Image src={template.imageUrl} alt={template.name} width={600} height={400} className="rounded-t-md object-cover aspect-[16/9]" data-ai-hint={template.aiHint} />
-                    <CardTitle className="mt-4">{template.name}</CardTitle>
-                    <CardDescription>{template.description}</CardDescription>
+                    <CardTitle className="mt-4">{template.name}</CardTitle> {/* Mock data, not translated */}
+                    <CardDescription>{template.description}</CardDescription> {/* Mock data, not translated */}
                   </CardHeader>
                    <CardContent className="flex-grow">
                     {/* Info like usage count or tags */}
                   </CardContent>
                   <CardFooter>
                      <Button variant="outline" asChild className="w-full">
-                      <Link href={`/templates/editor/${template.id}`}>Edit Template <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                      <Link href={`/templates/editor/${template.id}`}>{t('dashboard.editTemplate')} <ArrowRight className="ml-2 h-4 w-4" /></Link>
                     </Button>
                   </CardFooter>
                 </Card>
@@ -99,13 +105,13 @@ export default function DashboardPage() {
              <Card className="text-center py-12">
               <CardHeader>
                 <Layers className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <CardTitle>No templates created yet</CardTitle>
-                <CardDescription>Build reusable designs for your quizzes.</CardDescription>
+                <CardTitle>{t('dashboard.myTemplates.noTemplates.title')}</CardTitle>
+                <CardDescription>{t('dashboard.myTemplates.noTemplates.description')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button asChild>
                   <Link href="/templates/editor/new">
-                     <PlusCircle className="mr-2 h-4 w-4" /> Create Your First Template
+                     <PlusCircle className="mr-2 h-4 w-4" /> {t('dashboard.myTemplates.noTemplates.button')}
                   </Link>
                 </Button>
               </CardContent>

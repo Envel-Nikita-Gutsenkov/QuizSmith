@@ -1,9 +1,13 @@
+
+'use client'; // Required for useLanguage hook
+
 import Link from 'next/link';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, PlusCircle, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
+import { useLanguage } from '@/contexts/LanguageContext'; // Added
 
 // Mock data for tests
 const mockTests = [
@@ -13,13 +17,15 @@ const mockTests = [
 ];
 
 export default function MyTestsPage() {
+  const { t } = useLanguage(); // Added
+
   return (
-    <AppLayout currentPageTitle="My Tests">
+    <AppLayout currentPageTitleKey="myTests.pageTitle"> {/* Changed to currentPageTitleKey */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-semibold tracking-tight">My Tests</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">{t('myTests.pageTitle')}</h1>
         <Button asChild>
           <Link href="/editor/new">
-            <PlusCircle className="mr-2 h-4 w-4" /> Create New Test
+            <PlusCircle className="mr-2 h-4 w-4" /> {t('myTests.create')}
           </Link>
         </Button>
       </div>
@@ -30,9 +36,9 @@ export default function MyTestsPage() {
             <Card key={test.id} className="flex flex-col shadow-md hover:shadow-lg transition-shadow">
               <CardHeader>
                 <Image src={test.imageUrl} alt={test.name} width={600} height={400} className="rounded-t-md object-cover aspect-[16/9]" data-ai-hint={test.aiHint} />
-                <CardTitle className="mt-4">{test.name}</CardTitle>
+                <CardTitle className="mt-4">{test.name}</CardTitle> {/* Mock data, not translated */}
                 <CardDescription>
-                  {test.questions} questions &bull; {test.status} &bull; Last modified: {test.lastModified}
+                  {test.questions} {t('myTests.questionsLabel')} &bull; {t('myTests.statusLabel')}: {test.status} &bull; {t('myTests.lastModifiedLabel')}: {test.lastModified}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
@@ -40,10 +46,10 @@ export default function MyTestsPage() {
               </CardContent>
               <CardFooter className="grid grid-cols-2 gap-2">
                 <Button variant="outline" asChild>
-                  <Link href={`/editor/${test.id}`}>Edit</Link>
+                  <Link href={`/editor/${test.id}`}>{t('myTests.edit')}</Link>
                 </Button>
                  <Button asChild>
-                  <Link href={`/test/${test.id}/results`}>View Results <ArrowRight className="ml-1 h-4 w-4" /></Link>
+                  <Link href={`/test/${test.id}/results`}>{t('myTests.viewResults')} <ArrowRight className="ml-1 h-4 w-4" /></Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -53,13 +59,13 @@ export default function MyTestsPage() {
         <Card className="text-center py-16">
           <CardHeader>
             <FileText className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-            <CardTitle className="text-xl">You haven&apos;t created any tests yet.</CardTitle>
-            <CardDescription>Click the button below to start building your first quiz!</CardDescription>
+            <CardTitle className="text-xl">{t('myTests.noTests.title')}</CardTitle>
+            <CardDescription>{t('myTests.noTests.description')}</CardDescription>
           </CardHeader>
           <CardContent>
             <Button size="lg" asChild>
               <Link href="/editor/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Create Your First Test
+                <PlusCircle className="mr-2 h-4 w-4" /> {t('myTests.noTests.button')}
               </Link>
             </Button>
           </CardContent>
