@@ -1,6 +1,7 @@
+
 'use client'; // Required for useState, useEffect
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,12 +13,32 @@ import { Separator } from '@/components/ui/separator';
 
 export default function NewTestEditorPage() {
   const [testName, setTestName] = useState('');
-  const [htmlContent, setHtmlContent] = useState('<!-- Your HTML structure here -->\n<div class="quiz-container">\n  <h1 data-quiz-title>Test Title</h1>\n  <div data-quiz-question="1"></div>\n  <div data-quiz-options-for-question="1">\n    <button data-quiz-answer-option="1.A"></button>\n    <button data-quiz-answer-option="1.B"></button>
-  </div>\n</div>');
-  const [cssContent, setCssContent] = useState('/* Your CSS styles here */\n.quiz-container {\n  padding: 20px;\n  border: 1px solid #ccc;\n  border-radius: 8px;\n}\n\n[data-quiz-title] {\n  color: hsl(var(--primary));\n}');
+  const [htmlContent, setHtmlContent] = useState(
+`<!-- Your HTML structure here -->
+<div class="quiz-container">
+  <h1 data-quiz-title>Test Title</h1>
+  <div data-quiz-question="1"></div>
+  <div data-quiz-options-for-question="1">
+    <button data-quiz-answer-option="1.A"></button>
+    <button data-quiz-answer-option="1.B"></button>
+  </div>
+</div>`
+  );
+  const [cssContent, setCssContent] = useState(
+`/* Your CSS styles here */
+.quiz-container {
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+[data-quiz-title] {
+  color: hsl(var(--primary));
+}`
+  );
   const [previewContent, setPreviewContent] = useState('');
 
-  const updatePreview = () => {
+  const updatePreview = useCallback(() => {
     const fullHtml = `
       <html>
         <head>
@@ -27,13 +48,12 @@ export default function NewTestEditorPage() {
       </html>
     `;
     setPreviewContent(fullHtml);
-  };
+  }, [htmlContent, cssContent]);
 
-  // Update preview when HTML or CSS changes (debounced in a real app)
-  useState(() => {
+  // Update preview when HTML or CSS changes
+  useEffect(() => {
     updatePreview();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  });
+  }, [htmlContent, cssContent, updatePreview]);
 
 
   return (
