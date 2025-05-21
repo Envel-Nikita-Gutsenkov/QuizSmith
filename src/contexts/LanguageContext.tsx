@@ -182,13 +182,6 @@ const translations: Translations = {
     'adminPanel.logs.description': 'View system and application logs. (Placeholder UI)',
     'adminPanel.logs.placeholder': 'Log entries would appear here...\n[INFO] 2023-10-27 10:00:00 - Application started.\n[WARN] 2023-10-27 10:05:23 - User login attempt failed.\n...',
     'adminPanel.logs.refreshButton': 'Refresh Logs',
-    'adminPanel.testRollbacks.title': 'Test Version Management',
-    'adminPanel.testRollbacks.description': 'Review and revert tests to their previous saved states. (Placeholder UI)',
-    'adminPanel.testRollbacks.testVersionLabel': 'Test: {{testName}} - Version {{versionNumber}}',
-    'adminPanel.testRollbacks.savedDateLabel': 'Saved: {{date}}',
-    'adminPanel.testRollbacks.currentButton': 'Current',
-    'adminPanel.testRollbacks.rollbackButton': 'Rollback',
-    'adminPanel.testRollbacks.rollbackToTestVersionButton': 'Rollback "{{testName}}" to Version {{versionNumber}}',
 
   },
   ru: {
@@ -354,13 +347,7 @@ const translations: Translations = {
     'adminPanel.logs.description': 'Просмотр системных и прикладных логов. (Заглушка интерфейса)',
     'adminPanel.logs.placeholder': 'Записи логов будут отображаться здесь...\n[ИНФО] 2023-10-27 10:00:00 - Приложение запущено.\n[ПРЕДУПР.] 2023-10-27 10:05:23 - Неудачная попытка входа пользователя.\n...',
     'adminPanel.logs.refreshButton': 'Обновить логи',
-    'adminPanel.testRollbacks.title': 'Управление версиями тестов',
-    'adminPanel.testRollbacks.description': 'Просмотр и откат тестов к их предыдущим сохраненным состояниям. (Заглушка интерфейса)',
-    'adminPanel.testRollbacks.testVersionLabel': 'Тест: {{testName}} - Версия {{versionNumber}}',
-    'adminPanel.testRollbacks.savedDateLabel': 'Сохранено: {{date}}',
-    'adminPanel.testRollbacks.currentButton': 'Текущая',
-    'adminPanel.testRollbacks.rollbackButton': 'Откатить',
-    'adminPanel.testRollbacks.rollbackToTestVersionButton': 'Откатить "{{testName}}" до версии {{versionNumber}}',
+
   },
 };
 
