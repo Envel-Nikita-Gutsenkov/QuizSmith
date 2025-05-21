@@ -151,25 +151,6 @@ export default function AdminPage() {
                   </div>
                 )}
               </div>
-
-              {/* Other Database Option */}
-               <div className="p-4 border rounded-md hover:bg-accent/50 transition-colors">
-                <div className="flex items-center space-x-3">
-                  <RadioGroupItem value="other" id="other" />
-                  <Label htmlFor="other" className="flex-1 cursor-pointer">
-                    <span className="font-medium">{t('adminPanel.storage.other.label', { defaultValue: 'Other Database' })}</span>
-                    <p className="text-sm text-muted-foreground">{t('adminPanel.storage.other.description', { defaultValue: 'Requires manual backend setup.' })}</p>
-                  </Label>
-                </div>
-                 {selectedStorage === 'other' && (
-                  <div className="mt-4 space-y-3 pl-8">
-                    <div>
-                      <Label htmlFor="otherConnectionString">{t('adminPanel.storage.other.connectionStringLabel', {defaultValue: 'Connection String / Details'})}</Label>
-                      <Textarea id="otherConnectionString" placeholder={t('adminPanel.storage.other.connectionStringPlaceholder', {defaultValue: 'Enter connection details or path...'})} className="mt-1" rows={3}/>
-                    </div>
-                  </div>
-                )}
-              </div>
             </RadioGroup>
 
             <Button onClick={handleSaveConfiguration} className="mt-4">
