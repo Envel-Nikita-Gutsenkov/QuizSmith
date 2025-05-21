@@ -20,10 +20,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AppLayoutProps {
   children: ReactNode;
-  currentPageTitleKey?: string; 
+  currentPageTitleKey?: string;
+  currentPageTitleParams?: Record<string, string | number | undefined>; // Added
 }
 
-export function AppLayout({ children, currentPageTitleKey }: AppLayoutProps) {
+export function AppLayout({ children, currentPageTitleKey, currentPageTitleParams }: AppLayoutProps) {
   const { t } = useLanguage(); 
 
   const mainNavItems = [
@@ -40,9 +41,6 @@ export function AppLayout({ children, currentPageTitleKey }: AppLayoutProps) {
   const secondaryNavItems = [
     { href: '/dashboard/settings', labelKey: 'nav.settings', icon: <Settings /> },
   ];
-
-  // Pass the key to AppHeader, let AppHeader handle the translation and useEffect for hydration
-  // const pageTitle = currentPageTitleKey ? t(currentPageTitleKey) : undefined; 
 
   return (
     <SidebarProvider defaultOpen>
@@ -101,7 +99,7 @@ export function AppLayout({ children, currentPageTitleKey }: AppLayoutProps) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="flex flex-col">
-        <AppHeader titleKey={currentPageTitleKey} /> {/* Pass titleKey instead of translated title */}
+        <AppHeader titleKey={currentPageTitleKey} titleParams={currentPageTitleParams} /> {/* Pass titleParams */}
         <main className="flex-1 overflow-y-auto p-6 bg-secondary/30">
           {children}
         </main>

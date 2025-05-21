@@ -18,24 +18,25 @@ import {
 import { LayoutGrid, LogOut, Settings, User, Globe } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useState, useEffect } from 'react'; // Added useState, useEffect
+import { useState, useEffect } from 'react';
 
 interface AppHeaderProps {
-  titleKey?: string; // Changed from title to titleKey
+  titleKey?: string;
+  titleParams?: Record<string, string | number | undefined>; // Added
 }
 
-export function AppHeader({ titleKey }: AppHeaderProps) {
+export function AppHeader({ titleKey, titleParams }: AppHeaderProps) {
   const { toggleSidebar, isMobile } = useSidebar();
   const { language, setLanguage, t } = useLanguage();
-  const [renderedTitle, setRenderedTitle] = useState(titleKey ? t(titleKey, {}, titleKey) : undefined); // Initialize with key or translated key if possible initially
+  const [renderedTitle, setRenderedTitle] = useState<string | undefined>(titleKey ? t(titleKey, titleParams, titleKey) : undefined);
 
   useEffect(() => {
     if (titleKey) {
-      setRenderedTitle(t(titleKey));
+      setRenderedTitle(t(titleKey, titleParams, titleKey));
     } else {
       setRenderedTitle(undefined);
     }
-  }, [titleKey, t, language]); // Add language to dependencies to re-translate if language changes
+  }, [titleKey, titleParams, t, language]);
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">

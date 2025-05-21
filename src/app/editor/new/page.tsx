@@ -7,13 +7,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'; // CardFooter removed as it's not used
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Question, QuestionOption } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
-import { useLanguage } from '@/contexts/LanguageContext'; // Added
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -33,6 +33,7 @@ const defaultHtmlContent = `
           Sample Option Text
         </button>
       </div>
+      <div data-quiz-feedback="q_template_id" class="feedback-message mt-6 text-center font-medium text-lg" style="display: none; min-height: 28px;"></div>
     </div>
   </div>
 
@@ -54,29 +55,43 @@ body {
   border-color: hsl(var(--accent) / 0.8);
   box-shadow: 0 0 0 2px hsl(var(--accent) / 0.5);
   transform: scale(1.02); 
+  animation: pop 0.3s ease-out;
 }
-.option-button.correct-answer {
-  background-color: hsl(var(--primary)) !important;
-  color: hsl(var(--primary-foreground)) !important;
-  border-color: hsl(var(--primary)) !important;
-  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.7);
+.option-button.correct-answer { /* User selected correct answer */
+  background-color: hsl(var(--success-bg)) !important;
+  color: hsl(var(--success-fg)) !important;
+  border-color: hsl(var(--success-border)) !important;
+  box-shadow: 0 0 0 3px hsl(var(--success-border) / 0.7);
+  animation: pop 0.3s ease-out;
 }
-.option-button.incorrect-answer-selected {
+.option-button.incorrect-answer-selected { /* User selected incorrect answer */
   background-color: hsl(var(--destructive)) !important;
   color: hsl(var(--destructive-foreground)) !important;
   border-color: hsl(var(--destructive)) !important;
   box-shadow: 0 0 0 3px hsl(var(--destructive) / 0.7);
   opacity: 0.9;
+  animation: pop 0.3s ease-out;
 }
-.option-button.correct-answer-unselected {
-  border: 2px solid hsl(var(--primary)) !important;
-  background-color: hsl(var(--primary) / 0.1) !important;
+.option-button.always-correct-answer { /* To show the correct answer if user was wrong */
+  background-color: hsl(var(--success-bg)) !important;
+  color: hsl(var(--success-fg)) !important;
+  border: 2px solid hsl(var(--success-border)) !important;
 }
+.feedback-message { opacity: 0; transform: translateY(10px); transition: opacity 0.3s ease-out, transform 0.3s ease-out; }
+.feedback-message.show { opacity: 1; transform: translateY(0); animation: fadeInFeedback 0.3s ease-out, popFeedback 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+.feedback-message.correct { color: hsl(var(--success-fg)); }
+.feedback-message.incorrect { color: hsl(var(--destructive)); }
+
 .animate-slide-out-left { opacity: 0 !important; transform: translateX(-50px) !important; transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
 .animate-slide-in-right { opacity: 0; transform: translateX(50px); animation: slideInFromRight 0.5s ease-out forwards; }
 @keyframes slideInFromRight { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+
 .animate-fade-in { opacity: 0; animation: fadeIn 0.5s ease-out forwards; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+@keyframes fadeInFeedback { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0px); } }
+@keyframes popFeedback { 0% { transform: scale(0.9) translateY(5px); } 70% { transform: scale(1.05) translateY(0px); } 100% { transform: scale(1) translateY(0px); } }
 `;
 
 const quizLogicScript = `
@@ -84,70 +99,160 @@ document.addEventListener('DOMContentLoaded', () => {
   const questionsDataElement = document.getElementById('quiz-data');
   const endMessageElement = document.getElementById('quiz-end-message-text');
   if (!questionsDataElement || !endMessageElement) { console.error('Quiz data or end message element not found.'); return; }
+  
+  const t = (key, replacements = {}, defaultValue = '') => { // Simple i18n helper for script
+    let text = defaultValue || key; // Fallback to key if no default value
+    if (typeof quizTranslations !== 'undefined' && quizTranslations[key]) {
+        text = quizTranslations[key];
+    }
+    for (const placeholder in replacements) {
+        text = text.replace(new RegExp('{{' + placeholder + '}}', 'g'), replacements[placeholder]);
+    }
+    return text;
+  };
+  const quizTranslations = { // Add basic translations, should match context if needed
+    'quiz.feedback.correct': 'Correct!',
+    'quiz.feedback.incorrect': 'Incorrect!',
+    'quiz.endScreen.title': 'Quiz Complete!',
+    'quiz.restartButton': 'Restart Quiz'
+  };
+
+
   const questions = JSON.parse(questionsDataElement.textContent || '[]');
-  const rawQuizEndMessage = endMessageElement.textContent || 'Quiz Finished! Score: {{score}}/{{total}}';
+  const rawQuizEndMessage = endMessageElement.textContent || t('editor.defaultEndMessage', { score: '{{score}}', total: '{{total}}' }, 'Quiz Finished! Score: {{score}}/{{total}}');
+  
   const quizContainer = document.querySelector('.quiz-container');
   const questionHost = document.getElementById('quiz-content-host');
   const questionTemplateElement = quizContainer.querySelector('[data-quiz-question-id="q_template_id"]');
-  if (!quizContainer || !questionHost || !questionTemplateElement) { if (questionHost) questionHost.innerHTML = '<p>Error: Quiz structure incomplete.</p>'; return; }
+  
+  if (!quizContainer || !questionHost || !questionTemplateElement) { 
+    if (questionHost) questionHost.innerHTML = '<p>Error: Quiz structure incomplete.</p>'; return; 
+  }
   questionTemplateElement.remove();
-  let currentQuestionIndex = 0; let score = 0; let activeQuestionElement = null;
+  
+  let currentQuestionIndex = 0; 
+  let score = 0; 
+  let activeQuestionElement = null;
+
   function displayQuestion(index) {
     if (activeQuestionElement) {
       activeQuestionElement.classList.add('animate-slide-out-left');
-      setTimeout(() => { activeQuestionElement.remove(); activeQuestionElement = null; index >= questions.length ? displayEndScreen() : renderQuestion(index); }, 500);
-    } else { index >= questions.length ? displayEndScreen() : renderQuestion(index); }
+      setTimeout(() => { 
+        activeQuestionElement.remove(); 
+        activeQuestionElement = null; 
+        index >= questions.length ? displayEndScreen() : renderQuestion(index); 
+      }, 500);
+    } else { 
+      index >= questions.length ? displayEndScreen() : renderQuestion(index); 
+    }
   }
+
   function renderQuestion(index) {
     const question = questions[index];
     const newQuestionElement = questionTemplateElement.cloneNode(true);
-    newQuestionElement.style.display = 'block'; newQuestionElement.setAttribute('data-quiz-question-id', question.id);
+    newQuestionElement.style.display = 'block'; 
+    newQuestionElement.setAttribute('data-quiz-question-id', question.id);
+    
     const questionTextEl = newQuestionElement.querySelector('[data-quiz-question-text]');
-    if (questionTextEl) { questionTextEl.textContent = question.text; questionTextEl.setAttribute('data-quiz-question-text', question.id); }
+    if (questionTextEl) { 
+      questionTextEl.textContent = question.text; 
+      questionTextEl.setAttribute('data-quiz-question-text', question.id); 
+    }
+    
     const optionsContainerEl = newQuestionElement.querySelector('[data-quiz-options-for-question]');
     const optionTemplateEl = questionTemplateElement.querySelector('[data-quiz-answer-option]');
+    const feedbackEl = newQuestionElement.querySelector('[data-quiz-feedback]');
+    if (feedbackEl) { feedbackEl.style.display = 'none'; feedbackEl.className = 'feedback-message mt-6 text-center font-medium text-lg'; }
+
+
     if (optionsContainerEl && optionTemplateEl) {
-      const templateOptionButton = optionTemplateEl.cloneNode(true); optionsContainerEl.innerHTML = ''; 
+      const templateOptionButton = optionTemplateEl.cloneNode(true); 
+      optionsContainerEl.innerHTML = ''; 
       question.options.forEach(option => {
         const newOptionButton = templateOptionButton.cloneNode(true);
         newOptionButton.setAttribute('data-quiz-answer-option', \`\${question.id}.\${option.id}\`);
         newOptionButton.textContent = option.text;
-        newOptionButton.onclick = (event) => handleOptionClick(event.currentTarget, option, question.options, newQuestionElement);
+        newOptionButton.onclick = (event) => handleOptionClick(event.currentTarget, option, question.options, newQuestionElement, feedbackEl);
         optionsContainerEl.appendChild(newOptionButton);
       });
     }
-    questionHost.appendChild(newQuestionElement); activeQuestionElement = newQuestionElement; newQuestionElement.classList.add('animate-slide-in-right');
+    questionHost.appendChild(newQuestionElement); 
+    activeQuestionElement = newQuestionElement; 
+    newQuestionElement.classList.add('animate-slide-in-right');
   }
-  function handleOptionClick(selectedButton, selectedOption, allOptions, questionElement) {
+
+  function handleOptionClick(selectedButton, selectedOption, allOptions, questionElement, feedbackEl) {
     const optionButtons = questionElement.querySelectorAll('.option-button');
-    optionButtons.forEach(btn => btn.disabled = true);
-    const isCorrect = selectedOption.isCorrect; const correctOption = allOptions.find(opt => opt.isCorrect);
-    if (isCorrect) { selectedButton.classList.add('correct-answer'); score++; } 
-    else { selectedButton.classList.add('incorrect-answer-selected'); if (correctOption) { const correctButton = Array.from(optionButtons).find(btn => btn.getAttribute('data-quiz-answer-option').endsWith(correctOption.id)); if (correctButton) correctButton.classList.add('correct-answer-unselected'); } }
-    setTimeout(() => { currentQuestionIndex++; displayQuestion(currentQuestionIndex); }, 2000);
+    optionButtons.forEach(btn => btn.disabled = true); // Disable all buttons
+    
+    const isCorrect = selectedOption.isCorrect;
+    const correctOption = allOptions.find(opt => opt.isCorrect);
+
+    if (feedbackEl) {
+      feedbackEl.style.display = 'block';
+      feedbackEl.classList.remove('correct', 'incorrect', 'show'); // Clear previous states
+    }
+
+    if (isCorrect) {
+      selectedButton.classList.add('correct-answer');
+      if (feedbackEl) {
+        feedbackEl.textContent = t('quiz.feedback.correct');
+        feedbackEl.classList.add('correct', 'show');
+      }
+      score++;
+    } else {
+      selectedButton.classList.add('incorrect-answer-selected');
+      if (feedbackEl) {
+        feedbackEl.textContent = t('quiz.feedback.incorrect');
+        feedbackEl.classList.add('incorrect', 'show');
+      }
+      // Highlight the actual correct answer if one exists
+      if (correctOption) {
+        const correctButton = Array.from(optionButtons).find(btn => btn.getAttribute('data-quiz-answer-option').endsWith(correctOption.id));
+        if (correctButton) {
+          correctButton.classList.add('always-correct-answer'); // Use new class for always showing correct
+        }
+      }
+    }
+    
+    setTimeout(() => {
+      currentQuestionIndex++;
+      displayQuestion(currentQuestionIndex);
+    }, 2500); // Increased delay to see feedback
   }
+
   function displayEndScreen() {
     questionHost.innerHTML = ''; 
     const finalEndMessage = rawQuizEndMessage.replace('{{score}}', score.toString()).replace('{{total}}', questions.length.toString());
-    const endScreenDiv = document.createElement('div'); endScreenDiv.id = 'quiz-end-screen';
+    const endScreenDiv = document.createElement('div');
+    endScreenDiv.id = 'quiz-end-screen';
     endScreenDiv.className = 'text-center p-8 bg-card rounded-lg shadow-xl animate-fade-in';
-    endScreenDiv.innerHTML = \`<h2 class="text-2xl font-bold mb-4 text-primary">Quiz Complete!</h2><p data-quiz-end-message class="text-lg text-foreground mb-6">\${finalEndMessage}</p><button id="restart-quiz-button" class="mt-4 bg-primary text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 transition-colors text-base font-medium shadow-md">Restart Quiz</button>\`;
+    endScreenDiv.innerHTML = \`<h2 class="text-2xl font-bold mb-4 text-primary">\${t('quiz.endScreen.title')}</h2><p data-quiz-end-message class="text-lg text-foreground mb-6">\${finalEndMessage}</p><button id="restart-quiz-button" class="mt-4 bg-primary text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 transition-colors text-base font-medium shadow-md">\${t('quiz.restartButton')}</button>\`;
     questionHost.appendChild(endScreenDiv);
+    
     const restartButton = document.getElementById('restart-quiz-button');
-    if (restartButton) { restartButton.onclick = () => { currentQuestionIndex = 0; score = 0; activeQuestionElement = null; questionHost.innerHTML = ''; displayQuestion(currentQuestionIndex); }; }
+    if (restartButton) {
+      restartButton.onclick = () => {
+        currentQuestionIndex = 0;
+        score = 0;
+        activeQuestionElement = null;
+        questionHost.innerHTML = '';
+        displayQuestion(currentQuestionIndex);
+      };
+    }
   }
+  
   questions.length > 0 ? displayQuestion(currentQuestionIndex) : (questionHost.innerHTML = '<p>No questions added.</p>');
 });
 `;
 
-// TODO: Translate static strings in this component using useLanguage()
 export default function NewTestEditorPage() {
-  const { t } = useLanguage(); // Added
-  const [testName, setTestName] = useState(t('editor.defaultTestName', {defaultValue: 'My Awesome Quiz'}));
+  const { t } = useLanguage();
+  const [testName, setTestName] = useState(''); // Initialized in useEffect
   const [questions, setQuestions] = useState<Question[]>([]);
   const [htmlContent, setHtmlContent] = useState(defaultHtmlContent);
   const [cssContent, setCssContent] = useState(defaultCssContent);
-  const [quizEndMessage, setQuizEndMessage] = useState(t('editor.defaultEndMessage', {defaultValue: 'Congratulations! Score: {{score}}/{{total}}.'}));
+  const [quizEndMessage, setQuizEndMessage] = useState(''); // Initialized in useEffect
   const [previewContent, setPreviewContent] = useState('');
   const { toast } = useToast();
 
@@ -156,13 +261,17 @@ export default function NewTestEditorPage() {
     const doc = parser.parseFromString(htmlContent, 'text/html');
     const titleElement = doc.querySelector('[data-quiz-title]');
     if (titleElement) titleElement.textContent = testName || t('editor.quizTitlePlaceholder', {defaultValue: 'Quiz Title'});
+    
     const questionsDataScriptTag = doc.getElementById('quiz-data');
     if (questionsDataScriptTag) questionsDataScriptTag.textContent = JSON.stringify(questions);
+    
     const endMessageDivTag = doc.getElementById('quiz-end-message-text');
     if (endMessageDivTag) endMessageDivTag.textContent = quizEndMessage;
+    
     const finalHtmlBody = doc.body.innerHTML;
+    
     const stylingVariables = `
-      :root { /* Extract HSL values from the live document for theme consistency */
+      :root {
         --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
         --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
         --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
@@ -176,6 +285,9 @@ export default function NewTestEditorPage() {
         --destructive-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
         --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
         --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
+        --success-bg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-bg').trim()};
+        --success-fg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-fg').trim()};
+        --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
       }
     `;
     setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"></script><style>${stylingVariables}${cssContent}</style></head><body>${finalHtmlBody}<script>${quizLogicScript}<\/script></body></html>`);
@@ -183,7 +295,6 @@ export default function NewTestEditorPage() {
 
   useEffect(() => { updatePreview(); }, [updatePreview]);
   
-  // Initialize testName and quizEndMessage with translated values after mount
   useEffect(() => {
     setTestName(t('editor.defaultTestName', {defaultValue: 'My Awesome Quiz'}));
     setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: 'Congratulations! Score: {{score}}/{{total}}.'}));
@@ -217,14 +328,21 @@ export default function NewTestEditorPage() {
     console.log("Saving test data:", JSON.stringify(testData, null, 2));
     toast({ title: t('editor.toast.saveSuccessTitle', {defaultValue: "Test Data Logged"}), description: t('editor.toast.saveSuccessDescription', {defaultValue: "Test config logged to console."}) });
   };
-
-  const editorPageTitle = testName || t('editor.pageTitleNew', {defaultValue: "Create New Test"});
+  
+  const isEditing = questions.length > 0 || (testName && testName !== t('editor.defaultTestName'));
+  const pageTitleKeyToUse = isEditing ? "editor.pageTitleEditing" : "editor.pageTitleNew";
+  const pageTitleParamsToUse = isEditing ? { testName } : undefined;
 
   return (
-    <AppLayout currentPageTitleKey={questions.length > 0 || testName !== t('editor.defaultTestName', {defaultValue: 'My Awesome Quiz'}) ? "editor.pageTitleEditing" : "editor.pageTitleNew"} >
+    <AppLayout
+      currentPageTitleKey={pageTitleKeyToUse}
+      currentPageTitleParams={pageTitleParamsToUse}
+    >
       <div className="flex flex-col h-full">
         <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold truncate pr-4">{editorPageTitle}</h1>
+          <h1 className="text-2xl font-semibold truncate pr-4">
+             {isEditing ? t('editor.pageTitleEditing', { testName: testName || '...' }) : t('editor.pageTitleNew')}
+          </h1>
           <div className="space-x-2 flex-shrink-0">
             <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('editor.refreshPreview', {defaultValue: 'Refresh Preview'})}</Button>
             <Button onClick={handleSaveTest}><Save className="mr-2 h-4 w-4" /> {t('editor.saveTest', {defaultValue: 'Save Test'})}</Button>
