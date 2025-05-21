@@ -174,7 +174,7 @@ const translations: Translations = {
     'adminPanel.storage.firestore.privateKeyLabel': 'Private Key (JSON)',
     'adminPanel.storage.firestore.privateKeyPlaceholder': 'Paste your Firebase service account private key JSON here...',
     'adminPanel.storage.other.label': 'Other Database',
-    'adminPanel.storage.other.description': 'Requires manual backend setup and configuration.',
+    'adminPanel.storage.other.description': 'Requires manual backend setup.',
     'adminPanel.storage.other.connectionStringLabel': 'Connection String / Details',
     'adminPanel.storage.other.connectionStringPlaceholder': 'Enter connection details or path...',
     'adminPanel.storage.saveButton': 'Save Configuration',
@@ -421,7 +421,3 @@ export function useLanguage() {
   }
   return context;
 }
-
-    
-
-    
