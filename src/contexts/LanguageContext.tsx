@@ -150,6 +150,22 @@ const translations: Translations = {
     'testResults.comingSoon': 'Detailed test results and analytics will be available here soon.',
     'testResults.checkBack': 'Please check back later!',
 
+    'adminPanel.pageTitle': 'Admin Panel',
+    'adminPanel.storage.title': 'Storage Configuration',
+    'adminPanel.storage.description': 'Select and configure permanent storage options for the application. (Note: This is a UI placeholder. Backend implementation is required for full functionality).',
+    'adminPanel.storage.selectLabel': 'Choose Storage Type:',
+    'adminPanel.storage.sqlite.label': 'SQLite',
+    'adminPanel.storage.sqlite.description': 'Local file-based database. Good for development or small single-server deployments.',
+    'adminPanel.storage.mysql.label': 'MySQL',
+    'adminPanel.storage.mysql.description': 'Robust relational database. Suitable for larger applications.',
+    'adminPanel.storage.firestore.label': 'Firebase Firestore',
+    'adminPanel.storage.firestore.description': 'Scalable NoSQL cloud database. Recommended for Next.js applications.',
+    'adminPanel.storage.other.label': 'Other Database',
+    'adminPanel.storage.other.description': 'Requires manual backend setup and configuration.',
+    'adminPanel.storage.saveButton': 'Save Configuration',
+    'adminPanel.toast.saveConfigTitle': 'Configuration Update',
+    'adminPanel.toast.saveConfigDescription': 'This feature is not yet implemented. Backend development is required.',
+
   },
   ru: {
     'appHeader.myAccount': 'Мой аккаунт',
@@ -281,6 +297,22 @@ const translations: Translations = {
     'testResults.summaryDescription': 'Подробные результаты для теста ID: {{testId}}. Эта функция находится в разработке.',
     'testResults.comingSoon': 'Подробные результаты теста и аналитика скоро будут доступны здесь.',
     'testResults.checkBack': 'Пожалуйста, зайдите позже!',
+
+    'adminPanel.pageTitle': 'Панель администратора',
+    'adminPanel.storage.title': 'Конфигурация хранилища',
+    'adminPanel.storage.description': 'Выберите и настройте параметры постоянного хранилища для приложения. (Примечание: Это заглушка интерфейса. Для полной функциональности требуется разработка бэкенда).',
+    'adminPanel.storage.selectLabel': 'Выберите тип хранилища:',
+    'adminPanel.storage.sqlite.label': 'SQLite',
+    'adminPanel.storage.sqlite.description': 'Локальная файловая база данных. Подходит для разработки или небольших односерверных развертываний.',
+    'adminPanel.storage.mysql.label': 'MySQL',
+    'adminPanel.storage.mysql.description': 'Надежная реляционная база данных. Подходит для крупных приложений.',
+    'adminPanel.storage.firestore.label': 'Firebase Firestore',
+    'adminPanel.storage.firestore.description': 'Масштабируемая облачная NoSQL база данных. Рекомендуется для приложений Next.js.',
+    'adminPanel.storage.other.label': 'Другая база данных',
+    'adminPanel.storage.other.description': 'Требуется ручная настройка и конфигурация бэкенда.',
+    'adminPanel.storage.saveButton': 'Сохранить конфигурацию',
+    'adminPanel.toast.saveConfigTitle': 'Обновление конфигурации',
+    'adminPanel.toast.saveConfigDescription': 'Эта функция еще не реализована. Требуется разработка бэкенда.',
   },
 };
 
@@ -334,3 +366,4 @@ export function useLanguage() {
 }
 
     
+
