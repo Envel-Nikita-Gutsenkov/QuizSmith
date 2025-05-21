@@ -15,7 +15,7 @@ export default function LoginPage() {
             <Logo />
           </Link>
           <CardTitle className="text-2xl">Welcome Back!</CardTitle>
-          <CardDescription>Enter your credentials to access your QuizSmith dashboard or try the demo.</CardDescription>
+          <CardDescription>Enter your credentials to access QuizSmith.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -34,15 +34,14 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button className="w-full" asChild>
+            {/* In a real app, this would attempt authentication */}
             <Link href="/dashboard">Login</Link>
           </Button>
-          <Button variant="outline" className="w-full" asChild>
-            <Link href="/dashboard">Try Demo</Link>
-          </Button>
+          {/* Removed "Try Demo" button as the context is now for real users */}
           <p className="text-sm text-muted-foreground text-center">
             Don&apos;t have an account?{' '}
             <Link href="/signup" className="font-semibold text-primary hover:underline">
-              Sign Up
+              Contact Admin
             </Link>
           </p>
         </CardFooter>
