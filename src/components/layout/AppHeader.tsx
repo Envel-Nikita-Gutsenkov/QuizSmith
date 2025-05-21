@@ -32,38 +32,35 @@ export function AppHeader({ titleKey, titleParams }: AppHeaderProps) {
 
   useEffect(() => {
     if (titleKey) {
-      // Use the key itself as a fallback if translation isn't immediately available
-      // or if it's intended to be the key during server render.
       const initialTitle = t(titleKey, titleParams, titleKey);
       setRenderedTitle(initialTitle);
     } else {
       setRenderedTitle(undefined);
     }
-  }, [titleKey, titleParams, t, language]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [titleKey, titleParams, language, t]); // Added language to deps to re-render title on lang change
 
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-      {isMobile && (
-         <Button
-          variant="outline"
-          size="icon"
-          className="shrink-0 md:hidden"
-          onClick={toggleSidebar}
-          aria-label="Toggle sidebar"
-        >
-          <LayoutGrid className="h-5 w-5" />
-        </Button>
-      )}
+      {/* Left part: Toggle, Logo, Title */}
       <div className="flex items-center gap-4">
-        {!isMobile && (
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <Logo className="h-6 w-auto" />
-          </Link>
+        {isMobile && (
+          <Button variant="outline" size="icon" className="shrink-0" onClick={toggleSidebar} aria-label={t('appHeader.toggleSidebar', {defaultValue: 'Toggle sidebar'})}>
+            <LayoutGrid className="h-5 w-5" />
+          </Button>
         )}
-         {renderedTitle && <h1 className="text-lg font-semibold text-foreground hidden md:block">{renderedTitle}</h1>}
+        {/* Always show Logo */}
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Logo className="h-6 w-auto" />
+        </Link>
+        {/* Desktop Title */}
+        {renderedTitle && (
+          <h1 className="text-lg font-semibold text-foreground hidden md:block">{renderedTitle}</h1>
+        )}
       </div>
       
+      {/* Right part: Actions */}
       <div className="ml-auto flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

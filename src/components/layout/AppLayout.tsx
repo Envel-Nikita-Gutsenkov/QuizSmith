@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { Home, FileText, Layers, PlusCircle, Settings, PanelLeft } from 'lucide-react';
+import { Home, FileText, Layers, PlusCircle, Settings, PanelLeft, Shield, LayoutDashboard } from 'lucide-react';
 import {
   SidebarProvider,
   Sidebar,
@@ -42,14 +42,16 @@ export function AppLayout({ children, currentPageTitleKey, currentPageTitleParam
 
   const secondaryNavItems = [
     { href: '/dashboard/settings', labelKey: 'nav.settings', icon: <Settings /> },
+    { href: '/admin', labelKey: 'nav.adminPanel', icon: <Shield /> },
   ];
 
   return (
     <SidebarProvider defaultOpen>
       <Sidebar variant="sidebar" collapsible="icon" className="border-r">
-        <SidebarHeader className="p-4 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <Logo className="h-7 w-auto" />
+        <SidebarHeader className="p-4 flex items-center justify-between group-data-[collapsible=icon]:group-data-[state=collapsed]:p-2 group-data-[collapsible=icon]:group-data-[state=collapsed]:justify-center">
+          <Link href="/dashboard" className="flex items-center gap-2 group-data-[collapsible=icon]:group-data-[state=collapsed]:w-full group-data-[collapsible=icon]:group-data-[state=collapsed]:h-full group-data-[collapsible=icon]:group-data-[state=collapsed]:p-1 group-data-[collapsible=icon]:group-data-[state=collapsed]:justify-center">
+            <Logo className="h-7 w-auto group-data-[collapsible=icon]:group-data-[state=collapsed]:hidden" />
+            <LayoutDashboard className="h-6 w-6 hidden group-data-[collapsible=icon]:group-data-[state=collapsed]:block text-primary" /> {/* Fallback icon */}
           </Link>
            <SidebarTrigger className="group-data-[collapsible=icon]:hidden">
             <PanelLeft />

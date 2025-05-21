@@ -25,6 +25,7 @@ const translations: Translations = {
     'appHeader.lang.en': 'English (EN)',
     'appHeader.lang.ru': 'Russian (RU)',
     'appHeader.lang.current': 'EN',
+    'appHeader.toggleSidebar': 'Toggle sidebar',
 
 
     'nav.dashboard': 'Dashboard',
@@ -33,6 +34,7 @@ const translations: Translations = {
     'nav.newTest': 'New Test',
     'nav.newTemplate': 'New Template',
     'nav.settings': 'Settings',
+    'nav.adminPanel': 'Admin Panel',
     'nav.createNew': 'Create New',
 
     'dashboard.pageTitle': 'Dashboard',
@@ -176,6 +178,7 @@ const translations: Translations = {
     'appHeader.lang.en': 'Английский (EN)',
     'appHeader.lang.ru': 'Русский (RU)',
     'appHeader.lang.current': 'RU',
+    'appHeader.toggleSidebar': 'Переключить боковую панель',
 
     'nav.dashboard': 'Панель',
     'nav.myTests': 'Мои тесты',
@@ -183,6 +186,7 @@ const translations: Translations = {
     'nav.newTest': 'Новый тест',
     'nav.newTemplate': 'Новый шаблон',
     'nav.settings': 'Настройки',
+    'nav.adminPanel': 'Панель администратора',
     'nav.createNew': 'Создать',
 
     'dashboard.pageTitle': 'Панель',
@@ -366,4 +370,3 @@ export function useLanguage() {
 }
 
     
-
