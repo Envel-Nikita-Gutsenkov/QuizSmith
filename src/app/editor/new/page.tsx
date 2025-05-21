@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code } from 'lucide-react';
+import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Question, QuestionOption } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,34 +20,51 @@ const defaultHtmlContent = `
 <div class="quiz-container p-8 rounded-xl shadow-2xl bg-card text-card-foreground max-w-2xl mx-auto my-10">
   <h1 data-quiz-title class="text-3xl font-bold mb-8 text-primary text-center">Your Quiz Title</h1>
   
-  <!-- Question Block Template: This structure will be used for each question -->
-  <div data-quiz-question-id="q_template_id" class="question-block mb-10 p-6 bg-background/70 border border-border rounded-lg shadow-md transition-all duration-300 hover:shadow-lg">
-    <h2 data-quiz-question-text="q_template_id" class="text-xl font-semibold mb-6 text-foreground">Sample Question: What is 2 + 2?</h2>
-    <div data-quiz-options-for-question="q_template_id" class="options-grid grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- Option Button Template: This will be repeated for each answer option -->
-      <button data-quiz-answer-option="q_template_id.opt_template_id" 
-              class="option-button w-full text-left p-4 border border-border rounded-md text-foreground
-                     hover:bg-secondary hover:border-primary hover:shadow-md 
-                     focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
-                     transition-all duration-200 ease-in-out transform hover:scale-105">
-        Sample Option Text
-      </button>
+  <!-- This div will host the active question or the end screen -->
+  <div id="quiz-content-host">
+    <!-- Question Block Template: This structure will be cloned by JS for each question -->
+    <!-- It should be initially present for JS to find, then JS can remove/hide the template itself -->
+    <div data-quiz-question-id="q_template_id" class="question-block mb-10 p-6 bg-background/70 border border-border rounded-lg shadow-md transition-all duration-300 hover:shadow-lg" style="display: none;">
+      <h2 data-quiz-question-text="q_template_id" class="text-xl font-semibold mb-6 text-foreground">Sample Question: What is 2 + 2?</h2>
+      <div data-quiz-options-for-question="q_template_id" class="options-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Option Button Template: This will be cloned by JS for each answer option -->
+        <button data-quiz-answer-option="q_template_id.opt_template_id" 
+                class="option-button w-full text-left p-4 border border-border rounded-md text-foreground
+                       hover:bg-secondary hover:border-primary hover:shadow-md 
+                       focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background
+                       transition-all duration-200 ease-in-out transform hover:scale-105">
+          Sample Option Text
+        </button>
+      </div>
     </div>
+    <!-- End Question Block Template -->
   </div>
-  <!-- End Question Block Template -->
 
-  <!-- Dynamically generated questions will be inserted above this comment by the preview logic -->
+  <!-- Data will be embedded here by the updatePreview function -->
+  <script id="quiz-data" type="application/json"></script>
+  <div id="quiz-end-message-text" style="display:none;"></div>
+
+  <!-- Main Quiz Logic Script will be embedded here by updatePreview -->
 </div>
 `;
 
 const defaultCssContent = `
 /* Custom CSS for Quiz - Leverages HSL variables from globals.css */
+body {
+  background-color: hsl(var(--background)); /* Ensures iframe bg matches theme */
+  color: hsl(var(--foreground));
+  font-family: var(--font-geist-sans, sans-serif);
+}
+
 .quiz-container {
   font-family: var(--font-geist-sans), sans-serif;
 }
 
 .question-block {
   /* Base styles in HTML via Tailwind */
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }
 
 .option-button {
@@ -55,7 +72,6 @@ const defaultCssContent = `
   cursor: pointer;
 }
 
-/* Example of a 'selected' state for an option */
 .option-button.selected {
   background-color: hsl(var(--accent));
   color: hsl(var(--accent-foreground));
@@ -64,37 +80,221 @@ const defaultCssContent = `
   transform: scale(1.02); /* Slight emphasis */
 }
 
-/* Example of a 'correct' state (if you implement feedback logic) */
-.option-button.correct {
-  background-color: hsl(var(--primary) / 0.9); /* Using primary, could be a specific success color */
-  color: hsl(var(--primary-foreground));
-  border-color: hsl(var(--primary));
+.option-button.correct-answer {
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-color: hsl(var(--primary)) !important;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.7);
 }
 
-/* Example of an 'incorrect' state */
-.option-button.incorrect {
-  background-color: hsl(var(--destructive) / 0.8);
-  color: hsl(var(--destructive-foreground));
-  border-color: hsl(var(--destructive));
-  opacity: 0.7;
+.option-button.incorrect-answer-selected {
+  background-color: hsl(var(--destructive)) !important;
+  color: hsl(var(--destructive-foreground)) !important;
+  border-color: hsl(var(--destructive)) !important;
+  box-shadow: 0 0 0 3px hsl(var(--destructive) / 0.7);
+  opacity: 0.9;
 }
 
-/* Subtle animation for question blocks appearing, if dynamically added */
+.option-button.correct-answer-unselected {
+  /* For highlighting the actual correct answer when user chose wrong */
+  /* Keep it subtle, maybe just a strong border or slightly different bg */
+  border: 2px solid hsl(var(--primary)) !important;
+  background-color: hsl(var(--primary) / 0.1) !important;
+  /* animation: pulse-green 1.5s infinite alternate; */
+}
+
+
+@keyframes pulse-green {
+  from { box-shadow: 0 0 0 0px hsl(var(--primary) / 0.4); }
+  to { box-shadow: 0 0 0 5px hsl(var(--primary) / 0.0); }
+}
+
+
+/* Question transition animations */
+.animate-slide-out-left {
+  opacity: 0 !important;
+  transform: translateX(-50px) !important;
+}
+
+.animate-slide-in-right {
+  opacity: 0;
+  transform: translateX(50px);
+  animation: slideInFromRight 0.5s ease-out forwards;
+}
+
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.question-block {
-  animation: fadeIn 0.5s ease-out forwards;
+#quiz-end-screen {
+  /* Styles for the end screen card, using Tailwind in JS for now */
 }
 `;
+
+const quizLogicScript = `
+document.addEventListener('DOMContentLoaded', () => {
+  const questionsDataElement = document.getElementById('quiz-data');
+  const endMessageElement = document.getElementById('quiz-end-message-text');
+  
+  if (!questionsDataElement || !endMessageElement) {
+    console.error('Quiz data or end message element not found.');
+    return;
+  }
+
+  const questions = JSON.parse(questionsDataElement.textContent || '[]');
+  const rawQuizEndMessage = endMessageElement.textContent || 'Quiz Finished! Score: {{score}}/{{total}}';
+
+  const quizContainer = document.querySelector('.quiz-container');
+  const questionHost = document.getElementById('quiz-content-host');
+  const questionTemplateElement = quizContainer.querySelector('[data-quiz-question-id="q_template_id"]');
+
+  if (!quizContainer || !questionHost || !questionTemplateElement) {
+    console.error('Essential quiz layout elements not found in HTML structure.');
+    if (questionHost) questionHost.innerHTML = '<p class="text-center text-muted-foreground p-8">Error: Quiz structure incomplete in HTML template.</p>';
+    return;
+  }
+  questionTemplateElement.remove(); // Remove the original template from DOM after cloning its HTML
+
+  let currentQuestionIndex = 0;
+  let score = 0;
+  let activeQuestionElement = null;
+
+  function displayQuestion(index) {
+    if (activeQuestionElement) {
+      activeQuestionElement.classList.add('animate-slide-out-left');
+      setTimeout(() => {
+        activeQuestionElement.remove();
+        activeQuestionElement = null;
+        if (index >= questions.length) {
+          displayEndScreen();
+        } else {
+          renderQuestion(index);
+        }
+      }, 500); // Match CSS animation duration
+    } else {
+      if (index >= questions.length) {
+        displayEndScreen();
+      } else {
+        renderQuestion(index);
+      }
+    }
+  }
+  
+  function renderQuestion(index) {
+    const question = questions[index];
+    const newQuestionElement = questionTemplateElement.cloneNode(true);
+    newQuestionElement.style.display = 'block'; // Make sure cloned template is visible
+    newQuestionElement.setAttribute('data-quiz-question-id', question.id);
+
+    const questionTextEl = newQuestionElement.querySelector('[data-quiz-question-text]');
+    if (questionTextEl) {
+      questionTextEl.textContent = question.text;
+      questionTextEl.setAttribute('data-quiz-question-text', question.id);
+    }
+
+    const optionsContainerEl = newQuestionElement.querySelector('[data-quiz-options-for-question]');
+    const optionTemplateEl = questionTemplateElement.querySelector('[data-quiz-answer-option]'); // Use original template for option button
+
+    if (optionsContainerEl && optionTemplateEl) {
+      const templateOptionButton = optionTemplateEl.cloneNode(true);
+      optionsContainerEl.innerHTML = ''; 
+      
+      question.options.forEach(option => {
+        const newOptionButton = templateOptionButton.cloneNode(true);
+        newOptionButton.setAttribute('data-quiz-answer-option', \`\${question.id}.\${option.id}\`);
+        newOptionButton.textContent = option.text;
+        newOptionButton.onclick = (event) => handleOptionClick(event.currentTarget, option, question.options, newQuestionElement);
+        optionsContainerEl.appendChild(newOptionButton);
+      });
+    }
+    
+    questionHost.appendChild(newQuestionElement);
+    activeQuestionElement = newQuestionElement;
+    newQuestionElement.classList.add('animate-slide-in-right');
+  }
+
+  function handleOptionClick(selectedButton, selectedOption, allOptions, questionElement) {
+    const optionButtons = questionElement.querySelectorAll('.option-button');
+    optionButtons.forEach(btn => btn.disabled = true);
+
+    const isCorrect = selectedOption.isCorrect;
+    const correctOption = allOptions.find(opt => opt.isCorrect);
+
+    if (isCorrect) {
+      selectedButton.classList.add('correct-answer');
+      score++;
+    } else {
+      selectedButton.classList.add('incorrect-answer-selected');
+      if (correctOption) {
+        const correctButton = Array.from(optionButtons).find(btn => btn.getAttribute('data-quiz-answer-option').endsWith(correctOption.id));
+        if (correctButton) {
+          correctButton.classList.add('correct-answer-unselected');
+        }
+      }
+    }
+
+    setTimeout(() => {
+      currentQuestionIndex++;
+      displayQuestion(currentQuestionIndex);
+    }, 2000); // 2 seconds delay to show feedback
+  }
+
+  function displayEndScreen() {
+    questionHost.innerHTML = ''; // Clear any remaining question elements
+
+    const finalEndMessage = rawQuizEndMessage.replace('{{score}}', score.toString()).replace('{{total}}', questions.length.toString());
+    
+    const endScreenDiv = document.createElement('div');
+    endScreenDiv.id = 'quiz-end-screen';
+    endScreenDiv.className = 'text-center p-8 bg-card rounded-lg shadow-xl animate-fade-in'; // Added Tailwind classes + animation
+    endScreenDiv.innerHTML = \`
+      <h2 class="text-2xl font-bold mb-4 text-primary">Quiz Complete!</h2>
+      <p data-quiz-end-message class="text-lg text-foreground mb-6">\${finalEndMessage}</p>
+      <button id="restart-quiz-button" class="mt-4 bg-primary text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 transition-colors text-base font-medium shadow-md">Restart Quiz</button>
+    \`;
+    
+    questionHost.appendChild(endScreenDiv);
+
+    const restartButton = document.getElementById('restart-quiz-button');
+    if (restartButton) {
+      restartButton.onclick = () => {
+        currentQuestionIndex = 0;
+        score = 0;
+        activeQuestionElement = null; 
+        questionHost.innerHTML = ''; // Clear end screen
+        // Re-add the question template host if it was cleared completely, or ensure logic re-uses main host
+        // For simplicity, re-fetch questionHost if it was cleared. Here, we just clear its content.
+        displayQuestion(currentQuestionIndex);
+      };
+    }
+  }
+
+  if (questions.length > 0) {
+    displayQuestion(currentQuestionIndex);
+  } else {
+    questionHost.innerHTML = '<p class="text-center text-muted-foreground p-8">No questions have been added to this quiz yet.</p>';
+  }
+});
+`;
+
 
 export default function NewTestEditorPage() {
   const [testName, setTestName] = useState('My Awesome Quiz');
   const [questions, setQuestions] = useState<Question[]>([]);
   const [htmlContent, setHtmlContent] = useState(defaultHtmlContent);
   const [cssContent, setCssContent] = useState(defaultCssContent);
+  const [quizEndMessage, setQuizEndMessage] = useState('Congratulations! You completed the quiz. Your score is {{score}} out of {{total}}.');
   const [previewContent, setPreviewContent] = useState('');
   const { toast } = useToast();
 
@@ -107,49 +307,19 @@ export default function NewTestEditorPage() {
       titleElement.textContent = testName || 'Quiz Title';
     }
 
-    const questionHost = doc.querySelector('.quiz-container'); // Assuming questions are direct children or placed specifically
-    const questionTemplate = doc.querySelector('[data-quiz-question-id]');
-
-    if (questionHost && questionTemplate) {
-      const templateQuestionElement = questionTemplate.cloneNode(true) as HTMLElement;
-      
-      // Remove the template itself from the live DOM before adding new ones
-      questionTemplate.remove();
-
-      questions.forEach(question => {
-        const newQuestionElement = templateQuestionElement.cloneNode(true) as HTMLElement;
-        newQuestionElement.setAttribute('data-quiz-question-id', question.id);
-
-        const questionTextEl = newQuestionElement.querySelector('[data-quiz-question-text]');
-        if (questionTextEl) {
-          questionTextEl.textContent = question.text;
-          questionTextEl.setAttribute('data-quiz-question-text', question.id);
-        }
-
-        const optionsContainerEl = newQuestionElement.querySelector('[data-quiz-options-for-question]');
-        const optionTemplateEl = optionsContainerEl?.querySelector('[data-quiz-answer-option]');
-
-        if (optionsContainerEl && optionTemplateEl) {
-          const templateOptionElement = optionTemplateEl.cloneNode(true) as HTMLElement;
-          // Clear template options from this new question block
-          optionsContainerEl.innerHTML = ''; 
-          
-          question.options.forEach(option => {
-            const newOptionElement = templateOptionElement.cloneNode(true) as HTMLElement;
-            newOptionElement.setAttribute('data-quiz-answer-option', `${question.id}.${option.id}`);
-            newOptionElement.textContent = option.text;
-            // Example: Add 'selected' class if option were interactive in preview
-            // if (option.isCorrect) { // This is for marking, not selection state
-            //    newOptionElement.classList.add('selected'); // Example for visual cue
-            // }
-            optionsContainerEl.appendChild(newOptionElement);
-          });
-        }
-        questionHost.appendChild(newQuestionElement);
-      });
+    // Embed questions data and end message into the HTML structure for the script
+    const questionsDataScriptTag = doc.getElementById('quiz-data');
+    if (questionsDataScriptTag) {
+      questionsDataScriptTag.textContent = JSON.stringify(questions);
+    }
+    const endMessageDivTag = doc.getElementById('quiz-end-message-text');
+    if (endMessageDivTag) {
+      endMessageDivTag.textContent = quizEndMessage;
     }
     
-    const finalHtml = doc.documentElement.innerHTML;
+    // The main quiz container HTML is now mostly static in defaultHtmlContent.
+    // The script will handle dynamic question rendering.
+    const finalHtmlBody = doc.body.innerHTML; // Get only body content
 
     const stylingVariables = `
       :root {
@@ -168,24 +338,28 @@ export default function NewTestEditorPage() {
         --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
         --input: ${getComputedStyle(document.documentElement).getPropertyValue('--input').trim()};
         --ring: ${getComputedStyle(document.documentElement).getPropertyValue('--ring').trim()};
-        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim()};
+        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
       }
     `;
 
     setPreviewContent(`
       <html>
         <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <script src="https://cdn.tailwindcss.com"></script>
           <style>
-            body { margin: 0; font-family: var(--font-geist-sans, sans-serif); background-color: hsl(var(--background)); color: hsl(var(--foreground)); }
             ${stylingVariables}
             ${cssContent}
           </style>
-          <script src="https://cdn.tailwindcss.com"></script>
         </head>
-        <body>${finalHtml}</body>
+        <body>
+          ${finalHtmlBody}
+          <script>${quizLogicScript}<\/script>
+        </body>
       </html>
     `);
-  }, [htmlContent, cssContent, testName, questions]);
+  }, [htmlContent, cssContent, testName, questions, quizEndMessage]);
 
   useEffect(() => {
     updatePreview();
@@ -256,7 +430,7 @@ export default function NewTestEditorPage() {
   const handleRemoveOption = (questionId: string, optionId: string) => {
     setQuestions(prevQuestions => prevQuestions.map(q => {
       if (q.id === questionId) {
-        if (q.options.length > 1) { // Ensure at least one option remains
+        if (q.options.length > 1) { 
           return { ...q, options: q.options.filter(opt => opt.id !== optionId) };
         }
       }
@@ -274,11 +448,12 @@ export default function NewTestEditorPage() {
       questions,
       htmlContent,
       cssContent,
+      quizEndMessage,
     };
     console.log("Saving test data:", JSON.stringify(testData, null, 2));
     toast({
       title: "Test Data Logged (Mock Save)",
-      description: "Your test configuration has been logged to the console. Backend integration is needed for actual saving.",
+      description: "Your test configuration has been logged to the console.",
     });
   };
 
@@ -288,7 +463,7 @@ export default function NewTestEditorPage() {
         <header className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold truncate pr-4">{testName || "New Test Editor"}</h1>
           <div className="space-x-2 flex-shrink-0">
-            <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> Update Preview</Button>
+            <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> Refresh Preview</Button>
             <Button onClick={handleSaveTest}><Save className="mr-2 h-4 w-4" /> Save Test</Button>
           </div>
         </header>
@@ -311,6 +486,19 @@ export default function NewTestEditorPage() {
                     onChange={(e) => setTestName(e.target.value)}
                     className="mt-1"
                   />
+                </div>
+                <Separator />
+                 <div>
+                  <Label htmlFor="quizEndMessage" className="text-sm font-medium flex items-center"><MessageSquareText className="mr-2 h-4 w-4" /> Quiz End Message</Label>
+                  <Textarea
+                    id="quizEndMessage"
+                    placeholder="e.g., Congratulations! Your score: {{score}}/{{total}}"
+                    value={quizEndMessage}
+                    onChange={(e) => setQuizEndMessage(e.target.value)}
+                    className="mt-1"
+                    rows={3}
+                  />
+                   <p className="text-xs text-muted-foreground mt-1">Use {'{{score}}'} and {'{{total}}'} for dynamic values.</p>
                 </div>
                 <Separator />
                 <div>
@@ -360,14 +548,14 @@ export default function NewTestEditorPage() {
           <Card className="md:col-span-1 flex flex-col overflow-hidden shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center"><Eye className="mr-2 h-5 w-5 text-primary" />Live Preview</CardTitle>
-              <CardDescription>Rendered output of your HTML, CSS, and questions.</CardDescription>
+              <CardDescription>Rendered output of your HTML, CSS, and questions. Fully interactive.</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow p-0 m-0">
               <iframe
                 srcDoc={previewContent}
                 title="Test Preview"
                 className="w-full h-full border-0"
-                sandbox="allow-scripts allow-same-origin" // allow-same-origin is needed for scripts if any, and for styles to apply correctly from parent context vars
+                sandbox="allow-scripts allow-same-origin allow-popups" 
               />
             </CardContent>
           </Card>
@@ -453,5 +641,3 @@ export default function NewTestEditorPage() {
     </AppLayout>
   );
 }
-
-    
