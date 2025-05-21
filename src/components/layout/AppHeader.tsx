@@ -17,15 +17,25 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LayoutGrid, LogOut, Settings, User, Globe } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
-import { useLanguage } from '@/contexts/LanguageContext'; // Added import
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useState, useEffect } from 'react'; // Added useState, useEffect
 
 interface AppHeaderProps {
-  title?: string;
+  titleKey?: string; // Changed from title to titleKey
 }
 
-export function AppHeader({ title }: AppHeaderProps) {
+export function AppHeader({ titleKey }: AppHeaderProps) {
   const { toggleSidebar, isMobile } = useSidebar();
-  const { language, setLanguage, t } = useLanguage(); // Added useLanguage
+  const { language, setLanguage, t } = useLanguage();
+  const [renderedTitle, setRenderedTitle] = useState(titleKey ? t(titleKey, {}, titleKey) : undefined); // Initialize with key or translated key if possible initially
+
+  useEffect(() => {
+    if (titleKey) {
+      setRenderedTitle(t(titleKey));
+    } else {
+      setRenderedTitle(undefined);
+    }
+  }, [titleKey, t, language]); // Add language to dependencies to re-translate if language changes
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -46,11 +56,10 @@ export function AppHeader({ title }: AppHeaderProps) {
             <Logo className="h-6 w-auto" />
           </Link>
         )}
-         {title && <h1 className="text-lg font-semibold text-foreground hidden md:block">{title}</h1>}
+         {renderedTitle && <h1 className="text-lg font-semibold text-foreground hidden md:block">{renderedTitle}</h1>}
       </div>
       
-      <div className="ml-auto flex items-center gap-2"> {/* Reduced gap from 4 to 2 */}
-        {/* Language Switcher */}
+      <div className="ml-auto flex items-center gap-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" aria-label={t('appHeader.language')}>
@@ -66,7 +75,6 @@ export function AppHeader({ title }: AppHeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* Profile Dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -80,7 +88,7 @@ export function AppHeader({ title }: AppHeaderProps) {
             <DropdownMenuLabel>{t('appHeader.myAccount')}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/dashboard/settings"> {/* Assuming profile is part of settings for now */}
+              <Link href="/dashboard/settings"> 
                 <User className="mr-2 h-4 w-4" />
                 <span>{t('appHeader.profile')}</span>
               </Link>
@@ -92,7 +100,7 @@ export function AppHeader({ title }: AppHeaderProps) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem> {/* Needs actual logout logic */}
+            <DropdownMenuItem> 
               <LogOut className="mr-2 h-4 w-4" />
               <span>{t('appHeader.logout')}</span>
             </DropdownMenuItem>

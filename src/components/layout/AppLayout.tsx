@@ -16,15 +16,15 @@ import {
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/icons/Logo';
 import { AppHeader } from './AppHeader';
-import { useLanguage } from '@/contexts/LanguageContext'; // Added
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface AppLayoutProps {
   children: ReactNode;
-  currentPageTitleKey?: string; // Changed from currentPageTitle to currentPageTitleKey
+  currentPageTitleKey?: string; 
 }
 
 export function AppLayout({ children, currentPageTitleKey }: AppLayoutProps) {
-  const { t } = useLanguage(); // Added
+  const { t } = useLanguage(); 
 
   const mainNavItems = [
     { href: '/dashboard', labelKey: 'nav.dashboard', icon: <Home /> },
@@ -41,7 +41,8 @@ export function AppLayout({ children, currentPageTitleKey }: AppLayoutProps) {
     { href: '/dashboard/settings', labelKey: 'nav.settings', icon: <Settings /> },
   ];
 
-  const pageTitle = currentPageTitleKey ? t(currentPageTitleKey) : undefined;
+  // Pass the key to AppHeader, let AppHeader handle the translation and useEffect for hydration
+  // const pageTitle = currentPageTitleKey ? t(currentPageTitleKey) : undefined; 
 
   return (
     <SidebarProvider defaultOpen>
@@ -100,7 +101,7 @@ export function AppLayout({ children, currentPageTitleKey }: AppLayoutProps) {
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="flex flex-col">
-        <AppHeader title={pageTitle} />
+        <AppHeader titleKey={currentPageTitleKey} /> {/* Pass titleKey instead of translated title */}
         <main className="flex-1 overflow-y-auto p-6 bg-secondary/30">
           {children}
         </main>
