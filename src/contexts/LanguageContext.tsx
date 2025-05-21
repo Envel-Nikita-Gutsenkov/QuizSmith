@@ -19,7 +19,7 @@ const translations: Translations = {
   en: {
     'appHeader.myAccount': 'My Account',
     'appHeader.profile': 'Profile',
-    'appHeader.settingsLink': 'Settings', // Changed from 'appHeader.settings' to avoid conflict
+    'appHeader.settingsLink': 'Settings', 
     'appHeader.logout': 'Log out',
     'appHeader.language': 'Language',
     'appHeader.lang.en': 'English (EN)',
@@ -74,10 +74,12 @@ const translations: Translations = {
     'settings.pageTitle': 'Settings',
 
     'editor.defaultTestName': 'My Awesome Quiz',
+    'editor.defaultTestNameExisting': 'Test {{testId}}',
     'editor.defaultEndMessage': 'Congratulations! Score: {{score}}/{{total}}.',
     'editor.quizTitlePlaceholder': 'Quiz Title',
     'editor.pageTitleNew': 'Create New Test',
-    'editor.pageTitleEditing': 'Editing: {{testName}}',
+    'editor.pageTitleEditing': 'Editing: {{testName}}', // Kept for new page logic that shows name after typing
+    'editor.pageTitleExisting': 'Editing Test: {{testNameOrId}}',
     'editor.refreshPreview': 'Refresh Preview',
     'editor.saveTest': 'Save Test',
     'editor.config.title': 'Configuration',
@@ -112,14 +114,19 @@ const translations: Translations = {
     'editor.newOptionText': 'New Option {{number}}',
     'editor.toast.saveSuccessTitle': 'Test Data Logged',
     'editor.toast.saveSuccessDescription': 'Test configuration has been logged to the console.',
+    'editor.toast.saveSuccessTitleExisting': 'Existing Test Data Logged',
+    'editor.toast.saveSuccessDescriptionExisting': 'Test {{testId}} configuration logged to console.',
+
 
     'templateEditor.new.pageTitle': 'New Template Editor',
+    'templateEditor.edit.pageTitle': 'Edit Template: {{templateIdOrName}}',
     'templateEditor.updatePreview': 'Update Preview',
     'templateEditor.saveTemplate': 'Save Template',
     'templateEditor.details.title': 'Template Details & Design',
     'templateEditor.details.description': 'Define the structure and style of your reusable quiz template.',
     'templateEditor.details.nameLabel': 'Template Name',
     'templateEditor.details.namePlaceholder': 'e.g., Modern MCQ Template',
+    'templateEditor.details.loadedNamePlaceholder': 'Template {{templateId}}',
     'templateEditor.details.descriptionLabel': 'Description (Optional)',
     'templateEditor.details.descriptionPlaceholder': 'A brief description of what this template is best for...',
     'templateEditor.details.htmlLabel': 'HTML Structure',
@@ -134,17 +141,22 @@ const translations: Translations = {
     'templateEditor.preview.sampleOption1': 'Sample Option 1',
     'templateEditor.preview.sampleOption2': 'Sample Option 2',
 
+    'testResults.pageTitle': 'Results: {{testId}}',
+    'testResults.summaryTitle': 'Test Summary',
+    'testResults.summaryDescription': 'Detailed results for test ID: {{testId}}. This feature is under development.',
+    'testResults.comingSoon': 'Detailed test results and analytics will be available here soon.',
+    'testResults.checkBack': 'Please check back later!',
+
   },
   ru: {
     'appHeader.myAccount': 'Мой аккаунт',
     'appHeader.profile': 'Профиль',
-    'appHeader.settingsLink': 'Настройки', // Changed from 'appHeader.settings'
+    'appHeader.settingsLink': 'Настройки',
     'appHeader.logout': 'Выйти',
     'appHeader.language': 'Язык',
     'appHeader.lang.en': 'Английский (EN)',
     'appHeader.lang.ru': 'Русский (RU)',
     'appHeader.lang.current': 'RU',
-
 
     'nav.dashboard': 'Панель',
     'nav.myTests': 'Мои тесты',
@@ -168,7 +180,6 @@ const translations: Translations = {
     'dashboard.editTest': 'Редактировать тест',
     'dashboard.editTemplate': 'Редактировать шаблон',
 
-
     'myTests.pageTitle': 'Мои тесты',
     'myTests.create': 'Создать новый тест',
     'myTests.noTests.title': 'Вы еще не создали ни одного теста.',
@@ -179,7 +190,6 @@ const translations: Translations = {
     'myTests.questionsLabel': 'вопросов',
     'myTests.statusLabel': 'Статус',
     'myTests.lastModifiedLabel': 'Последнее изменение',
-
 
     'myTemplates.pageTitle': 'Мои шаблоны',
     'myTemplates.create': 'Создать новый шаблон',
@@ -194,10 +204,12 @@ const translations: Translations = {
     'settings.pageTitle': 'Настройки',
 
     'editor.defaultTestName': 'Моя классная викторина',
+    'editor.defaultTestNameExisting': 'Тест {{testId}}',
     'editor.defaultEndMessage': 'Поздравляем! Результат: {{score}}/{{total}}.',
     'editor.quizTitlePlaceholder': 'Название викторины',
     'editor.pageTitleNew': 'Создать новый тест',
     'editor.pageTitleEditing': 'Редактирование: {{testName}}',
+    'editor.pageTitleExisting': 'Редактирование теста: {{testNameOrId}}',
     'editor.refreshPreview': 'Обновить предпросмотр',
     'editor.saveTest': 'Сохранить тест',
     'editor.config.title': 'Конфигурация',
@@ -232,14 +244,18 @@ const translations: Translations = {
     'editor.newOptionText': 'Новый вариант {{number}}',
     'editor.toast.saveSuccessTitle': 'Данные теста записаны',
     'editor.toast.saveSuccessDescription': 'Конфигурация теста записана в консоль.',
+    'editor.toast.saveSuccessTitleExisting': 'Данные существующего теста записаны',
+    'editor.toast.saveSuccessDescriptionExisting': 'Конфигурация теста {{testId}} записана в консоль.',
 
     'templateEditor.new.pageTitle': 'Редактор нового шаблона',
+    'templateEditor.edit.pageTitle': 'Редактировать шаблон: {{templateIdOrName}}',
     'templateEditor.updatePreview': 'Обновить предпросмотр',
     'templateEditor.saveTemplate': 'Сохранить шаблон',
     'templateEditor.details.title': 'Детали шаблона и дизайн',
     'templateEditor.details.description': 'Определите структуру и стиль вашего многоразового шаблона викторины.',
     'templateEditor.details.nameLabel': 'Название шаблона',
     'templateEditor.details.namePlaceholder': 'например, Современный MCQ шаблон',
+    'templateEditor.details.loadedNamePlaceholder': 'Шаблон {{templateId}}',
     'templateEditor.details.descriptionLabel': 'Описание (необязательно)',
     'templateEditor.details.descriptionPlaceholder': 'Краткое описание, для чего лучше всего подходит этот шаблон...',
     'templateEditor.details.htmlLabel': 'Структура HTML',
@@ -253,31 +269,29 @@ const translations: Translations = {
     'templateEditor.preview.sampleQuestion': 'Это пример текста вопроса.',
     'templateEditor.preview.sampleOption1': 'Пример варианта 1',
     'templateEditor.preview.sampleOption2': 'Пример варианта 2',
+
+    'testResults.pageTitle': 'Результаты: {{testId}}',
+    'testResults.summaryTitle': 'Сводка по тесту',
+    'testResults.summaryDescription': 'Подробные результаты для теста ID: {{testId}}. Эта функция находится в разработке.',
+    'testResults.comingSoon': 'Подробные результаты теста и аналитика скоро будут доступны здесь.',
+    'testResults.checkBack': 'Пожалуйста, зайдите позже!',
   },
 };
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: (key: string, replacements?: Record<string, string | number | undefined>, defaultValue?: string) => string; // Added defaultValue
+  t: (key: string, replacements?: Record<string, string | number | undefined>, defaultValue?: string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('en'); // Default language
+  const [language, setLanguageState] = useState<Language>('en'); 
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
-    // Optionally, save to localStorage: localStorage.setItem('language', lang);
   }, []);
-
-  // useEffect(() => {
-  //   const storedLang = localStorage.getItem('language') as Language | null;
-  //   if (storedLang && (storedLang === 'en' || storedLang === 'ru')) {
-  //     setLanguageState(storedLang);
-  //   }
-  // }, []);
 
   const t = useCallback(
     (key: string, replacements?: Record<string, string | number | undefined>, defaultValue?: string): string => {
@@ -313,3 +327,4 @@ export function useLanguage() {
   return context;
 }
 
+    
