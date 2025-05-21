@@ -78,9 +78,10 @@ const translations: Translations = {
     'editor.defaultEndMessage': 'Congratulations! Score: {{score}}/{{total}}.',
     'editor.quizTitlePlaceholder': 'Quiz Title',
     'editor.pageTitleNew': 'Create New Test',
-    'editor.pageTitleEditing': 'Editing: {{testName}}', // Kept for new page logic that shows name after typing
+    'editor.pageTitleEditing': 'Editing: {{testNameOrId}}',
     'editor.pageTitleExisting': 'Editing Test: {{testNameOrId}}',
     'editor.refreshPreview': 'Refresh Preview',
+    'editor.fullScreenPreview': 'Full Screen Preview',
     'editor.saveTest': 'Save Test',
     'editor.config.title': 'Configuration',
     'editor.config.description': 'Basic settings, design inputs, and embed information.',
@@ -116,6 +117,8 @@ const translations: Translations = {
     'editor.toast.saveSuccessDescription': 'Test configuration has been logged to the console.',
     'editor.toast.saveSuccessTitleExisting': 'Existing Test Data Logged',
     'editor.toast.saveSuccessDescriptionExisting': 'Test {{testId}} configuration logged to console.',
+    'editor.toast.popupBlockedTitle': 'Popup Blocked',
+    'editor.toast.popupBlockedDescription': 'Please allow popups for this site to use full screen preview.',
 
 
     'templateEditor.new.pageTitle': 'New Template Editor',
@@ -208,9 +211,10 @@ const translations: Translations = {
     'editor.defaultEndMessage': 'Поздравляем! Результат: {{score}}/{{total}}.',
     'editor.quizTitlePlaceholder': 'Название викторины',
     'editor.pageTitleNew': 'Создать новый тест',
-    'editor.pageTitleEditing': 'Редактирование: {{testName}}',
+    'editor.pageTitleEditing': 'Редактирование: {{testNameOrId}}',
     'editor.pageTitleExisting': 'Редактирование теста: {{testNameOrId}}',
     'editor.refreshPreview': 'Обновить предпросмотр',
+    'editor.fullScreenPreview': 'Полноэкранный предпросмотр',
     'editor.saveTest': 'Сохранить тест',
     'editor.config.title': 'Конфигурация',
     'editor.config.description': 'Основные настройки, дизайн и информация для встраивания.',
@@ -246,6 +250,8 @@ const translations: Translations = {
     'editor.toast.saveSuccessDescription': 'Конфигурация теста записана в консоль.',
     'editor.toast.saveSuccessTitleExisting': 'Данные существующего теста записаны',
     'editor.toast.saveSuccessDescriptionExisting': 'Конфигурация теста {{testId}} записана в консоль.',
+    'editor.toast.popupBlockedTitle': 'Всплывающее окно заблокировано',
+    'editor.toast.popupBlockedDescription': 'Пожалуйста, разрешите всплывающие окна для этого сайта, чтобы использовать полноэкранный предпросмотр.',
 
     'templateEditor.new.pageTitle': 'Редактор нового шаблона',
     'templateEditor.edit.pageTitle': 'Редактировать шаблон: {{templateIdOrName}}',

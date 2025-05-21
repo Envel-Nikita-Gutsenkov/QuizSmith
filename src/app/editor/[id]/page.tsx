@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText } from 'lucide-react';
+import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Question } from '@/lib/types'; // QuestionOption implicitly imported
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -350,6 +350,22 @@ export default function EditTestEditorPage() {
     toast({ title: t('editor.toast.saveSuccessTitleExisting', {defaultValue: "Existing Test Data Logged"}), description: t('editor.toast.saveSuccessDescriptionExisting', {testId: testId, defaultValue: `Test ${testId} config logged to console.`}) });
   };
   
+  const handleFullScreenPreview = () => {
+    if (previewContent) {
+      const blob = new Blob([previewContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const newWindow = window.open(url);
+      if (!newWindow) {
+        toast({
+          title: t('editor.toast.popupBlockedTitle', { defaultValue: "Popup Blocked" }),
+          description: t('editor.toast.popupBlockedDescription', { defaultValue: "Please allow popups for this site to use full screen preview." }),
+          variant: "destructive",
+        });
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 100); // Clean up
+    }
+  };
+
   const pageTitleKeyToUse = "editor.pageTitleExisting";
 
   return (
@@ -362,8 +378,9 @@ export default function EditTestEditorPage() {
           <h1 className="text-2xl font-semibold truncate pr-4">
              {t(pageTitleKeyToUse, { testNameOrId: testName || testId })}
           </h1>
-          <div className="space-x-2 flex-shrink-0">
+          <div className="space-x-2 flex-shrink-0 flex items-center">
             <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('editor.refreshPreview', {defaultValue: 'Refresh Preview'})}</Button>
+            <Button variant="outline" onClick={handleFullScreenPreview}><ExternalLink className="mr-2 h-4 w-4" /> {t('editor.fullScreenPreview', {defaultValue: 'Full Screen'})}</Button>
             <Button onClick={handleSaveTest}><Save className="mr-2 h-4 w-4" /> {t('editor.saveTest', {defaultValue: 'Save Test'})}</Button>
           </div>
         </header>
@@ -472,3 +489,4 @@ export default function EditTestEditorPage() {
     </AppLayout>
   );
 }
+
