@@ -1,3 +1,4 @@
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +15,7 @@ export default function SignupPage() {
             <Logo />
           </Link>
           <CardTitle className="text-2xl">Create your Account</CardTitle>
-          <CardDescription>Join QuizSmith and start building amazing quizzes today!</CardDescription>
+          <CardDescription>Join QuizSmith or explore as a guest!</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -46,6 +47,7 @@ export default function SignupPage() {
             <Link href="/login" className="font-semibold text-primary hover:underline">
               Login
             </Link>
+            {' '}or <Link href="/dashboard" className="font-semibold text-primary hover:underline">Explore as Guest</Link>
           </p>
         </CardFooter>
       </Card>
