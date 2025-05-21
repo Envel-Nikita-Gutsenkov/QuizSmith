@@ -1,4 +1,6 @@
 
+'use client'; // Add this directive
+
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { Home, FileText, Layers, PlusCircle, Settings, PanelLeft } from 'lucide-react';
@@ -21,7 +23,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 interface AppLayoutProps {
   children: ReactNode;
   currentPageTitleKey?: string;
-  currentPageTitleParams?: Record<string, string | number | undefined>; // Added
+  currentPageTitleParams?: Record<string, string | number | undefined>; 
 }
 
 export function AppLayout({ children, currentPageTitleKey, currentPageTitleParams }: AppLayoutProps) {
@@ -99,7 +101,7 @@ export function AppLayout({ children, currentPageTitleKey, currentPageTitleParam
         </SidebarFooter>
       </Sidebar>
       <SidebarInset className="flex flex-col">
-        <AppHeader titleKey={currentPageTitleKey} titleParams={currentPageTitleParams} /> {/* Pass titleParams */}
+        <AppHeader titleKey={currentPageTitleKey} titleParams={currentPageTitleParams} /> 
         <main className="flex-1 overflow-y-auto p-6 bg-secondary/30">
           {children}
         </main>
