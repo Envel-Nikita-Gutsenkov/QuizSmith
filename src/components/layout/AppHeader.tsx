@@ -22,21 +22,25 @@ import { useState, useEffect } from 'react';
 
 interface AppHeaderProps {
   titleKey?: string;
-  titleParams?: Record<string, string | number | undefined>; // Added
+  titleParams?: Record<string, string | number | undefined>;
 }
 
 export function AppHeader({ titleKey, titleParams }: AppHeaderProps) {
   const { toggleSidebar, isMobile } = useSidebar();
   const { language, setLanguage, t } = useLanguage();
-  const [renderedTitle, setRenderedTitle] = useState<string | undefined>(titleKey ? t(titleKey, titleParams, titleKey) : undefined);
+  const [renderedTitle, setRenderedTitle] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (titleKey) {
-      setRenderedTitle(t(titleKey, titleParams, titleKey));
+      // Use the key itself as a fallback if translation isn't immediately available
+      // or if it's intended to be the key during server render.
+      const initialTitle = t(titleKey, titleParams, titleKey);
+      setRenderedTitle(initialTitle);
     } else {
       setRenderedTitle(undefined);
     }
   }, [titleKey, titleParams, t, language]);
+
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
@@ -101,9 +105,11 @@ export function AppHeader({ titleKey, titleParams }: AppHeaderProps) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem> 
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>{t('appHeader.logout')}</span>
+            <DropdownMenuItem asChild>
+              <Link href="/login">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>{t('appHeader.logout')}</span>
+              </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
