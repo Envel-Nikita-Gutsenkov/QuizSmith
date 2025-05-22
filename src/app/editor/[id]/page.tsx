@@ -88,16 +88,15 @@ function EditTestEditorPageContent() {
         setQuestions([]); 
       }
     } else {
-      // Simulate loading existing test data - for now, just set the name
       const defaultTestNameValue = "Test " + testId;
       setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: defaultTestNameValue }));
-      setSelectedTemplateId(DEFAULT_TEMPLATE_ID); // Default template for now
+      setSelectedTemplateId(DEFAULT_TEMPLATE_ID); 
       setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: "Congratulations! Score: {{score}}/{{total}}."}));
-      setQuestions([]); // No questions loaded by default for existing tests yet
+      setQuestions([]); 
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId, t, toast, router]); // Removed isInitialLoad from deps
+  }, [testId, t, toast, router]);
 
   useEffect(() => {
     if (isInitialLoad || !testId || testId === 'unknown' || testId === 'new' || !currentTemplate) return;
@@ -123,17 +122,22 @@ function EditTestEditorPageContent() {
         setPreviewContent("<html><body><p>No template selected or template not found.</p></body></html>");
         return;
     }
-    const questionsJson = JSON.stringify(questions);
+    const questionsJson = JSON.stringify(questions).replace(/<\//g, '<\\u002F'); // Sanitize for script tag
     const injectedDataHtml = `
       <script id="quiz-data" type="application/json">${questionsJson}<\/script>
       <div id="quiz-name-data" style="display:none;">${testName || ''}</div>
       <div id="quiz-end-message-data" style="display:none;">${quizEndMessage}</div>
     `;
 
-    const finalHtmlBody = currentTemplate.htmlContent.replace(
-      '</body>',
-      `${injectedDataHtml}</body>`
-    );
+    let templateHtml = currentTemplate.htmlContent;
+    if (typeof templateHtml === 'string' && templateHtml.includes('</body>')) {
+        templateHtml = templateHtml.replace(
+            '</body>',
+            `${injectedDataHtml}</body>`
+        );
+    } else if (typeof templateHtml === 'string') {
+        templateHtml += injectedDataHtml;
+    }
     
     let stylingVariables = '';
      if (typeof window !== 'undefined') {
@@ -147,7 +151,8 @@ function EditTestEditorPageContent() {
             --primary: ${rootStyle.getPropertyValue('--primary').trim()};
             --primary-foreground: ${rootStyle.getPropertyValue('--primary-foreground').trim()};
             --secondary: ${rootStyle.getPropertyValue('--secondary').trim()};
-            --accent: ${rootStyle.getPropertyValue('--accent-foreground').trim()};
+            --accent: ${rootStyle.getPropertyValue('--accent').trim()};
+            --accent-foreground: ${rootStyle.getPropertyValue('--accent-foreground').trim()};
             --destructive: ${rootStyle.getPropertyValue('--destructive').trim()};
             --destructive-foreground: ${rootStyle.getPropertyValue('--destructive-foreground').trim()};
             --border: ${rootStyle.getPropertyValue('--border').trim()};
@@ -158,10 +163,14 @@ function EditTestEditorPageContent() {
           }
         `;
     }
-    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${currentTemplate.cssContent}</style></head>${finalHtmlBody}</html>`);
-  }, [currentTemplate, testName, questions, quizEndMessage]);
+    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${currentTemplate.cssContent}</style></head>${templateHtml}</html>`);
+  }, [currentTemplate, testName, questions, quizEndMessage, t]); // Added t to dependencies
 
-  useEffect(() => { updatePreview(); }, [updatePreview]);
+  useEffect(() => { 
+    if (!isInitialLoad || currentTemplate) {
+      updatePreview();
+    }
+  }, [updatePreview, isInitialLoad, currentTemplate]);
 
   const handleAddQuestion = () => {
     const newQuestionTextDefault = "New Question " + (questions.length + 1);
@@ -265,14 +274,13 @@ function EditTestEditorPageContent() {
         toast({title: "Error", description: "No page template selected. Cannot save test.", variant: "destructive"});
         return;
     }
-    // In a real app, this would be an API call to update existing testId
     const testData: Test = { 
-        id: testId, // Use the existing testId
+        id: testId, 
         name: testName, 
         questions, 
         templateId: selectedTemplateId, 
         quizEndMessage, 
-        createdAt: new Date().toISOString(), // This would be fetched if editing existing
+        createdAt: new Date().toISOString(), 
         updatedAt: new Date().toISOString() 
     };
     console.log("Saving test data (existing):", JSON.stringify(testData, null, 2));
@@ -381,7 +389,7 @@ function EditTestEditorPageContent() {
                   <CardHeader><CardTitle className="text-base flex items-center"><Code className="mr-2 h-4 w-4" /> {t('editor.config.embedTitle')}</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{t('editor.config.embedDescription')}</p>
-                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? `<iframe src="/test/${testId}/player" width="100%" height="600px" frameborder="0"></iframe>` : "<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
+                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? `&lt;iframe src="/test/${testId}/player" width="100%" height="600px" frameborder="0"&gt;&lt;/iframe&gt;` : "&lt;iframe src='...' width='100%' height='600px' frameborder='0'&gt;&lt;/iframe&gt;"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
                   </CardContent>
                 </Card>
               </CardContent>
@@ -391,7 +399,7 @@ function EditTestEditorPageContent() {
           <Card className="md:col-span-1 flex flex-col overflow-hidden shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center"><Eye className="mr-2 h-5 w-5 text-primary" />{t('editor.preview.title')}</CardTitle>
-              <CardDescription>{t('editor.preview.description')}</CardDescription>
+               {/* Removed descriptive text: "(Powered by Selected Template)" */}
             </CardHeader>
             <CardContent className="flex-grow p-0 m-0">
               <iframe srcDoc={previewContent} title="Test Preview" className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-popups" />
