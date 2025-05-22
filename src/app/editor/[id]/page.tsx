@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff } from 'lucide-react';
+import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff, Palette } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType, PageTemplate as PageTemplateType, Test } from '@/lib/types';
@@ -97,7 +97,7 @@ function EditTestEditorPageContent() {
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId, t, toast, router, localStorageKey]); // Added localStorageKey
+  }, [testId, t, toast, router, localStorageKey]); 
 
   useEffect(() => {
     if (isInitialLoad || !testId || testId === 'unknown' || testId === 'new') return;
@@ -115,23 +115,21 @@ function EditTestEditorPageContent() {
       if (timer) clearTimeout(timer);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testName, questions, selectedTemplateId, quizEndMessage, isInitialLoad, localStorageKey]); // currentTemplate removed, we save selectedTemplateId
+  }, [testName, questions, selectedTemplateId, quizEndMessage, isInitialLoad, localStorageKey]); 
 
 
   const updatePreview = useCallback(() => {
     if (!currentTemplate) {
-        setPreviewContent("<html><body><p>No template selected or template not found.</p></body></html>");
+        setPreviewContent("<html><body><p>No Page Style Template selected or template not found.</p></body></html>");
         return;
     }
-    const questionsJson = JSON.stringify(questions).replace(/<\//g, '<\\u002F'); // Sanitize for script tag
+    const questionsJson = JSON.stringify(questions).replace(/<\//g, '<\\u002F'); 
     const injectedDataHtml = `
       <script id="quiz-data" type="application/json">${questionsJson}<\/script>
       <div id="quiz-name-data" style="display:none;">${testName || ''}</div>
       <div id="quiz-end-message-data" style="display:none;">${quizEndMessage}</div>
     `;
-
-    // currentTemplate.htmlContent is the content FOR the body.
-    // The injectedDataHtml should be part of this body content, typically at the end.
+    
     const bodyContentWithInjectedData = `
       ${currentTemplate.htmlContent}
       ${injectedDataHtml}
@@ -165,7 +163,7 @@ function EditTestEditorPageContent() {
   }, [currentTemplate, testName, questions, quizEndMessage, t]); 
 
   useEffect(() => { 
-    if (currentTemplate && !isInitialLoad) {
+    if (!isInitialLoad && currentTemplate) {
       updatePreview();
     }
   }, [updatePreview, isInitialLoad, currentTemplate]);
@@ -269,7 +267,7 @@ function EditTestEditorPageContent() {
 
   const handleSaveTest = () => {
     if (!currentTemplate) {
-        toast({title: "Error", description: "No page template selected. Cannot save test.", variant: "destructive"});
+        toast({title: t('editor.toast.templateNotSelectedErrorTitle'), description: t('editor.toast.templateNotSelectedErrorDescription'), variant: "destructive"});
         return;
     }
     const testData: Test = { 
@@ -343,6 +341,7 @@ function EditTestEditorPageContent() {
         </header>
 
         <div className="grid md:grid-cols-3 gap-6 flex-1 min-h-0">
+         {/* Configuration Pane */}
           <Card className="md:col-span-1 flex flex-col shadow-lg">
              <CardHeader>
                 <CardTitle className="flex items-center"><Settings2 className="mr-2 h-5 w-5 text-primary" />{t('editor.config.title')}</CardTitle>
@@ -387,23 +386,24 @@ function EditTestEditorPageContent() {
                   <CardHeader><CardTitle className="text-base flex items-center"><Code className="mr-2 h-4 w-4" /> {t('editor.config.embedTitle')}</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{t('editor.config.embedDescription')}</p>
-                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? `<iframe src="/test/${testId}/player" width="100%" height="600px" frameborder="0"></iframe>` : "&lt;iframe src='...' width='100%' height='600px' frameborder='0'&gt;&lt;/iframe&gt;"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
+                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? `<iframe src="/test/${testId}/player" width="100%" height="600px" frameborder="0"></iframe>` : "<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
                   </CardContent>
                 </Card>
               </CardContent>
             </ScrollArea>
           </Card>
-
+          
+          {/* Preview Pane */}
           <Card className="md:col-span-1 flex flex-col overflow-hidden shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center"><Eye className="mr-2 h-5 w-5 text-primary" />{t('editor.preview.title')}</CardTitle>
-               {/* Removed descriptive text: "(Powered by Selected Template)" */}
             </CardHeader>
             <CardContent className="flex-grow p-0 m-0">
-              <iframe srcDoc={previewContent} title="Test Preview" className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-popups" />
+              <iframe srcDoc={previewContent} title={t('editor.preview.iframeTitle')} className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-popups" />
             </CardContent>
           </Card>
 
+          {/* Questions Data Pane */}
           <Card className="md:col-span-1 flex flex-col shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between">
               <div className="space-y-1.5">
@@ -554,4 +554,3 @@ export default function EditTestPage() {
     </Suspense>
   )
 }
-

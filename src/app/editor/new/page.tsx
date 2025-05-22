@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff } from 'lucide-react';
+import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff, Palette } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType, PageTemplate as PageTemplateType, Test } from '@/lib/types';
@@ -26,7 +26,7 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 interface TestDraft {
   name: string;
   questions: Question[];
-  templateId: string; // Storing templateId instead of full HTML/CSS
+  templateId: string; 
   quizEndMessage: string;
 }
 
@@ -69,25 +69,24 @@ function NewTestEditorPageContent() {
         const draft: TestDraft = JSON.parse(savedDraft);
         setTestName(draft.name);
         setQuestions(draft.questions);
-        setSelectedTemplateId(draft.templateId || DEFAULT_TEMPLATE_ID); // Load templateId
+        setSelectedTemplateId(draft.templateId || DEFAULT_TEMPLATE_ID); 
         setQuizEndMessage(draft.quizEndMessage);
         setHasUnsavedDraft(true);
         toast({ title: t('editor.toast.draftRestoredTitle'), description: t('editor.toast.draftRestoredDescriptionNew') });
-        setIsInitialLoad(false); // Mark initial load as done
+        setIsInitialLoad(false); 
         return;
       } catch (e) {
         console.error("Failed to parse test draft from localStorage", e);
-        localStorage.removeItem(localStorageKey); // Clear corrupted draft
+        localStorage.removeItem(localStorageKey); 
       }
     }
 
-    // If no draft, or draft loading failed, proceed with URL param or defaults
     const initialTemplateIdFromUrl = searchParams.get('template') || DEFAULT_TEMPLATE_ID;
-    setSelectedTemplateId(initialTemplateIdFromUrl); // This will trigger the above useEffect to set currentTemplate
+    setSelectedTemplateId(initialTemplateIdFromUrl); 
 
     const selectedInitialTemplateForName = pageTemplates.find(pt => pt.id === initialTemplateIdFromUrl) || pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
     
-    if (initialTemplateIdFromUrl && initialTemplateIdFromUrl !== DEFAULT_TEMPLATE_ID) {
+    if (initialTemplateIdFromUrl && initialTemplateIdFromUrl !== DEFAULT_TEMPLATE_ID && selectedInitialTemplateForName) {
       const defaultTestNameValue = "Quiz from " + selectedInitialTemplateForName.name;
       setTestName(t('editor.defaultTestNameFromTemplate', {templateName: selectedInitialTemplateForName.name, defaultValue: defaultTestNameValue}));
     } else {
@@ -104,13 +103,14 @@ function NewTestEditorPageContent() {
         });
     }
     setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: "Congratulations! Score: {{score}}/{{total}}."}));
-    setIsInitialLoad(false); // Mark initial load as done
+    setQuestions([]); // Start with no questions if not from draft
+    setIsInitialLoad(false); 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, t, toast, localStorageKey]); // isInitialLoad removed from deps, managed internally now
+  }, [searchParams, t, toast, localStorageKey]); 
 
   // Save to localStorage on change (debounced)
   useEffect(() => {
-    if (isInitialLoad) return; // Don't save during initial load
+    if (isInitialLoad) return; 
 
     if (debounceTimer) clearTimeout(debounceTimer);
 
@@ -118,7 +118,7 @@ function NewTestEditorPageContent() {
       const draft: TestDraft = {
         name: testName,
         questions,
-        templateId: selectedTemplateId, // Save templateId
+        templateId: selectedTemplateId, 
         quizEndMessage
       };
       localStorage.setItem(localStorageKey, JSON.stringify(draft));
@@ -130,31 +130,32 @@ function NewTestEditorPageContent() {
       if (timer) clearTimeout(timer);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testName, questions, selectedTemplateId, quizEndMessage, isInitialLoad, localStorageKey]); // currentTemplate removed, we save templateId
+  }, [testName, questions, selectedTemplateId, quizEndMessage, isInitialLoad, localStorageKey]);
 
 
   const updatePreview = useCallback(() => {
     if (!currentTemplate) {
-        setPreviewContent("<html><body><p>No template selected or template not found.</p></body></html>");
+        setPreviewContent("<html><body><p>No Page Style Template selected or template not found.</p></body></html>");
         return;
     }
 
-    const questionsJson = JSON.stringify(questions).replace(/<\//g, '<\\u002F'); // Sanitize for script tag
+    const questionsJson = JSON.stringify(questions).replace(/<\//g, '<\\u002F');
     const injectedDataHtml = `
       <script id="quiz-data" type="application/json">${questionsJson}<\/script>
       <div id="quiz-name-data" style="display:none;">${testName || ''}</div>
       <div id="quiz-end-message-data" style="display:none;">${quizEndMessage}</div>
     `;
 
-    // currentTemplate.htmlContent is the content for the body.
-    // The injectedDataHtml should be part of this body content, typically at the end.
+    // The Page Style Template's htmlContent IS the main content for the body.
+    // It includes its own <script> for the quiz engine.
+    // The injectedDataHtml should be part of this body content, typically appended.
     const bodyContentWithInjectedData = `
       ${currentTemplate.htmlContent}
       ${injectedDataHtml}
     `;
     
     let stylingVariables = '';
-     if (typeof window !== 'undefined') { // Client-side only
+     if (typeof window !== 'undefined') { 
         const rootStyle = getComputedStyle(document.documentElement);
         stylingVariables = `
           :root {
@@ -182,14 +183,8 @@ function NewTestEditorPageContent() {
   }, [currentTemplate, testName, questions, quizEndMessage, t]);
 
   useEffect(() => {
-    // Update preview if currentTemplate is set and we are past the initial data loading phase
-    if (currentTemplate && !isInitialLoad) {
+    if (!isInitialLoad && currentTemplate) {
       updatePreview();
-    }
-    // Also update if currentTemplate is set during initial load, specifically if a draft or specific template was requested
-    // This check might be redundant if !isInitialLoad covers it after setting currentTemplate from draft/param
-    else if (currentTemplate && isInitialLoad && (localStorage.getItem(localStorageKey) || searchParams.get('template'))) {
-       updatePreview();
     }
   }, [updatePreview, isInitialLoad, currentTemplate]);
   
@@ -297,15 +292,15 @@ function NewTestEditorPageContent() {
 
   const handleSaveTest = () => {
     if (!currentTemplate) {
-        toast({title: "Error", description: "No page template selected. Cannot save test.", variant: "destructive"});
+        toast({title: t('editor.toast.templateNotSelectedErrorTitle'), description: t('editor.toast.templateNotSelectedErrorDescription'), variant: "destructive"});
         return;
     }
-    const newTestId = 'new-' + generateId(); // Always generate a new ID for "new" test page
+    const newTestId = 'new-' + generateId(); 
     const testData: Test = { 
         id: newTestId, 
         name: testName, 
         questions, 
-        templateId: selectedTemplateId, // Use selectedTemplateId
+        templateId: selectedTemplateId, 
         quizEndMessage, 
         createdAt: new Date().toISOString(), 
         updatedAt: new Date().toISOString() 
@@ -314,7 +309,7 @@ function NewTestEditorPageContent() {
     toast({ title: t('editor.toast.saveSuccessTitle'), description: t('editor.toast.saveSuccessDescription') });
     localStorage.removeItem(localStorageKey);
     setHasUnsavedDraft(false);
-    router.push(`/editor/${newTestId}`); // Navigate to the new test's edit page
+    router.push(`/editor/${newTestId}`); 
   };
   
   const handleFullScreenPreview = () => {
@@ -352,13 +347,12 @@ function NewTestEditorPageContent() {
                     );
 
   const pageTitleKeyToUse = isEditing ? "editor.pageTitleEditing" : "editor.pageTitleNew";
-  const pageTitleParamsToUse = isEditing ? { testNameOrId: testName } : undefined;
 
 
   return (
     <AppLayout
       currentPageTitleKey={pageTitleKeyToUse}
-      currentPageTitleParams={pageTitleParamsToUse}
+      currentPageTitleParams={{ testNameOrId: testName }}
     >
       <div className="flex flex-col h-full">
         <header className="flex items-center justify-between mb-6">
@@ -383,6 +377,7 @@ function NewTestEditorPageContent() {
         </header>
 
         <div className="grid md:grid-cols-3 gap-6 flex-1 min-h-0">
+          {/* Configuration Pane */}
           <Card className="md:col-span-1 flex flex-col shadow-lg">
              <CardHeader>
                 <CardTitle className="flex items-center"><Settings2 className="mr-2 h-5 w-5 text-primary" />{t('editor.config.title')}</CardTitle>
@@ -427,24 +422,24 @@ function NewTestEditorPageContent() {
                   <CardHeader><CardTitle className="text-base flex items-center"><Code className="mr-2 h-4 w-4" /> {t('editor.config.embedTitle')}</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{t('editor.config.embedDescription')}</p>
-                    {/* For new tests, embed code is placeholder until saved with an ID */}
-                    <Textarea readOnly value="&lt;iframe src='...' width='100%' height='600px' frameborder='0'&gt;&lt;/iframe&gt;" className="mt-2 font-mono text-xs bg-muted/50 cursor-not-allowed" rows={3} />
+                    <Textarea readOnly value="<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>" className="mt-2 font-mono text-xs bg-muted/50 cursor-not-allowed" rows={3} />
                   </CardContent>
                 </Card>
               </CardContent>
             </ScrollArea>
           </Card>
 
+          {/* Preview Pane */}
           <Card className="md:col-span-1 flex flex-col overflow-hidden shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center"><Eye className="mr-2 h-5 w-5 text-primary" />{t('editor.preview.title')}</CardTitle>
-              {/* Removed descriptive text: "(Powered by Selected Template)" */}
             </CardHeader>
             <CardContent className="flex-grow p-0 m-0">
-              <iframe srcDoc={previewContent} title="Test Preview" className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-popups" />
+              <iframe srcDoc={previewContent} title={t('editor.preview.iframeTitle')} className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-popups" />
             </CardContent>
           </Card>
 
+          {/* Questions Data Pane */}
           <Card className="md:col-span-1 flex flex-col shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between">
               <div className="space-y-1.5">
@@ -595,4 +590,3 @@ export default function NewTestEditorPage() {
     </Suspense>
   );
 }
-
