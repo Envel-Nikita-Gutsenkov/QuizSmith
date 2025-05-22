@@ -45,34 +45,34 @@ export default function NewPageTemplateEditorPage() {
       .replace(/\{\{option_text_placeholder_1\}\}/g, t('pageTemplateEditor.preview.sampleOption1', {defaultValue: 'Sample Option 1'}))
       .replace(/\{\{option_text_placeholder_2\}\}/g, t('pageTemplateEditor.preview.sampleOption2', {defaultValue: 'Sample Option 2'}));
     
-    const stylingVariables = \`
+    const stylingVariables = `
       :root {
-        --background: \${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
-        --foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
-        --card: \${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
-        --card-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
-        --primary: \${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
-        --secondary: \${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
-        --border: \${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
-        --radius: \${getComputedStyle(document.documentElement).getPropertyValue('--radius').trim()};
-        --font-geist-sans: \${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
+        --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
+        --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
+        --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
+        --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
+        --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
+        --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
+        --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
+        --radius: ${getComputedStyle(document.documentElement).getPropertyValue('--radius').trim()};
+        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
       }
-    \`;
+    `;
 
-    const fullHtml = \`
+    const fullHtml = `
       <html>
         <head>
           <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
           <script src="https://cdn.tailwindcss.com"><\/script>
           <style>
-            \${stylingVariables}
+            ${stylingVariables}
             body { margin: 0; font-family: var(--font-geist-sans); background-color: hsl(var(--background)); }
-            \${cssContent}
+            ${cssContent}
           </style>
         </head>
-        <body>\${processedHtml}</body>
+        <body>${processedHtml}</body>
       </html>
-    \`;
+    `;
     setPreviewContent(fullHtml);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [htmlContent, cssContent, templateName, t]); 
@@ -84,7 +84,7 @@ export default function NewPageTemplateEditorPage() {
   const handleSaveTemplate = () => {
     // In a real app, this would save the new template to a backend
     console.log("Saving new page template:", { templateName, templateDescription, htmlContent, cssContent });
-    toast({ title: "New Page Template (Mock Saved)", description: \`Page Template '\${templateName}' data logged to console.\` });
+    toast({ title: "New Page Template (Mock Saved)", description: `Page Template '${templateName}' data logged to console.` });
     // Potentially redirect or clear form
   };
 

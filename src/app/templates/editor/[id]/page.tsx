@@ -62,35 +62,35 @@ function EditPageTemplateEditorPageContent() {
       .replace(/\{\{option_text_placeholder_1\}\}/g, t('pageTemplateEditor.preview.sampleOption1', {defaultValue: 'Sample Option 1'}))
       .replace(/\{\{option_text_placeholder_2\}\}/g, t('pageTemplateEditor.preview.sampleOption2', {defaultValue: 'Sample Option 2'}));
     
-    const stylingVariables = \`
+    const stylingVariables = `
       :root {
-        --background: \${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
-        --foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
-        --card: \${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
-        --card-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
-        --primary: \${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
-        --secondary: \${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
-        --accent: \${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
-        --border: \${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
-        --radius: \${getComputedStyle(document.documentElement).getPropertyValue('--radius').trim()};
-        --font-geist-sans: \${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
+        --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
+        --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
+        --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
+        --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
+        --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
+        --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
+        --accent: ${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
+        --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
+        --radius: ${getComputedStyle(document.documentElement).getPropertyValue('--radius').trim()};
+        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
       }
-    \`;
+    `;
 
-    const fullHtml = \`
+    const fullHtml = `
       <html>
         <head>
            <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
            <script src="https://cdn.tailwindcss.com"><\/script>
           <style>
-            \${stylingVariables}
+            ${stylingVariables}
             body { margin: 0; font-family: var(--font-geist-sans); background-color: hsl(var(--background)); }
-            \${cssContent}
+            ${cssContent}
           </style>
         </head>
-        <body>\${processedHtml}</body>
+        <body>${processedHtml}</body>
       </html>
-    \`;
+    `;
     setPreviewContent(fullHtml);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [htmlContent, cssContent, templateName, t]);
@@ -101,14 +101,14 @@ function EditPageTemplateEditorPageContent() {
 
   const handleSaveTemplate = () => {
     console.log("Saving page template:", { templateId, templateName, templateDescription, htmlContent, cssContent });
-    toast({ title: "Page Template Saved (Mock)", description: \`Page Template \${templateName} data logged to console.\` });
+    toast({ title: "Page Template Saved (Mock)", description: `Page Template ${templateName} data logged to console.` });
   };
 
   return (
     <AppLayout currentPageTitleKey={pageTitleKey} currentPageTitleParams={{ templateIdOrName: templateName || templateId }}>
       <div className="flex flex-col h-full">
          <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">{t(pageTitleKey, { templateIdOrName: templateName || templateId, defaultValue: \`Edit Page Template: \${templateName || templateId}\` })}</h1>
+          <h1 className="text-2xl font-semibold">{t(pageTitleKey, { templateIdOrName: templateName || templateId, defaultValue: `Edit Page Template: ${templateName || templateId}` })}</h1>
           <div className="space-x-2">
             <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.updatePreview')}</Button>
             <Button onClick={handleSaveTemplate}><Save className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.saveTemplate')}</Button>
