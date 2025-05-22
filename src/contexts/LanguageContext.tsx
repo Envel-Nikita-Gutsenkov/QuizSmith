@@ -30,14 +30,13 @@ const translations: Translations = {
 
     'nav.dashboard': 'Dashboard',
     'nav.myTests': 'My Tests',
-    'nav.myPageTemplates': 'My Page Templates', 
-    'nav.myTemplates': 'My Page Templates', // Added
+    'nav.myTemplates': 'My Templates', 
     'nav.newTest': 'New Test',
-    'nav.newPageTemplate': 'New Page Template', 
+    'nav.newPageTemplate': 'New Template', 
     'nav.settings': 'Settings',
     'nav.adminPanel': 'Admin Panel',
     'nav.createNew': 'Create New',
-    'nav.explorePageTemplates': 'Explore Page Templates', 
+    'nav.explorePageTemplates': 'Explore Templates', 
 
     'dashboard.pageTitle': 'Dashboard',
     'dashboard.myTests.heading': 'My Tests',
@@ -168,7 +167,7 @@ const translations: Translations = {
     'pageTemplateEditor.preview.sampleOption1': 'Sample Option 1',
     'pageTemplateEditor.preview.sampleOption2': 'Sample Option 2',
 
-    'pageTemplates.explore.pageTitle': 'Explore Page Style Templates', 
+    'pageTemplates.explore.pageTitle': 'Explore Templates', 
     'pageTemplates.explore.createButton': 'Create New Page Template', 
     'pageTemplates.explore.useThisTemplate': 'Use This Page Template', 
     'pageTemplates.explore.preview': 'Preview Page Style', 
@@ -232,14 +231,13 @@ const translations: Translations = {
 
     'nav.dashboard': 'Панель',
     'nav.myTests': 'Мои тесты',
-    'nav.myPageTemplates': 'Мои шаблоны страниц', 
-    'nav.myTemplates': 'Мои шаблоны страниц', // Added
+    'nav.myTemplates': 'Мои шаблоны', 
     'nav.newTest': 'Новый тест',
-    'nav.newPageTemplate': 'Новый шаблон страницы', 
+    'nav.newPageTemplate': 'Новый шаблон', 
     'nav.settings': 'Настройки',
     'nav.adminPanel': 'Панель администратора',
     'nav.createNew': 'Создать',
-    'nav.explorePageTemplates': 'Обзор шаблонов страниц', 
+    'nav.explorePageTemplates': 'Обзор шаблонов', 
 
     'dashboard.pageTitle': 'Панель',
     'dashboard.myTests.heading': 'Мои тесты',
@@ -368,7 +366,7 @@ const translations: Translations = {
     'pageTemplateEditor.preview.sampleOption1': 'Вариант А',
     'pageTemplateEditor.preview.sampleOption2': 'Вариант Б',
 
-    'pageTemplates.explore.pageTitle': 'Обзор шаблонов стилей страниц', 
+    'pageTemplates.explore.pageTitle': 'Обзор шаблонов', 
     'pageTemplates.explore.createButton': 'Создать новый шаблон страницы', 
     'pageTemplates.explore.useThisTemplate': 'Использовать этот шаблон страницы', 
     'pageTemplates.explore.preview': 'Предпросмотр стиля страницы', 
