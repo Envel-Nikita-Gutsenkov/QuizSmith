@@ -16,7 +16,11 @@ export interface MatchPair {
   id: string;
   prompt: string; 
   target: string; 
-  userAnsweredCorrectly?: boolean; // Optional: for UI feedback in template script
+  // For template engine state:
+  answered?: boolean; 
+  matchedCorrectly?: boolean;
+  originalPromptElement?: HTMLElement | null;
+  originalTargetElement?: HTMLElement | null;
 }
 
 export interface DraggableItem {
@@ -26,9 +30,10 @@ export interface DraggableItem {
 
 export interface DropTarget {
   id: string;
-  text: string; // Label for the drop target
-  expectedDragItemId?: string; // Which dragItem.id is correct for this target
-  droppedItemId?: string | null; // Optional: for UI feedback / state in template script
+  text: string; // Label for the drop target, can be empty for visual-only targets
+  expectedDragItemId?: string | null; // Which dragItem.id is correct for this target. Null or empty means any or visual only.
+  // For template engine state:
+  droppedItemId?: string | null; 
 }
 
 export interface Question {
@@ -65,3 +70,4 @@ export interface Test {
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
+

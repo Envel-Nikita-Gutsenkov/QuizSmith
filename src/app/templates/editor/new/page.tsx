@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates'; 
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation'; // Added useRouter
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 
@@ -28,6 +28,7 @@ function NewPageTemplateEditorPageContent() {
   const { t } = useLanguage(); 
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter(); // Added router
 
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
@@ -43,6 +44,8 @@ function NewPageTemplateEditorPageContent() {
 
   // Load from localStorage on mount
   useEffect(() => {
+    if (!isInitialLoad) return;
+
     const savedDraft = localStorage.getItem(localStorageKey);
     const sourceTemplateId = searchParams.get('from');
     let templateToLoad: typeof pageTemplates[0] | undefined = undefined;
@@ -56,9 +59,7 @@ function NewPageTemplateEditorPageContent() {
         setHtmlContent(draft.htmlContent);
         setCssContent(draft.cssContent);
         setHasUnsavedDraft(true);
-        // If loaded from draft, potentially ignore 'from' if it's a different session
-        // Or, decide if 'from' takes precedence. For now, draft takes precedence.
-        toast({ title: t('pageTemplateEditor.toast.draftRestoredTitle', {defaultValue: "Draft Restored"}), description: t('pageTemplateEditor.toast.draftRestoredDescriptionNew', {defaultValue: "Your unsaved new page template draft has been loaded."}) });
+        toast({ title: t('pageTemplateEditor.toast.draftRestoredTitle'), description: t('pageTemplateEditor.toast.draftRestoredDescriptionNew') });
         setIsInitialLoad(false);
         return;
       } catch (e) {
@@ -71,42 +72,43 @@ function NewPageTemplateEditorPageContent() {
       templateToLoad = pageTemplates.find(pt => pt.id === sourceTemplateId);
       isDuplicating = true;
       if (templateToLoad) {
-        setTemplateName(t('pageTemplateEditor.new.pageTitleFromSource', { sourceName: templateToLoad.name, defaultValue: `Copy of ${templateToLoad.name}`}));
+        const newNameDefault = "Copy of " + templateToLoad.name;
+        setTemplateName(t('pageTemplateEditor.new.pageTitleFromSource', { sourceName: templateToLoad.name, defaultValue: newNameDefault }));
         setTemplateDescription(templateToLoad.description || '');
         setSourceTemplateName(templateToLoad.name); 
         setHtmlContent(templateToLoad.htmlContent);
         setCssContent(templateToLoad.cssContent);
-        // When duplicating, it's immediately an "unsaved draft" of the new copy
         setHasUnsavedDraft(true); 
       } else {
+        const loadErrorDescDefault = "Could not load template \"" + sourceTemplateId + "\" to duplicate. Starting with a blank canvas.";
         toast({
-          title: t('pageTemplateEditor.toast.loadErrorTitle', {defaultValue: 'Load Error'}),
-          description: t('pageTemplateEditor.toast.loadErrorDescription', {templateId: sourceTemplateId, defaultValue: `Could not load template "${sourceTemplateId}" to duplicate. Starting with a blank canvas.`}),
+          title: t('pageTemplateEditor.toast.loadErrorTitle'),
+          description: t('pageTemplateEditor.toast.loadErrorDescription', {templateId: sourceTemplateId, defaultValue: loadErrorDescDefault}),
           variant: 'destructive',
         });
         templateToLoad = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID);
       }
     } else {
       templateToLoad = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID);
-      setTemplateName(t('pageTemplateEditor.details.namePlaceholder', {defaultValue: 'My New Page Template'}));
+      setTemplateName(t('pageTemplateEditor.details.namePlaceholder', {defaultValue: 'My New Quiz Engine Template'}));
     }
     
-    if (templateToLoad && !isDuplicating) { // Only set defaults if not duplicating (already handled) and not loaded from draft
+    if (templateToLoad && !isDuplicating) { 
       setHtmlContent(templateToLoad.htmlContent);
       setCssContent(templateToLoad.cssContent);
-      if (templateToLoad.id === DEFAULT_TEMPLATE_ID) { 
+      if (templateToLoad.id === DEFAULT_TEMPLATE_ID || !templateToLoad.description) { 
           setTemplateDescription(templateToLoad.description || '');
       } else {
-          setTemplateDescription('');
+          setTemplateDescription(''); // Clear description for non-default duplicated templates
       }
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, t, toast]);
+  }, [searchParams, t, toast]); // isInitialLoad removed from deps
 
   // Save to localStorage on change (debounced)
   useEffect(() => {
-    if (isInitialLoad) return; // Don't save during initial load
+    if (isInitialLoad) return; 
 
     if (debounceTimer) clearTimeout(debounceTimer);
 
@@ -114,7 +116,6 @@ function NewPageTemplateEditorPageContent() {
       const draft: PageTemplateDraft = { name: templateName, description: templateDescription, htmlContent, cssContent };
       localStorage.setItem(localStorageKey, JSON.stringify(draft));
       setHasUnsavedDraft(true);
-      // console.log("New template draft saved to localStorage");
     }, 1000);
     setDebounceTimer(timer);
 
@@ -126,25 +127,32 @@ function NewPageTemplateEditorPageContent() {
 
 
   const updatePreview = useCallback(() => {
+    // For template editor preview, replace quiz data placeholders with sample static text
     let processedHtml = htmlContent
-      .replace(/\{\{template_title_placeholder\}\}/g, templateName || t('pageTemplateEditor.preview.sampleTitle', {defaultValue: 'Sample Page Template Title'}))
-      .replace(/\{\{question_text_placeholder\}\}/g, t('pageTemplateEditor.preview.sampleQuestion', {defaultValue: 'This is where question content would appear.'}))
-      .replace(/\{\{option_text_placeholder_1\}\}/g, t('pageTemplateEditor.preview.sampleOption1', {defaultValue: 'Sample Option 1'}))
-      .replace(/\{\{option_text_placeholder_2\}\}/g, t('pageTemplateEditor.preview.sampleOption2', {defaultValue: 'Sample Option 2'}));
+      .replace(/<script id="quiz-data" type="application\/json">.*<\/script>/s, '<script id="quiz-data" type="application/json">[]<\/script>') // Empty questions
+      .replace(/<div id="quiz-name-data"[^>]*>.*<\/div>/s, `<div id="quiz-name-data" style="display:none;">${templateName || t('pageTemplateEditor.preview.sampleTitle')}</div>`)
+      .replace(/<div id="quiz-end-message-data"[^>]*>.*<\/div>/s, '<div id="quiz-end-message-data" style="display:none;">Sample end message.</div>');
     
-    const stylingVariables = `
-      :root {
-        --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
-        --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
-        --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
-        --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
-        --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
-        --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
-        --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
-        --radius: ${getComputedStyle(document.documentElement).getPropertyValue('--radius').trim()};
-        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
-      }
-    `;
+    // The template's own JS engine will run. If it relies on {{placeholders}} for preview, they should be defined or handled.
+    // For simplicity, we're assuming the engine is robust enough or the primary preview is for HTML/CSS structure.
+    
+    let stylingVariables = '';
+    if (typeof window !== 'undefined') {
+        const rootStyle = getComputedStyle(document.documentElement);
+        stylingVariables = `
+          :root {
+            --background: ${rootStyle.getPropertyValue('--background').trim()};
+            --foreground: ${rootStyle.getPropertyValue('--foreground').trim()};
+            --card: ${rootStyle.getPropertyValue('--card').trim()};
+            --card-foreground: ${rootStyle.getPropertyValue('--card-foreground').trim()};
+            --primary: ${rootStyle.getPropertyValue('--primary').trim()};
+            --secondary: ${rootStyle.getPropertyValue('--secondary').trim()};
+            --border: ${rootStyle.getPropertyValue('--border').trim()};
+            --radius: ${rootStyle.getPropertyValue('--radius').trim()};
+            --font-geist-sans: ${rootStyle.getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
+          }
+        `;
+    }
 
     const fullHtml = `
       <html>
@@ -169,10 +177,14 @@ function NewPageTemplateEditorPageContent() {
   }, [updatePreview]);
 
   const handleSaveTemplate = () => {
-    console.log("Saving new page template:", { templateName, templateDescription, htmlContent, cssContent });
+    const newTemplateId = 'tpl-' + generateId();
+    // In a real app, this would save to a backend. For now, it's a mock save.
+    console.log("Saving new page template:", { id: newTemplateId, templateName, templateDescription, htmlContent, cssContent });
     toast({ title: t('pageTemplateEditor.toast.saveSuccessTitle'), description: t('pageTemplateEditor.toast.saveSuccessDescription', { templateName }) });
     localStorage.removeItem(localStorageKey);
     setHasUnsavedDraft(false);
+    // Navigate to the edit page of the "saved" template
+    router.push(`/templates/editor/${newTemplateId}`);
   };
 
   const pageTitleKey = sourceTemplateName 
@@ -185,7 +197,7 @@ function NewPageTemplateEditorPageContent() {
     <AppLayout currentPageTitleKey={pageTitleKey} currentPageTitleParams={pageTitleParams}>
       <div className="flex flex-col h-full">
          <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">{t(pageTitleKey, pageTitleParams || {defaultValue: 'New Page Template'})}</h1>
+          <h1 className="text-2xl font-semibold">{t(pageTitleKey, pageTitleParams || {defaultValue: 'New Quiz Engine Template'})}</h1>
           <div className="space-x-2 flex items-center">
             {hasUnsavedDraft && (
               <Tooltip>

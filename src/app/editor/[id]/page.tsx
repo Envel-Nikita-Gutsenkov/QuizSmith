@@ -88,15 +88,16 @@ function EditTestEditorPageContent() {
         setQuestions([]); 
       }
     } else {
+      // Simulate loading existing test data - for now, just set the name
       const defaultTestNameValue = "Test " + testId;
       setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: defaultTestNameValue }));
-      setSelectedTemplateId(DEFAULT_TEMPLATE_ID); 
+      setSelectedTemplateId(DEFAULT_TEMPLATE_ID); // Default template for now
       setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: "Congratulations! Score: {{score}}/{{total}}."}));
-      setQuestions([]); 
+      setQuestions([]); // No questions loaded by default for existing tests yet
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId, t, toast, router]);
+  }, [testId, t, toast, router]); // Removed isInitialLoad from deps
 
   useEffect(() => {
     if (isInitialLoad || !testId || testId === 'unknown' || testId === 'new' || !currentTemplate) return;
@@ -146,8 +147,7 @@ function EditTestEditorPageContent() {
             --primary: ${rootStyle.getPropertyValue('--primary').trim()};
             --primary-foreground: ${rootStyle.getPropertyValue('--primary-foreground').trim()};
             --secondary: ${rootStyle.getPropertyValue('--secondary').trim()};
-            --accent: ${rootStyle.getPropertyValue('--accent').trim()};
-            --accent-foreground: ${rootStyle.getPropertyValue('--accent-foreground').trim()};
+            --accent: ${rootStyle.getPropertyValue('--accent-foreground').trim()};
             --destructive: ${rootStyle.getPropertyValue('--destructive').trim()};
             --destructive-foreground: ${rootStyle.getPropertyValue('--destructive-foreground').trim()};
             --border: ${rootStyle.getPropertyValue('--border').trim()};
@@ -265,19 +265,20 @@ function EditTestEditorPageContent() {
         toast({title: "Error", description: "No page template selected. Cannot save test.", variant: "destructive"});
         return;
     }
+    // In a real app, this would be an API call to update existing testId
     const testData: Test = { 
-        id: testId, 
+        id: testId, // Use the existing testId
         name: testName, 
         questions, 
         templateId: selectedTemplateId, 
         quizEndMessage, 
-        createdAt: new Date().toISOString(), 
+        createdAt: new Date().toISOString(), // This would be fetched if editing existing
         updatedAt: new Date().toISOString() 
     };
     console.log("Saving test data (existing):", JSON.stringify(testData, null, 2));
     const saveSuccessDescriptionDefault = "Test " + testId + " config logged to console.";
     toast({ title: t('editor.toast.saveSuccessTitleExisting'), description: t('editor.toast.saveSuccessDescriptionExisting', {testId: testId, defaultValue: saveSuccessDescriptionDefault}) });
-    if (testId && testId !== 'unknown') {
+    if (testId && testId !== 'unknown' && testId !== 'new') {
       localStorage.removeItem(localStorageKey);
     }
     setHasUnsavedDraft(false);
@@ -512,7 +513,7 @@ function EditTestEditorPageContent() {
                                             <SelectValue placeholder={t('editor.questions.selectCorrectDragItem')} />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value={NO_EXPECTED_DRAG_ITEM}>{t('editor.questions.noCorrectDragItem', {defaultValue: "None (visual only)"})}</SelectItem>
+                                            <SelectItem value={NO_EXPECTED_DRAG_ITEM}>{t('editor.questions.noCorrectDragItem')}</SelectItem>
                                             {(question.dragItems || []).map(dItem => (
                                               <SelectItem key={dItem.id} value={dItem.id}>{dItem.text.substring(0,30)}{dItem.text.length > 30 ? '...' : ''}</SelectItem>
                                             ))}

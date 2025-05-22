@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Save, Eye, Layers, Palette, CloudOff } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation'; // Added useRouter
 import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -26,6 +26,7 @@ interface PageTemplateDraft {
 function EditPageTemplateEditorPageContent() {
   const { t } = useLanguage();
   const params = useParams();
+  const router = useRouter(); // Added router
   const templateId = params?.id as string || 'unknown';
   const { toast } = useToast();
 
@@ -42,17 +43,20 @@ function EditPageTemplateEditorPageContent() {
 
   const pageTitleKey = "pageTemplateEditor.edit.pageTitle"; 
 
-  // Load from localStorage or mock templates on mount
   useEffect(() => {
+    if (!isInitialLoad) return;
+
     if (!templateId || templateId === 'unknown') {
-        // Handle unknown template ID case - perhaps redirect or show error
+        // This case should ideally not be reached if routing is correct
+        // but as a fallback, load default and redirect or show error.
         const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
-        setTemplateName(t('pageTemplateEditor.details.loadedNamePlaceholder', { templateId: 'default', defaultValue: `Default Blank Template` }));
+        setTemplateName(t('pageTemplateEditor.details.loadedNamePlaceholder', { templateId: 'default', defaultValue: `Default Quiz Engine Template` }));
         setTemplateDescription(defaultTemplate.description || '');
         setHtmlContent(defaultTemplate.htmlContent);
         setCssContent(defaultTemplate.cssContent);
-        toast({ title: "Error", description: "Template ID not found. Loaded default.", variant: "destructive" });
+        toast({ title: "Error", description: "Template ID not found. Loaded default and redirecting to new.", variant: "destructive" });
         setIsInitialLoad(false);
+        router.push('/templates/editor/new'); // Redirect to new if ID is invalid
         return;
     }
 
@@ -65,36 +69,46 @@ function EditPageTemplateEditorPageContent() {
         setHtmlContent(draft.htmlContent);
         setCssContent(draft.cssContent);
         setHasUnsavedDraft(true);
-        toast({ title: t('pageTemplateEditor.toast.draftRestoredTitle', {defaultValue: "Draft Restored"}), description: t('pageTemplateEditor.toast.draftRestoredDescriptionExisting', {templateName: draft.name, defaultValue: `Unsaved draft for template "${draft.name}" loaded.`}) });
+        const draftDescDefault = `Unsaved draft for template "${draft.name}" loaded.`;
+        toast({ title: t('pageTemplateEditor.toast.draftRestoredTitle'), description: t('pageTemplateEditor.toast.draftRestoredDescriptionExisting', {templateName: draft.name, defaultValue: draftDescDefault}) });
       } catch (e) {
         console.error("Failed to parse template draft from localStorage", e);
-        localStorage.removeItem(localStorageKey); // Clear corrupted draft
+        localStorage.removeItem(localStorageKey); 
+        // Load from mock templates if draft fails
+        loadTemplateFromMock(templateId);
       }
     } else {
-      const selectedTemplate = pageTemplates.find(pt => pt.id === templateId);
-      if (selectedTemplate) {
-        setTemplateName(selectedTemplate.name);
-        setTemplateDescription(selectedTemplate.description || '');
-        setHtmlContent(selectedTemplate.htmlContent);
-        setCssContent(selectedTemplate.cssContent);
-      } else {
-        const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
-        setTemplateName(t('pageTemplateEditor.details.loadedNamePlaceholder', { templateId: 'default', defaultValue: `Default Blank Template` }));
-        setTemplateDescription(defaultTemplate.description || '');
-        setHtmlContent(defaultTemplate.htmlContent);
-        setCssContent(defaultTemplate.cssContent);
-        toast({
-            title: t('editor.toast.templateNotFoundTitle', {defaultValue: 'Page Template Not Found'}),
-            description: t('editor.toast.templateNotFoundDescription', {templateId, defaultValue: `The page template "${templateId}" was not found. Loaded default blank canvas.`}),
-            variant: "destructive",
-        });
-      }
+      loadTemplateFromMock(templateId);
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId, t, toast, localStorageKey]);
+  }, [templateId, t, toast, router]); // isInitialLoad removed from deps
 
-  // Save to localStorage on change (debounced)
+  const loadTemplateFromMock = (idToLoad: string) => {
+    const selectedTemplate = pageTemplates.find(pt => pt.id === idToLoad);
+    if (selectedTemplate) {
+      setTemplateName(selectedTemplate.name);
+      setTemplateDescription(selectedTemplate.description || '');
+      setHtmlContent(selectedTemplate.htmlContent);
+      setCssContent(selectedTemplate.cssContent);
+    } else {
+      // If specific ID not in mock, load default and notify
+      const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
+      setTemplateName(t('pageTemplateEditor.details.loadedNamePlaceholder', { templateId: 'default', defaultValue: `Default Quiz Engine Template` }));
+      setTemplateDescription(defaultTemplate.description || '');
+      setHtmlContent(defaultTemplate.htmlContent);
+      setCssContent(defaultTemplate.cssContent);
+      const notFoundDescDefault = `The quiz engine template "${idToLoad}" was not found. Loaded default blank canvas.`;
+      toast({
+          title: t('editor.toast.templateNotFoundTitle'), // Reusing a similar key
+          description: t('editor.toast.templateNotFoundDescription', {templateId: idToLoad, defaultValue: notFoundDescDefault}),
+          variant: "destructive",
+      });
+      // Optionally redirect if an invalid ID should not allow editing this page
+      // router.push('/templates'); 
+    }
+  };
+  
   useEffect(() => {
     if (isInitialLoad || !templateId || templateId === 'unknown') return;
 
@@ -104,7 +118,6 @@ function EditPageTemplateEditorPageContent() {
       const draft: PageTemplateDraft = { name: templateName, description: templateDescription, htmlContent, cssContent };
       localStorage.setItem(localStorageKey, JSON.stringify(draft));
       setHasUnsavedDraft(true);
-      // console.log(`Template draft ${templateId} saved to localStorage`);
     }, 1000);
     setDebounceTimer(timer);
 
@@ -116,26 +129,30 @@ function EditPageTemplateEditorPageContent() {
 
 
   const updatePreview = useCallback(() => {
+    // For template editor preview, replace quiz data placeholders with sample static text
     let processedHtml = htmlContent
-      .replace(/\{\{template_title_placeholder\}\}/g, templateName || t('pageTemplateEditor.preview.sampleTitle', {defaultValue: 'Sample Page Template Title'}))
-      .replace(/\{\{question_text_placeholder\}\}/g, t('pageTemplateEditor.preview.sampleQuestion', {defaultValue: 'This is where question content would appear.'}))
-      .replace(/\{\{option_text_placeholder_1\}\}/g, t('pageTemplateEditor.preview.sampleOption1', {defaultValue: 'Sample Option 1'}))
-      .replace(/\{\{option_text_placeholder_2\}\}/g, t('pageTemplateEditor.preview.sampleOption2', {defaultValue: 'Sample Option 2'}));
-    
-    const stylingVariables = `
-      :root {
-        --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
-        --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
-        --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
-        --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
-        --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
-        --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
-        --accent: ${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
-        --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
-        --radius: ${getComputedStyle(document.documentElement).getPropertyValue('--radius').trim()};
-        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
-      }
-    `;
+      .replace(/<script id="quiz-data" type="application\/json">.*<\/script>/s, '<script id="quiz-data" type="application/json">[]<\/script>') // Empty questions
+      .replace(/<div id="quiz-name-data"[^>]*>.*<\/div>/s, `<div id="quiz-name-data" style="display:none;">${templateName || t('pageTemplateEditor.preview.sampleTitle')}</div>`)
+      .replace(/<div id="quiz-end-message-data"[^>]*>.*<\/div>/s, '<div id="quiz-end-message-data" style="display:none;">Sample end message.</div>');
+
+    let stylingVariables = '';
+    if (typeof window !== 'undefined') { // Ensure this runs only on client
+        const rootStyle = getComputedStyle(document.documentElement);
+        stylingVariables = `
+          :root {
+            --background: ${rootStyle.getPropertyValue('--background').trim()};
+            --foreground: ${rootStyle.getPropertyValue('--foreground').trim()};
+            --card: ${rootStyle.getPropertyValue('--card').trim()};
+            --card-foreground: ${rootStyle.getPropertyValue('--card-foreground').trim()};
+            --primary: ${rootStyle.getPropertyValue('--primary').trim()};
+            --secondary: ${rootStyle.getPropertyValue('--secondary').trim()};
+            --accent: ${rootStyle.getPropertyValue('--accent').trim()};
+            --border: ${rootStyle.getPropertyValue('--border').trim()};
+            --radius: ${rootStyle.getPropertyValue('--radius').trim()};
+            --font-geist-sans: ${rootStyle.getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
+          }
+        `;
+    }
 
     const fullHtml = `
       <html>
@@ -161,7 +178,8 @@ function EditPageTemplateEditorPageContent() {
 
   const handleSaveTemplate = () => {
     console.log("Saving page template:", { templateId, templateName, templateDescription, htmlContent, cssContent });
-    toast({ title: t('pageTemplateEditor.toast.saveSuccessTitleExisting', {defaultValue: "Page Template Saved (Mock)"}), description: t('pageTemplateEditor.toast.saveSuccessDescriptionExisting', {templateName: templateName, defaultValue: `Page Template ${templateName} data logged to console.`}) });
+    const successDescDefault = `Quiz Engine Template ${templateName} data logged to console.`;
+    toast({ title: t('pageTemplateEditor.toast.saveSuccessTitleExisting'), description: t('pageTemplateEditor.toast.saveSuccessDescriptionExisting', {templateName: templateName, defaultValue: successDescDefault}) });
     if (templateId && templateId !== 'unknown') {
       localStorage.removeItem(localStorageKey);
     }
@@ -172,7 +190,7 @@ function EditPageTemplateEditorPageContent() {
     <AppLayout currentPageTitleKey={pageTitleKey} currentPageTitleParams={{ templateIdOrName: templateName || templateId }}>
       <div className="flex flex-col h-full">
          <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">{t(pageTitleKey, { templateIdOrName: templateName || templateId, defaultValue: `Edit Page Template: ${templateName || templateId}` })}</h1>
+          <h1 className="text-2xl font-semibold">{t(pageTitleKey, { templateIdOrName: templateName || templateId, defaultValue: `Edit Quiz Engine Template: ${templateName || templateId}` })}</h1>
           <div className="space-x-2 flex items-center">
             {hasUnsavedDraft && (
               <Tooltip>
