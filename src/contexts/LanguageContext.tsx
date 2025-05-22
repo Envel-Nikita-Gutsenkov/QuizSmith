@@ -30,13 +30,14 @@ const translations: Translations = {
 
     'nav.dashboard': 'Dashboard',
     'nav.myTests': 'My Tests',
-    'nav.myPageTemplates': 'My Page Templates', // Changed
+    'nav.myPageTemplates': 'My Page Templates', 
+    'nav.myTemplates': 'My Page Templates', // Added
     'nav.newTest': 'New Test',
-    'nav.newPageTemplate': 'New Page Template', // Changed
+    'nav.newPageTemplate': 'New Page Template', 
     'nav.settings': 'Settings',
     'nav.adminPanel': 'Admin Panel',
     'nav.createNew': 'Create New',
-    'nav.explorePageTemplates': 'Explore Page Templates', // Added
+    'nav.explorePageTemplates': 'Explore Page Templates', 
 
     'dashboard.pageTitle': 'Dashboard',
     'dashboard.myTests.heading': 'My Tests',
@@ -44,13 +45,13 @@ const translations: Translations = {
     'dashboard.myTests.noTests.title': 'No tests created yet',
     'dashboard.myTests.noTests.description': 'Start by creating your first masterpiece!',
     'dashboard.myTests.noTests.button': 'Create Your First Test',
-    'dashboard.myPageTemplates.heading': 'My Page Templates', // Changed
-    'dashboard.myPageTemplates.create': 'Create New Page Template', // Changed
-    'dashboard.myPageTemplates.noPageTemplates.title': 'No page templates created yet', // Changed
-    'dashboard.myPageTemplates.noPageTemplates.description': 'Build reusable page designs for your quizzes.', // Changed
-    'dashboard.myPageTemplates.noPageTemplates.button': 'Create Your First Page Template', // Changed
+    'dashboard.myPageTemplates.heading': 'My Page Templates', 
+    'dashboard.myPageTemplates.create': 'Create New Page Template', 
+    'dashboard.myPageTemplates.noPageTemplates.title': 'No page templates created yet', 
+    'dashboard.myPageTemplates.noPageTemplates.description': 'Build reusable page designs for your quizzes.', 
+    'dashboard.myPageTemplates.noPageTemplates.button': 'Create Your First Page Template', 
     'dashboard.editTest': 'Edit Test',
-    'dashboard.editPageTemplate': 'Edit Page Template', // Changed
+    'dashboard.editPageTemplate': 'Edit Page Template', 
 
 
     'myTests.pageTitle': 'My Tests',
@@ -64,12 +65,12 @@ const translations: Translations = {
     'myTests.statusLabel': 'Status',
     'myTests.lastModifiedLabel': 'Last modified',
 
-    'myPageTemplates.pageTitle': 'My Page Templates', // Changed
-    'myPageTemplates.create': 'Create New Page Template', // Changed
-    'myPageTemplates.noPageTemplates.title': "You haven't created any page templates yet.", // Changed
-    'myPageTemplates.noPageTemplates.description': 'Page templates help you build quizzes faster with consistent page designs.', // Changed
-    'myPageTemplates.noPageTemplates.button': 'Create Your First Page Template', // Changed
-    'myPageTemplates.edit': 'Edit Page Template', // Changed
+    'myPageTemplates.pageTitle': 'My Page Templates', 
+    'myPageTemplates.create': 'Create New Page Template', 
+    'myPageTemplates.noPageTemplates.title': "You haven't created any page templates yet.", 
+    'myPageTemplates.noPageTemplates.description': 'Page templates help you build quizzes faster with consistent page designs.', 
+    'myPageTemplates.noPageTemplates.button': 'Create Your First Page Template', 
+    'myPageTemplates.edit': 'Edit Page Template', 
     'myPageTemplates.usageCountLabel': 'Used',
     'myPageTemplates.timesLabel': 'times',
     'myPageTemplates.lastModifiedLabel': 'Last modified',
@@ -164,13 +165,13 @@ const translations: Translations = {
     'pageTemplateEditor.preview.iframeTitle': 'Page Template Preview',
     'pageTemplateEditor.preview.sampleTitle': 'Sample Page Template Title',
     'pageTemplateEditor.preview.sampleQuestion': 'This is where question content would appear.',
-    'pageTemplateEditor.preview.sampleOption1': 'Option A',
-    'pageTemplateEditor.preview.sampleOption2': 'Option B',
+    'pageTemplateEditor.preview.sampleOption1': 'Sample Option 1',
+    'pageTemplateEditor.preview.sampleOption2': 'Sample Option 2',
 
-    'pageTemplates.explore.pageTitle': 'Explore Page Style Templates', // Changed
-    'pageTemplates.explore.createButton': 'Create New Page Template', // Changed
-    'pageTemplates.explore.useThisTemplate': 'Use This Page Template', // Changed
-    'pageTemplates.explore.preview': 'Preview Page Style', // Changed
+    'pageTemplates.explore.pageTitle': 'Explore Page Style Templates', 
+    'pageTemplates.explore.createButton': 'Create New Page Template', 
+    'pageTemplates.explore.useThisTemplate': 'Use This Page Template', 
+    'pageTemplates.explore.preview': 'Preview Page Style', 
     'pageTemplates.explore.noTemplates.title': 'No Page Templates Available Yet',
     'pageTemplates.explore.noTemplates.description': 'Be the first to create a stunning page template for QuizSmith!',
     'pageTemplates.explore.noTemplates.button': 'Create Your First Page Template',
@@ -231,13 +232,14 @@ const translations: Translations = {
 
     'nav.dashboard': 'Панель',
     'nav.myTests': 'Мои тесты',
-    'nav.myPageTemplates': 'Мои шаблоны страниц', // Changed
+    'nav.myPageTemplates': 'Мои шаблоны страниц', 
+    'nav.myTemplates': 'Мои шаблоны страниц', // Added
     'nav.newTest': 'Новый тест',
-    'nav.newPageTemplate': 'Новый шаблон страницы', // Changed
+    'nav.newPageTemplate': 'Новый шаблон страницы', 
     'nav.settings': 'Настройки',
     'nav.adminPanel': 'Панель администратора',
     'nav.createNew': 'Создать',
-    'nav.explorePageTemplates': 'Обзор шаблонов страниц', // Added
+    'nav.explorePageTemplates': 'Обзор шаблонов страниц', 
 
     'dashboard.pageTitle': 'Панель',
     'dashboard.myTests.heading': 'Мои тесты',
@@ -245,13 +247,13 @@ const translations: Translations = {
     'dashboard.myTests.noTests.title': 'Тесты еще не созданы',
     'dashboard.myTests.noTests.description': 'Начните с создания вашего первого шедевра!',
     'dashboard.myTests.noTests.button': 'Создать первый тест',
-    'dashboard.myPageTemplates.heading': 'Мои шаблоны страниц', // Changed
-    'dashboard.myPageTemplates.create': 'Создать новый шаблон страницы', // Changed
-    'dashboard.myPageTemplates.noPageTemplates.title': 'Шаблоны страниц еще не созданы', // Changed
-    'dashboard.myPageTemplates.noPageTemplates.description': 'Создавайте многоразовые дизайны страниц для ваших викторин.', // Changed
-    'dashboard.myPageTemplates.noPageTemplates.button': 'Создать первый шаблон страницы', // Changed
+    'dashboard.myPageTemplates.heading': 'Мои шаблоны страниц', 
+    'dashboard.myPageTemplates.create': 'Создать новый шаблон страницы', 
+    'dashboard.myPageTemplates.noPageTemplates.title': 'Шаблоны страниц еще не созданы', 
+    'dashboard.myPageTemplates.noPageTemplates.description': 'Создавайте многоразовые дизайны страниц для ваших викторин.', 
+    'dashboard.myPageTemplates.noPageTemplates.button': 'Создать первый шаблон страницы', 
     'dashboard.editTest': 'Редактировать тест',
-    'dashboard.editPageTemplate': 'Редактировать шаблон страницы', // Changed
+    'dashboard.editPageTemplate': 'Редактировать шаблон страницы', 
 
     'myTests.pageTitle': 'Мои тесты',
     'myTests.create': 'Создать новый тест',
@@ -264,12 +266,12 @@ const translations: Translations = {
     'myTests.statusLabel': 'Статус',
     'myTests.lastModifiedLabel': 'Последнее изменение',
 
-    'myPageTemplates.pageTitle': 'Мои шаблоны страниц', // Changed
-    'myPageTemplates.create': 'Создать новый шаблон страницы', // Changed
-    'myPageTemplates.noPageTemplates.title': 'Вы еще не создали ни одного шаблона страницы.', // Changed
-    'myPageTemplates.noPageTemplates.description': 'Шаблоны страниц помогут вам быстрее создавать викторины с единым дизайном страниц.', // Changed
-    'myPageTemplates.noPageTemplates.button': 'Создать свой первый шаблон страницы', // Changed
-    'myPageTemplates.edit': 'Редактировать шаблон страницы', // Changed
+    'myPageTemplates.pageTitle': 'Мои шаблоны страниц', 
+    'myPageTemplates.create': 'Создать новый шаблон страницы', 
+    'myPageTemplates.noPageTemplates.title': 'Вы еще не создали ни одного шаблона страницы.', 
+    'myPageTemplates.noPageTemplates.description': 'Шаблоны страниц помогут вам быстрее создавать викторины с единым дизайном страниц.', 
+    'myPageTemplates.noPageTemplates.button': 'Создать свой первый шаблон страницы', 
+    'myPageTemplates.edit': 'Редактировать шаблон страницы', 
     'myPageTemplates.usageCountLabel': 'Использовано',
     'myPageTemplates.timesLabel': 'раз',
     'myPageTemplates.lastModifiedLabel': 'Последнее изменение',
@@ -366,10 +368,10 @@ const translations: Translations = {
     'pageTemplateEditor.preview.sampleOption1': 'Вариант А',
     'pageTemplateEditor.preview.sampleOption2': 'Вариант Б',
 
-    'pageTemplates.explore.pageTitle': 'Обзор шаблонов стилей страниц', // Changed
-    'pageTemplates.explore.createButton': 'Создать новый шаблон страницы', // Changed
-    'pageTemplates.explore.useThisTemplate': 'Использовать этот шаблон страницы', // Changed
-    'pageTemplates.explore.preview': 'Предпросмотр стиля страницы', // Changed
+    'pageTemplates.explore.pageTitle': 'Обзор шаблонов стилей страниц', 
+    'pageTemplates.explore.createButton': 'Создать новый шаблон страницы', 
+    'pageTemplates.explore.useThisTemplate': 'Использовать этот шаблон страницы', 
+    'pageTemplates.explore.preview': 'Предпросмотр стиля страницы', 
     'pageTemplates.explore.noTemplates.title': 'Доступных шаблонов страниц пока нет',
     'pageTemplates.explore.noTemplates.description': 'Станьте первым, кто создаст потрясающий шаблон страницы для QuizSmith!',
     'pageTemplates.explore.noTemplates.button': 'Создать свой первый шаблон страницы',
@@ -472,3 +474,4 @@ export function useLanguage() {
 //   const contextValue = useLanguage();
 //   return <>{children(contextValue)}</>;
 // };
+
