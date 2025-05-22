@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType } from '@/lib/types';
@@ -16,13 +16,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useParams } from 'next/navigation';
-import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates'; // Assuming default template exists
-import Image from 'next/image'; // Next.js Image component
+import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates';
+import Image from 'next/image';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-const quizLogicScript = `
+const quizLogicScript = \`
 document.addEventListener('DOMContentLoaded', () => {
   const questionsDataElement = document.getElementById('quiz-data');
   const endMessageElement = document.getElementById('quiz-end-message-text');
@@ -241,7 +242,16 @@ document.addEventListener('DOMContentLoaded', () => {
   
   questions.length > 0 ? displayQuestion(currentQuestionIndex) : (questionHost.innerHTML = '<p>No questions added.</p>');
 });
-`;
+\`;
+
+interface TestDraft {
+  name: string;
+  questions: Question[];
+  htmlContent: string;
+  cssContent: string;
+  quizEndMessage: string;
+}
+
 
 function EditTestEditorPageContent() {
   const { t } = useLanguage();
@@ -256,25 +266,69 @@ function EditTestEditorPageContent() {
   const [quizEndMessage, setQuizEndMessage] = useState(''); 
   const [previewContent, setPreviewContent] = useState('');
 
+  const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
+  const localStorageKey = `quizsmith-test-draft-${testId}`;
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
+
+  // Load from localStorage or set defaults on mount
   useEffect(() => {
-    // Simulate loading data for an existing test
-    if (testId && testId !== 'new') {
-      setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: `Test ${testId}` }));
-      // For now, use default blank template
-      const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
-      setHtmlContent(defaultTemplate.htmlContent);
-      setCssContent(defaultTemplate.cssContent);
-    } else {
-      // Fallback for 'new' or unknown, though 'new' should use its own page.
-      const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
-      setHtmlContent(defaultTemplate.htmlContent);
-      setCssContent(defaultTemplate.cssContent);
-      setTestName(t('editor.defaultTestName', {defaultValue: 'My Awesome Quiz'}));
+    if (!testId || testId === 'unknown') {
+      // Handle unknown test ID, maybe redirect or show error
+      toast({ title: "Error", description: "Test ID not found.", variant: "destructive"});
+      setIsInitialLoad(false);
+      return;
     }
-    setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: 'Congratulations! Score: {{score}}/{{total}}.'}));
+
+    const savedDraft = localStorage.getItem(localStorageKey);
+    if (savedDraft) {
+      try {
+        const draft: TestDraft = JSON.parse(savedDraft);
+        setTestName(draft.name);
+        setQuestions(draft.questions);
+        setHtmlContent(draft.htmlContent);
+        setCssContent(draft.cssContent);
+        setQuizEndMessage(draft.quizEndMessage);
+        setHasUnsavedDraft(true);
+        toast({ title: "Draft Restored", description: `Unsaved draft for test "${draft.name}" loaded.` });
+      } catch (e) {
+        console.error("Failed to parse test draft from localStorage", e);
+        localStorage.removeItem(localStorageKey); // Clear corrupted draft
+      }
+    } else {
+      // Simulate loading data for an existing test if no draft
+      // In a real app, this would be an API call
+      setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: `Test ${testId}` }));
+      const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
+      setHtmlContent(defaultTemplate.htmlContent);
+      setCssContent(defaultTemplate.cssContent);
+      setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: 'Congratulations! Score: {{score}}/{{total}}.'}));
+      setQuestions([]); // Start with no questions if loading "existing" test for first time
+    }
+    setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId, t]);
+  }, [testId, t, toast, localStorageKey]);
+
+  // Save to localStorage on change (debounced)
+  useEffect(() => {
+    if (isInitialLoad || !testId || testId === 'unknown') return;
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    const timer = setTimeout(() => {
+      const draft: TestDraft = { name: testName, questions, htmlContent, cssContent, quizEndMessage };
+      localStorage.setItem(localStorageKey, JSON.stringify(draft));
+      setHasUnsavedDraft(true);
+      // console.log(`Test draft ${testId} saved to localStorage`);
+    }, 1000);
+    setDebounceTimer(timer);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [testName, questions, htmlContent, cssContent, quizEndMessage, isInitialLoad, localStorageKey]);
 
 
   const updatePreview = useCallback(() => {
@@ -291,27 +345,27 @@ function EditTestEditorPageContent() {
     
     const finalHtmlBody = doc.body.innerHTML;
     
-    const stylingVariables = `
+    const stylingVariables = \`
       :root {
-        --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
-        --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
-        --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
-        --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
-        --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
-        --primary-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
-        --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
-        --accent: ${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
-        --accent-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
-        --destructive: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
-        --destructive-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
-        --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
-        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
-        --success-bg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-bg').trim()};
-        --success-fg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-fg').trim()};
-        --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
+        --background: \${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
+        --foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
+        --card: \${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
+        --card-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
+        --primary: \${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
+        --primary-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
+        --secondary: \${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
+        --accent: \${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
+        --accent-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
+        --destructive: \${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
+        --destructive-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
+        --border: \${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
+        --font-geist-sans: \${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
+        --success-bg: \${getComputedStyle(document.documentElement).getPropertyValue('--success-bg').trim()};
+        --success-fg: \${getComputedStyle(document.documentElement).getPropertyValue('--success-fg').trim()};
+        --success-border: \${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
       }
-    `;
-    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"></script><style>${stylingVariables}${cssContent}</style></head><body>${finalHtmlBody}<script>${quizLogicScript}<\/script></body></html>`);
+    \`;
+    setPreviewContent(\`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>\${stylingVariables}\${cssContent}</style></head><body>\${finalHtmlBody}<script>\${quizLogicScript}<\/script></body></html>\`);
   }, [htmlContent, cssContent, testName, questions, quizEndMessage, t]);
 
   useEffect(() => { updatePreview(); }, [updatePreview]);
@@ -411,6 +465,10 @@ function EditTestEditorPageContent() {
     const testData = { testId, testName, questions, htmlContent, cssContent, quizEndMessage, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     console.log("Saving test data (existing):", JSON.stringify(testData, null, 2));
     toast({ title: t('editor.toast.saveSuccessTitleExisting', {defaultValue: "Existing Test Data Logged"}), description: t('editor.toast.saveSuccessDescriptionExisting', {testId: testId, defaultValue: `Test ${testId} config logged to console.`}) });
+    if (testId && testId !== 'unknown') {
+      localStorage.removeItem(localStorageKey);
+    }
+    setHasUnsavedDraft(false);
   };
   
   const handleFullScreenPreview = () => {
@@ -449,6 +507,16 @@ function EditTestEditorPageContent() {
              {t(pageTitleKeyToUse, { testNameOrId: testName || testId })}
           </h1>
           <div className="space-x-2 flex-shrink-0 flex items-center">
+            {hasUnsavedDraft && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CloudOff className="h-5 w-5 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('editor.unsavedDraftTooltip')}</p>
+                  </TooltipContent>
+                </Tooltip>
+            )}
             <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('editor.refreshPreview', {defaultValue: 'Refresh Preview'})}</Button>
             <Button variant="outline" onClick={handleFullScreenPreview}><ExternalLink className="mr-2 h-4 w-4" /> {t('editor.fullScreenPreview', {defaultValue: 'Full Screen'})}</Button>
             <Button onClick={handleSaveTest}><Save className="mr-2 h-4 w-4" /> {t('editor.saveTest', {defaultValue: 'Save Test'})}</Button>
@@ -488,7 +556,7 @@ function EditTestEditorPageContent() {
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{t('editor.config.embedDescription', {defaultValue: 'After saving, embed code will appear here.'})}</p>
                     {/* For existing tests, the embed code can be shown */}
-                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? `<iframe src="/test/${testId}/player" width="100%" height="600px" frameborder="0"></iframe>` : "<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
+                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? \`<iframe src="/test/\${testId}/player" width="100%" height="600px" frameborder="0"></iframe>\` : "<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
                   </CardContent>
                 </Card>
               </CardContent>
@@ -636,4 +704,3 @@ export default function EditTestPage() {
     </Suspense>
   )
 }
-

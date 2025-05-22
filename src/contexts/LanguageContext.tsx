@@ -86,6 +86,7 @@ const translations: Translations = {
     'editor.refreshPreview': 'Refresh Preview',
     'editor.fullScreenPreview': 'Full Screen Preview',
     'editor.saveTest': 'Save Test',
+    'editor.unsavedDraftTooltip': 'Unsaved local draft exists. Save to clear.',
     'editor.config.title': 'Configuration & Page Style',
     'editor.config.description': 'Basic settings, page style (HTML/CSS), and embed information.',
     'editor.config.testNameLabel': 'Test Name',
@@ -150,6 +151,7 @@ const translations: Translations = {
     'pageTemplateEditor.edit.pageTitle': 'Edit Page Template: {{templateIdOrName}}',
     'pageTemplateEditor.updatePreview': 'Update Preview',
     'pageTemplateEditor.saveTemplate': 'Save Page Template',
+    'pageTemplateEditor.unsavedDraftTooltip': 'Unsaved local draft exists. Save to clear.',
     'pageTemplateEditor.details.title': 'Page Template Details & Design',
     'pageTemplateEditor.details.description': 'Define the HTML structure and CSS style of your reusable quiz page template. You can include <script> tags in the HTML for template-specific JavaScript.',
     'pageTemplateEditor.details.nameLabel': 'Page Template Name',
@@ -159,8 +161,10 @@ const translations: Translations = {
     'pageTemplateEditor.details.descriptionPlaceholder': 'A brief description of what this page template is best for...',
     'pageTemplateEditor.details.htmlLabel': 'Page HTML Structure',
     'pageTemplateEditor.details.htmlPlaceholder': 'Enter page template HTML...\n<!-- Ensure it includes placeholders like <div id="quiz-content-host"> for questions -->',
+    'pageTemplateEditor.details.htmlHint': 'Use {{template_title_placeholder}}, {{question_text_placeholder}}, {{option_text_placeholder_1}}, {{option_text_placeholder_2}} as dynamic placeholders for preview. For quiz functionality, ensure main container, #quiz-content-host, and specific data-quiz-* attributes (like data-quiz-question-id="q_template_id") are present for the quizLogicScript to work. You can include <script> tags here for template-specific JS.',
     'pageTemplateEditor.details.cssLabel': 'Page CSS Styles',
     'pageTemplateEditor.details.cssPlaceholder': 'Enter page template CSS...\n/* Style your page template elements */\n/* Add your CSS animations here */',
+    'pageTemplateEditor.details.cssHint': 'Your CSS will be injected into the preview. Tailwind CSS is also available there. Use CSS variables from globals.css (e.g., hsl(var(--primary))) for theming.',
     'pageTemplateEditor.preview.titlePane': 'Page Template Preview',
     'pageTemplateEditor.preview.descriptionPane': 'This is how your page template structure will look with sample content.',
     'pageTemplateEditor.preview.iframeTitle': 'Page Template Preview',
@@ -219,13 +223,6 @@ const translations: Translations = {
     'adminPanel.logs.description': 'View system and application logs. (Placeholder UI)',
     'adminPanel.logs.placeholder': 'Log entries would appear here...\n[INFO] 2023-10-27 10:00:00 - Application started.\n[WARN] 2023-10-27 10:05:23 - User login attempt failed.\n...',
     'adminPanel.logs.refreshButton': 'Refresh Logs',
-    'adminPanel.testVersionManagement.title': 'Test Version Management',
-    'adminPanel.testVersionManagement.description': 'Review and revert tests to their previous saved states. (Placeholder UI)',
-    'adminPanel.testVersionManagement.currentVersion': 'Version {{version}} (Current)',
-    'adminPanel.testVersionManagement.previousVersion': 'Version {{version}}',
-    'adminPanel.testVersionManagement.rollbackButton': 'Rollback to this Version',
-    'adminPanel.testVersionManagement.testNameLabel': 'Test: {{testName}}',
-    'adminPanel.testVersionManagement.savedDateLabel': 'Saved: {{date}}',
 
 
     'questionType.multiple-choice-text': 'Multiple Choice (Text)',
@@ -310,6 +307,7 @@ const translations: Translations = {
     'editor.refreshPreview': 'Обновить предпросмотр',
     'editor.fullScreenPreview': 'Полноэкранный предпросмотр',
     'editor.saveTest': 'Сохранить тест',
+    'editor.unsavedDraftTooltip': 'Существует несохраненный локальный черновик. Сохраните, чтобы очистить.',
     'editor.config.title': 'Конфигурация и стиль страницы',
     'editor.config.description': 'Основные настройки, стиль страницы (HTML/CSS) и информация для встраивания.',
     'editor.config.testNameLabel': 'Название теста',
@@ -374,6 +372,7 @@ const translations: Translations = {
     'pageTemplateEditor.edit.pageTitle': 'Редактировать шаблон страницы: {{templateIdOrName}}',
     'pageTemplateEditor.updatePreview': 'Обновить предпросмотр',
     'pageTemplateEditor.saveTemplate': 'Сохранить шаблон страницы',
+    'pageTemplateEditor.unsavedDraftTooltip': 'Существует несохраненный локальный черновик. Сохраните, чтобы очистить.',
     'pageTemplateEditor.details.title': 'Детали и дизайн шаблона страницы',
     'pageTemplateEditor.details.description': 'Определите структуру HTML и стиль CSS вашего многоразового шаблона страницы викторины. Вы можете включать теги &lt;script&gt; в HTML для специфичного JavaScript шаблона.',
     'pageTemplateEditor.details.nameLabel': 'Название шаблона страницы',
@@ -383,8 +382,10 @@ const translations: Translations = {
     'pageTemplateEditor.details.descriptionPlaceholder': 'Краткое описание, для чего лучше всего подходит этот шаблон страницы...',
     'pageTemplateEditor.details.htmlLabel': 'Структура HTML страницы',
     'pageTemplateEditor.details.htmlPlaceholder': 'Введите HTML шаблона страницы...\n<!-- Убедитесь, что он содержит плейсхолдеры, такие как <div id="quiz-content-host"> для вопросов -->',
+    'pageTemplateEditor.details.htmlHint': 'Используйте {{template_title_placeholder}}, {{question_text_placeholder}}, {{option_text_placeholder_1}}, {{option_text_placeholder_2}} как динамические плейсхолдеры для предпросмотра. Для функциональности викторины убедитесь в наличии основного контейнера, #quiz-content-host и специфичных data-quiz-* атрибутов (например, data-quiz-question-id="q_template_id") для работы quizLogicScript. Вы можете включать теги <script> здесь для специфичного JS шаблона.',
     'pageTemplateEditor.details.cssLabel': 'Стили CSS страницы',
     'pageTemplateEditor.details.cssPlaceholder': 'Введите CSS шаблона страницы...\n/* Стилизуйте элементы вашего шаблона страницы */\n/* Добавьте сюда свои CSS анимации */',
+    'pageTemplateEditor.details.cssHint': 'Ваш CSS будет внедрен в предпросмотр. Tailwind CSS также доступен там. Используйте CSS переменные из globals.css (например, hsl(var(--primary))) для темизации.',
     'pageTemplateEditor.preview.titlePane': 'Предпросмотр шаблона страницы',
     'pageTemplateEditor.preview.descriptionPane': 'Так будет выглядеть структура вашего шаблона страницы с образцом содержимого.',
     'pageTemplateEditor.preview.iframeTitle': 'Предпросмотр шаблона страницы',
@@ -442,13 +443,6 @@ const translations: Translations = {
     'adminPanel.logs.description': 'Просмотр системных и прикладных логов. (Заглушка интерфейса)',
     'adminPanel.logs.placeholder': 'Записи логов будут отображаться здесь...\n[ИНФО] 2023-10-27 10:00:00 - Приложение запущено.\n[ПРЕДУПР.] 2023-10-27 10:05:23 - Неудачная попытка входа пользователя.\n...',
     'adminPanel.logs.refreshButton': 'Обновить логи',
-    'adminPanel.testVersionManagement.title': 'Управление версиями тестов',
-    'adminPanel.testVersionManagement.description': 'Просмотр и откат тестов к предыдущим сохраненным состояниям. (Заглушка интерфейса)',
-    'adminPanel.testVersionManagement.currentVersion': 'Версия {{version}} (Текущая)',
-    'adminPanel.testVersionManagement.previousVersion': 'Версия {{version}}',
-    'adminPanel.testVersionManagement.rollbackButton': 'Откатить к этой версии',
-    'adminPanel.testVersionManagement.testNameLabel': 'Тест: {{testName}}',
-    'adminPanel.testVersionManagement.savedDateLabel': 'Сохранено: {{date}}',
 
     'questionType.multiple-choice-text': 'Один из многих (Текст)',
     'questionType.multiple-choice-image': 'Один из многих (Изображение)',
@@ -462,7 +456,6 @@ const translations: Translations = {
     'quiz.matching.selectPrompt': 'Выберите пару для:',
     'quiz.dragDrop.dropHere': 'Перетащите сюда',
     'quiz.questionType.notImplemented': 'Этот тип вопроса еще не полностью интерактивен в предпросмотре.',
-
   },
 };
 
@@ -514,4 +507,3 @@ export function useLanguage() {
   }
   return context;
 }
-

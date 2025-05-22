@@ -8,12 +8,21 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, Layers, Palette } from 'lucide-react';
+import { Save, Eye, Layers, Palette, CloudOff } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates'; 
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams } from 'next/navigation'; // Added for query params
+import { useSearchParams } from 'next/navigation';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
+
+interface PageTemplateDraft {
+  name: string;
+  description: string;
+  htmlContent: string;
+  cssContent: string;
+}
 
 function NewPageTemplateEditorPageContent() {
   const { t } = useLanguage(); 
@@ -27,41 +36,94 @@ function NewPageTemplateEditorPageContent() {
   const [previewContent, setPreviewContent] = useState('');
   const [sourceTemplateName, setSourceTemplateName] = useState<string | null>(null);
   
-  useEffect(() => {
-    const sourceTemplateId = searchParams.get('from');
-    let initialTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID); // Default to Blank Canvas
+  const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
+  const localStorageKey = 'quizsmith-new-template-draft';
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
+  // Load from localStorage on mount
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(localStorageKey);
+    const sourceTemplateId = searchParams.get('from');
+    let templateToLoad: typeof pageTemplates[0] | undefined = undefined;
+    let isDuplicating = false;
+
+    if (savedDraft) {
+      try {
+        const draft: PageTemplateDraft = JSON.parse(savedDraft);
+        setTemplateName(draft.name);
+        setTemplateDescription(draft.description);
+        setHtmlContent(draft.htmlContent);
+        setCssContent(draft.cssContent);
+        setHasUnsavedDraft(true);
+        // If loaded from draft, potentially ignore 'from' if it's a different session
+        // Or, decide if 'from' takes precedence. For now, draft takes precedence.
+        toast({ title: t('pageTemplateEditor.toast.draftRestoredTitle', {defaultValue: "Draft Restored"}), description: t('pageTemplateEditor.toast.draftRestoredDescriptionNew', {defaultValue: "Your unsaved new page template draft has been loaded."}) });
+        setIsInitialLoad(false);
+        return;
+      } catch (e) {
+        console.error("Failed to parse template draft from localStorage", e);
+        localStorage.removeItem(localStorageKey); // Clear corrupted draft
+      }
+    }
+    
     if (sourceTemplateId) {
-      const foundSourceTemplate = pageTemplates.find(pt => pt.id === sourceTemplateId);
-      if (foundSourceTemplate) {
-        initialTemplate = foundSourceTemplate;
-        setTemplateName(t('pageTemplateEditor.new.pageTitleFromSource', { sourceName: foundSourceTemplate.name, defaultValue: `Copy of ${foundSourceTemplate.name}`}));
-        setTemplateDescription(foundSourceTemplate.description || '');
-        setSourceTemplateName(foundSourceTemplate.name); // For dynamic title
+      templateToLoad = pageTemplates.find(pt => pt.id === sourceTemplateId);
+      isDuplicating = true;
+      if (templateToLoad) {
+        setTemplateName(t('pageTemplateEditor.new.pageTitleFromSource', { sourceName: templateToLoad.name, defaultValue: `Copy of ${templateToLoad.name}`}));
+        setTemplateDescription(templateToLoad.description || '');
+        setSourceTemplateName(templateToLoad.name); 
+        setHtmlContent(templateToLoad.htmlContent);
+        setCssContent(templateToLoad.cssContent);
+        // When duplicating, it's immediately an "unsaved draft" of the new copy
+        setHasUnsavedDraft(true); 
       } else {
         toast({
           title: t('pageTemplateEditor.toast.loadErrorTitle', {defaultValue: 'Load Error'}),
           description: t('pageTemplateEditor.toast.loadErrorDescription', {templateId: sourceTemplateId, defaultValue: `Could not load template "${sourceTemplateId}" to duplicate. Starting with a blank canvas.`}),
           variant: 'destructive',
         });
-        setTemplateName(t('pageTemplateEditor.details.namePlaceholder', {defaultValue: 'My New Page Template'}));
+        templateToLoad = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID);
       }
     } else {
+      templateToLoad = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID);
       setTemplateName(t('pageTemplateEditor.details.namePlaceholder', {defaultValue: 'My New Page Template'}));
     }
     
-    if (initialTemplate) {
-      setHtmlContent(initialTemplate.htmlContent);
-      setCssContent(initialTemplate.cssContent);
-      // Only set default description if not duplicating and the initial template is the default blank canvas
-      if (!sourceTemplateId && initialTemplate.id === DEFAULT_TEMPLATE_ID) { 
-          setTemplateDescription(initialTemplate.description || '');
-      } else if (!sourceTemplateId) { // If starting new (not duplicating) and it's not default blank, clear description
+    if (templateToLoad && !isDuplicating) { // Only set defaults if not duplicating (already handled) and not loaded from draft
+      setHtmlContent(templateToLoad.htmlContent);
+      setCssContent(templateToLoad.cssContent);
+      if (templateToLoad.id === DEFAULT_TEMPLATE_ID) { 
+          setTemplateDescription(templateToLoad.description || '');
+      } else {
           setTemplateDescription('');
       }
     }
+    setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, t, toast]); // toast dependency for error message
+  }, [searchParams, t, toast]);
+
+  // Save to localStorage on change (debounced)
+  useEffect(() => {
+    if (isInitialLoad) return; // Don't save during initial load
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    const timer = setTimeout(() => {
+      const draft: PageTemplateDraft = { name: templateName, description: templateDescription, htmlContent, cssContent };
+      localStorage.setItem(localStorageKey, JSON.stringify(draft));
+      setHasUnsavedDraft(true);
+      // console.log("New template draft saved to localStorage");
+    }, 1000);
+    setDebounceTimer(timer);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateName, templateDescription, htmlContent, cssContent, isInitialLoad]);
+
 
   const updatePreview = useCallback(() => {
     let processedHtml = htmlContent
@@ -109,6 +171,8 @@ function NewPageTemplateEditorPageContent() {
   const handleSaveTemplate = () => {
     console.log("Saving new page template:", { templateName, templateDescription, htmlContent, cssContent });
     toast({ title: t('pageTemplateEditor.toast.saveSuccessTitle'), description: t('pageTemplateEditor.toast.saveSuccessDescription', { templateName }) });
+    localStorage.removeItem(localStorageKey);
+    setHasUnsavedDraft(false);
   };
 
   const pageTitleKey = sourceTemplateName 
@@ -122,7 +186,17 @@ function NewPageTemplateEditorPageContent() {
       <div className="flex flex-col h-full">
          <header className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold">{t(pageTitleKey, pageTitleParams || {defaultValue: 'New Page Template'})}</h1>
-          <div className="space-x-2">
+          <div className="space-x-2 flex items-center">
+            {hasUnsavedDraft && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CloudOff className="h-5 w-5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('pageTemplateEditor.unsavedDraftTooltip')}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.updatePreview')}</Button>
             <Button onClick={handleSaveTemplate}><Save className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.saveTemplate')}</Button>
           </div>

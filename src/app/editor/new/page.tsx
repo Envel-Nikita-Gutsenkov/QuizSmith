@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType } from '@/lib/types';
@@ -17,11 +17,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates';
 import { useSearchParams } from 'next/navigation';
-import Image from 'next/image'; // Next.js Image component
+import Image from 'next/image';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-const quizLogicScript = `
+const quizLogicScript = \`
 document.addEventListener('DOMContentLoaded', () => {
   const questionsDataElement = document.getElementById('quiz-data');
   const endMessageElement = document.getElementById('quiz-end-message-text');
@@ -57,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!quizContainer || !questionHost || !questionTemplateElement) { 
     if (questionHost) questionHost.innerHTML = '<p>Error: Page template structure incomplete. Missing .quiz-container, #quiz-content-host, or [data-quiz-question-id="q_template_id"].</p>'; return; 
   }
-  questionTemplateElement.style.display = 'none'; // Keep it as a template, don't remove
+  questionTemplateElement.style.display = 'none';
   
   let currentQuestionIndex = 0; 
   let score = 0; 
@@ -93,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (feedbackEl) { feedbackEl.style.display = 'none'; feedbackEl.className = 'feedback-message mt-6 text-center font-medium text-lg'; }
 
     if (optionsContainerEl) {
-      optionsContainerEl.innerHTML = ''; // Clear previous options
+      optionsContainerEl.innerHTML = ''; 
       
       if (question.type === 'multiple-choice-text' || question.type === 'multiple-choice-image') {
         const optionTemplateEl = questionTemplateElement.querySelector('[data-quiz-answer-option]');
@@ -125,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const targetContainer = document.createElement('div');
         targetContainer.className = 'matching-targets grid grid-cols-2 gap-3';
-        // Shuffle targets for display (simple shuffle)
         const shuffledTargets = [...question.matchPairs].sort(() => 0.5 - Math.random()); 
         shuffledTargets.forEach(pair => {
           const btn = document.createElement('button');
@@ -241,7 +242,15 @@ document.addEventListener('DOMContentLoaded', () => {
   
   questions.length > 0 ? displayQuestion(currentQuestionIndex) : (questionHost.innerHTML = '<p>No questions added.</p>');
 });
-`;
+\`;
+
+interface TestDraft {
+  name: string;
+  questions: Question[];
+  htmlContent: string;
+  cssContent: string;
+  quizEndMessage: string;
+}
 
 function NewTestEditorPageContent() {
   const { t } = useLanguage();
@@ -255,7 +264,32 @@ function NewTestEditorPageContent() {
   const [quizEndMessage, setQuizEndMessage] = useState('');
   const [previewContent, setPreviewContent] = useState('');
 
+  const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
+  const localStorageKey = 'quizsmith-test-draft-new';
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+
+  // Load from localStorage or template on mount
   useEffect(() => {
+    const savedDraft = localStorage.getItem(localStorageKey);
+    if (savedDraft) {
+      try {
+        const draft: TestDraft = JSON.parse(savedDraft);
+        setTestName(draft.name);
+        setQuestions(draft.questions);
+        setHtmlContent(draft.htmlContent);
+        setCssContent(draft.cssContent);
+        setQuizEndMessage(draft.quizEndMessage);
+        setHasUnsavedDraft(true);
+        toast({ title: "Draft Restored", description: "Your unsaved new test draft has been loaded." });
+        setIsInitialLoad(false);
+        return; // Exit if draft loaded
+      } catch (e) {
+        console.error("Failed to parse test draft from localStorage", e);
+        localStorage.removeItem(localStorageKey); // Clear corrupted draft
+      }
+    }
+
     const templateId = searchParams.get('template') || DEFAULT_TEMPLATE_ID;
     const selectedTemplate = pageTemplates.find(pt => pt.id === templateId);
 
@@ -268,22 +302,42 @@ function NewTestEditorPageContent() {
         setTestName(t('editor.defaultTestName', {defaultValue: 'My Awesome Quiz'}));
       }
     } else {
-      // Fallback to default blank if template not found
       const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
       setHtmlContent(defaultTemplate.htmlContent);
       setCssContent(defaultTemplate.cssContent);
       setTestName(t('editor.defaultTestName', {defaultValue: 'My Awesome Quiz'}));
       if (templateId) {
         toast({
-            title: t('editor.toast.templateNotFoundTitle', {defaultValue: 'Page Template Not Found'}),
-            description: t('editor.toast.templateNotFoundDescription', {templateId, defaultValue: `The page template "${templateId}" was not found. Loaded default blank canvas.`}),
+            title: t('editor.toast.templateNotFoundTitle', {defaultValue: 'Page Style Template Not Found'}),
+            description: t('editor.toast.templateNotFoundDescription', {templateId, defaultValue: `The page style template "${templateId}" was not found. Loaded default blank canvas.`}),
             variant: "destructive",
         });
       }
     }
     setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: 'Congratulations! Score: {{score}}/{{total}}.'}));
+    setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, t]);
+  }, [searchParams, t, toast]);
+
+  // Save to localStorage on change (debounced)
+  useEffect(() => {
+    if (isInitialLoad) return;
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    const timer = setTimeout(() => {
+      const draft: TestDraft = { name: testName, questions, htmlContent, cssContent, quizEndMessage };
+      localStorage.setItem(localStorageKey, JSON.stringify(draft));
+      setHasUnsavedDraft(true);
+      // console.log("New test draft saved to localStorage");
+    }, 1000);
+    setDebounceTimer(timer);
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [testName, questions, htmlContent, cssContent, quizEndMessage, isInitialLoad]);
 
 
   const updatePreview = useCallback(() => {
@@ -300,27 +354,27 @@ function NewTestEditorPageContent() {
     
     const finalHtmlBody = doc.body.innerHTML;
     
-    const stylingVariables = `
+    const stylingVariables = \`
       :root {
-        --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
-        --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
-        --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
-        --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
-        --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
-        --primary-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
-        --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
-        --accent: ${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
-        --accent-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
-        --destructive: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
-        --destructive-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
-        --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
-        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
-        --success-bg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-bg').trim()};
-        --success-fg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-fg').trim()};
-        --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
+        --background: \${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
+        --foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
+        --card: \${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
+        --card-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
+        --primary: \${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
+        --primary-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
+        --secondary: \${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
+        --accent: \${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
+        --accent-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
+        --destructive: \${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
+        --destructive-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
+        --border: \${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
+        --font-geist-sans: \${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
+        --success-bg: \${getComputedStyle(document.documentElement).getPropertyValue('--success-bg').trim()};
+        --success-fg: \${getComputedStyle(document.documentElement).getPropertyValue('--success-fg').trim()};
+        --success-border: \${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
       }
-    `;
-    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"></script><style>${stylingVariables}${cssContent}</style></head><body>${finalHtmlBody}<script>${quizLogicScript}<\/script></body></html>`);
+    \`;
+    setPreviewContent(\`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>\${stylingVariables}\${cssContent}</style></head><body>\${finalHtmlBody}<script>\${quizLogicScript}<\/script></body></html>\`);
   }, [htmlContent, cssContent, testName, questions, quizEndMessage, t]);
 
   useEffect(() => { updatePreview(); }, [updatePreview]);
@@ -425,6 +479,8 @@ function NewTestEditorPageContent() {
     const testData = { testName, questions, htmlContent, cssContent, quizEndMessage, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     console.log("Saving test data:", JSON.stringify(testData, null, 2));
     toast({ title: t('editor.toast.saveSuccessTitle', {defaultValue: "Test Data Logged"}), description: t('editor.toast.saveSuccessDescription', {defaultValue: "Test config logged to console."}) });
+    localStorage.removeItem(localStorageKey);
+    setHasUnsavedDraft(false);
   };
   
   const handleFullScreenPreview = () => {
@@ -466,6 +522,16 @@ function NewTestEditorPageContent() {
              {t(pageTitleKeyToUse, { testNameOrId: testName || '...' })}
           </h1>
           <div className="space-x-2 flex-shrink-0 flex items-center">
+            {hasUnsavedDraft && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CloudOff className="h-5 w-5 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{t('editor.unsavedDraftTooltip')}</p>
+                  </TooltipContent>
+                </Tooltip>
+            )}
             <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('editor.refreshPreview', {defaultValue: 'Refresh Preview'})}</Button>
             <Button variant="outline" onClick={handleFullScreenPreview}><ExternalLink className="mr-2 h-4 w-4" /> {t('editor.fullScreenPreview', {defaultValue: 'Full Screen'})}</Button>
             <Button onClick={handleSaveTest}><Save className="mr-2 h-4 w-4" /> {t('editor.saveTest', {defaultValue: 'Save Test'})}</Button>
@@ -567,7 +633,6 @@ function NewTestEditorPageContent() {
                           <Textarea id={`q-text-${question.id}`} value={question.text} onChange={(e) => handleUpdateQuestion(question.id, 'text', e.target.value)} placeholder={t('editor.questions.questionTextPlaceholder', {defaultValue: 'Enter question text'})} className="mt-1" rows={2}/>
                         </div>
                         
-                        {/* Multiple Choice Options UI */}
                         {(question.type === 'multiple-choice-text' || question.type === 'multiple-choice-image') && (
                           <>
                             <p className="text-sm font-medium">{t('editor.questions.optionsLabel', {defaultValue: 'Options:'})}</p>
@@ -594,7 +659,6 @@ function NewTestEditorPageContent() {
                           </>
                         )}
 
-                        {/* Matching Pairs UI */}
                         {question.type === 'matching-text-text' && (
                             <>
                                 <p className="text-sm font-medium">{t('editor.questions.matchingPairsLabel', {defaultValue: 'Matching Pairs:'})}</p>
@@ -611,7 +675,6 @@ function NewTestEditorPageContent() {
                             </>
                         )}
                         
-                        {/* Drag and Drop UI */}
                         {question.type === 'drag-and-drop-text-text' && (
                             <>
                                 <p className="text-sm font-medium">{t('editor.questions.dragItemsLabel', {defaultValue: 'Draggable Items:'})}</p>
@@ -659,4 +722,3 @@ export default function NewTestEditorPage() {
     </Suspense>
   );
 }
-

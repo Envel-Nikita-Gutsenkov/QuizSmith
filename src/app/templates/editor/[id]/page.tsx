@@ -8,12 +8,20 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, Layers, Palette } from 'lucide-react';
+import { Save, Eye, Layers, Palette, CloudOff } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useParams } from 'next/navigation';
 import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates';
-import { useToast } from '@/hooks/use-toast'; // Added for not found toast
+import { useToast } from '@/hooks/use-toast';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+
+interface PageTemplateDraft {
+  name: string;
+  description: string;
+  htmlContent: string;
+  cssContent: string;
+}
 
 function EditPageTemplateEditorPageContent() {
   const { t } = useLanguage();
@@ -27,32 +35,84 @@ function EditPageTemplateEditorPageContent() {
   const [cssContent, setCssContent] = useState('');
   const [previewContent, setPreviewContent] = useState('');
   
+  const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
+  const localStorageKey = `quizsmith-template-draft-${templateId}`;
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+
   const pageTitleKey = "pageTemplateEditor.edit.pageTitle"; 
 
+  // Load from localStorage or mock templates on mount
   useEffect(() => {
-    const selectedTemplate = pageTemplates.find(pt => pt.id === templateId);
-    if (selectedTemplate) {
-      setTemplateName(selectedTemplate.name);
-      setTemplateDescription(selectedTemplate.description || '');
-      setHtmlContent(selectedTemplate.htmlContent);
-      setCssContent(selectedTemplate.cssContent);
+    if (!templateId || templateId === 'unknown') {
+        // Handle unknown template ID case - perhaps redirect or show error
+        const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
+        setTemplateName(t('pageTemplateEditor.details.loadedNamePlaceholder', { templateId: 'default', defaultValue: `Default Blank Template` }));
+        setTemplateDescription(defaultTemplate.description || '');
+        setHtmlContent(defaultTemplate.htmlContent);
+        setCssContent(defaultTemplate.cssContent);
+        toast({ title: "Error", description: "Template ID not found. Loaded default.", variant: "destructive" });
+        setIsInitialLoad(false);
+        return;
+    }
+
+    const savedDraft = localStorage.getItem(localStorageKey);
+    if (savedDraft) {
+      try {
+        const draft: PageTemplateDraft = JSON.parse(savedDraft);
+        setTemplateName(draft.name);
+        setTemplateDescription(draft.description);
+        setHtmlContent(draft.htmlContent);
+        setCssContent(draft.cssContent);
+        setHasUnsavedDraft(true);
+        toast({ title: t('pageTemplateEditor.toast.draftRestoredTitle', {defaultValue: "Draft Restored"}), description: t('pageTemplateEditor.toast.draftRestoredDescriptionExisting', {templateName: draft.name, defaultValue: `Unsaved draft for template "${draft.name}" loaded.`}) });
+      } catch (e) {
+        console.error("Failed to parse template draft from localStorage", e);
+        localStorage.removeItem(localStorageKey); // Clear corrupted draft
+      }
     } else {
-      // Fallback to default blank if template not found
-      const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
-      setTemplateName(t('pageTemplateEditor.details.loadedNamePlaceholder', { templateId: 'default', defaultValue: `Default Blank Template` }));
-      setTemplateDescription(defaultTemplate.description || '');
-      setHtmlContent(defaultTemplate.htmlContent);
-      setCssContent(defaultTemplate.cssContent);
-      if (templateId && templateId !== 'unknown') {
-         toast({
+      const selectedTemplate = pageTemplates.find(pt => pt.id === templateId);
+      if (selectedTemplate) {
+        setTemplateName(selectedTemplate.name);
+        setTemplateDescription(selectedTemplate.description || '');
+        setHtmlContent(selectedTemplate.htmlContent);
+        setCssContent(selectedTemplate.cssContent);
+      } else {
+        const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
+        setTemplateName(t('pageTemplateEditor.details.loadedNamePlaceholder', { templateId: 'default', defaultValue: `Default Blank Template` }));
+        setTemplateDescription(defaultTemplate.description || '');
+        setHtmlContent(defaultTemplate.htmlContent);
+        setCssContent(defaultTemplate.cssContent);
+        toast({
             title: t('editor.toast.templateNotFoundTitle', {defaultValue: 'Page Template Not Found'}),
             description: t('editor.toast.templateNotFoundDescription', {templateId, defaultValue: `The page template "${templateId}" was not found. Loaded default blank canvas.`}),
             variant: "destructive",
         });
       }
     }
+    setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [templateId, t]);
+  }, [templateId, t, toast, localStorageKey]);
+
+  // Save to localStorage on change (debounced)
+  useEffect(() => {
+    if (isInitialLoad || !templateId || templateId === 'unknown') return;
+
+    if (debounceTimer) clearTimeout(debounceTimer);
+
+    const timer = setTimeout(() => {
+      const draft: PageTemplateDraft = { name: templateName, description: templateDescription, htmlContent, cssContent };
+      localStorage.setItem(localStorageKey, JSON.stringify(draft));
+      setHasUnsavedDraft(true);
+      // console.log(`Template draft ${templateId} saved to localStorage`);
+    }, 1000);
+    setDebounceTimer(timer);
+
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateName, templateDescription, htmlContent, cssContent, isInitialLoad, localStorageKey]);
 
 
   const updatePreview = useCallback(() => {
@@ -101,7 +161,11 @@ function EditPageTemplateEditorPageContent() {
 
   const handleSaveTemplate = () => {
     console.log("Saving page template:", { templateId, templateName, templateDescription, htmlContent, cssContent });
-    toast({ title: "Page Template Saved (Mock)", description: `Page Template ${templateName} data logged to console.` });
+    toast({ title: t('pageTemplateEditor.toast.saveSuccessTitleExisting', {defaultValue: "Page Template Saved (Mock)"}), description: t('pageTemplateEditor.toast.saveSuccessDescriptionExisting', {templateName: templateName, defaultValue: `Page Template ${templateName} data logged to console.`}) });
+    if (templateId && templateId !== 'unknown') {
+      localStorage.removeItem(localStorageKey);
+    }
+    setHasUnsavedDraft(false);
   };
 
   return (
@@ -109,7 +173,17 @@ function EditPageTemplateEditorPageContent() {
       <div className="flex flex-col h-full">
          <header className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-semibold">{t(pageTitleKey, { templateIdOrName: templateName || templateId, defaultValue: `Edit Page Template: ${templateName || templateId}` })}</h1>
-          <div className="space-x-2">
+          <div className="space-x-2 flex items-center">
+            {hasUnsavedDraft && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <CloudOff className="h-5 w-5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('pageTemplateEditor.unsavedDraftTooltip')}</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
             <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.updatePreview')}</Button>
             <Button onClick={handleSaveTemplate}><Save className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.saveTemplate')}</Button>
           </div>
@@ -154,6 +228,9 @@ function EditPageTemplateEditorPageContent() {
                   className="mt-1 font-mono text-xs min-h-[250px] resize-y"
                   rows={12}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t('pageTemplateEditor.details.htmlHint')}
+                </p>
               </div>
               <div>
                 <Label htmlFor="cssContent" className="text-sm font-medium flex items-center"><Palette className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.details.cssLabel')}</Label>
@@ -165,6 +242,9 @@ function EditPageTemplateEditorPageContent() {
                   className="mt-1 font-mono text-xs min-h-[250px] resize-y"
                   rows={12}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                   {t('pageTemplateEditor.details.cssHint')}
+                </p>
               </div>
             </CardContent>
           </Card>
