@@ -36,7 +36,6 @@ const translations: Translations = {
     'nav.settings': 'Settings',
     'nav.adminPanel': 'Admin Panel',
     'nav.createNew': 'Create New',
-    // 'nav.explorePageTemplates': 'Explore Page Templates', // Kept for reference, but page title key is more specific
 
     'dashboard.pageTitle': 'Dashboard',
     'dashboard.myTests.heading': 'My Tests',
@@ -64,8 +63,8 @@ const translations: Translations = {
     'myTests.statusLabel': 'Status',
     'myTests.lastModifiedLabel': 'Last modified',
 
-    'myPageTemplates.pageTitle': 'My Templates', // Changed from "My Page Templates"
-    'myPageTemplates.create': 'Create New Template', // Changed
+    'myPageTemplates.pageTitle': 'My Templates',
+    'myPageTemplates.create': 'Create New Template',
     'myPageTemplates.noPageTemplates.title': "You haven't created any templates yet.",
     'myPageTemplates.noPageTemplates.description': 'Page templates help you build quizzes faster with consistent page designs.',
     'myPageTemplates.noPageTemplates.button': 'Create Your First Template',
@@ -175,11 +174,11 @@ const translations: Translations = {
     'pageTemplateEditor.toast.loadErrorDescription': 'Could not load template "{{templateId}}". Loaded default blank canvas.',
 
 
-    'pageTemplates.explore.pageTitle': 'Explore Templates', // Changed from "Explore Page Style Templates"
+    'pageTemplates.explore.pageTitle': 'Explore Templates',
     'pageTemplates.explore.createButton': 'Create New Template',
     'pageTemplates.explore.useThisTemplate': 'Use This Template',
     'pageTemplates.explore.preview': 'Edit Page Style',
-    'pageTemplates.explore.duplicate': 'Duplicate', // New Key
+    'pageTemplates.explore.duplicate': 'Duplicate',
     'pageTemplates.explore.noTemplates.title': 'No Page Templates Available Yet',
     'pageTemplates.explore.noTemplates.description': 'Be the first to create a stunning page template for QuizSmith!',
     'pageTemplates.explore.noTemplates.button': 'Create Your First Page Template',
@@ -220,6 +219,14 @@ const translations: Translations = {
     'adminPanel.logs.description': 'View system and application logs. (Placeholder UI)',
     'adminPanel.logs.placeholder': 'Log entries would appear here...\n[INFO] 2023-10-27 10:00:00 - Application started.\n[WARN] 2023-10-27 10:05:23 - User login attempt failed.\n...',
     'adminPanel.logs.refreshButton': 'Refresh Logs',
+    'adminPanel.testVersionManagement.title': 'Test Version Management',
+    'adminPanel.testVersionManagement.description': 'Review and revert tests to their previous saved states. (Placeholder UI)',
+    'adminPanel.testVersionManagement.currentVersion': 'Version {{version}} (Current)',
+    'adminPanel.testVersionManagement.previousVersion': 'Version {{version}}',
+    'adminPanel.testVersionManagement.rollbackButton': 'Rollback to this Version',
+    'adminPanel.testVersionManagement.testNameLabel': 'Test: {{testName}}',
+    'adminPanel.testVersionManagement.savedDateLabel': 'Saved: {{date}}',
+
 
     'questionType.multiple-choice-text': 'Multiple Choice (Text)',
     'questionType.multiple-choice-image': 'Multiple Choice (Image)',
@@ -254,7 +261,6 @@ const translations: Translations = {
     'nav.settings': 'Настройки',
     'nav.adminPanel': 'Панель администратора',
     'nav.createNew': 'Создать',
-    // 'nav.explorePageTemplates': 'Обзор шаблонов страниц',
 
     'dashboard.pageTitle': 'Панель',
     'dashboard.myTests.heading': 'Мои тесты',
@@ -281,8 +287,8 @@ const translations: Translations = {
     'myTests.statusLabel': 'Статус',
     'myTests.lastModifiedLabel': 'Последнее изменение',
 
-    'myPageTemplates.pageTitle': 'Мои шаблоны', // Changed
-    'myPageTemplates.create': 'Создать новый шаблон', // Changed
+    'myPageTemplates.pageTitle': 'Мои шаблоны',
+    'myPageTemplates.create': 'Создать новый шаблон',
     'myPageTemplates.noPageTemplates.title': 'Вы еще не создали ни одного шаблона.',
     'myPageTemplates.noPageTemplates.description': 'Шаблоны страниц помогут вам быстрее создавать викторины с единым дизайном страниц.',
     'myPageTemplates.noPageTemplates.button': 'Создать свой первый шаблон',
@@ -391,11 +397,11 @@ const translations: Translations = {
     'pageTemplateEditor.toast.loadErrorTitle': 'Ошибка загрузки',
     'pageTemplateEditor.toast.loadErrorDescription': 'Не удалось загрузить шаблон "{{templateId}}". Загружен пустой шаблон по умолчанию.',
 
-    'pageTemplates.explore.pageTitle': 'Обзор шаблонов', // Changed
+    'pageTemplates.explore.pageTitle': 'Обзор шаблонов',
     'pageTemplates.explore.createButton': 'Создать новый шаблон',
     'pageTemplates.explore.useThisTemplate': 'Использовать этот шаблон',
     'pageTemplates.explore.preview': 'Редактировать стиль страницы',
-    'pageTemplates.explore.duplicate': 'Дублировать', // New Key
+    'pageTemplates.explore.duplicate': 'Дублировать',
     'pageTemplates.explore.noTemplates.title': 'Доступных шаблонов страниц пока нет',
     'pageTemplates.explore.noTemplates.description': 'Станьте первым, кто создаст потрясающий шаблон страницы для QuizSmith!',
     'pageTemplates.explore.noTemplates.button': 'Создать свой первый шаблон страницы',
@@ -436,6 +442,13 @@ const translations: Translations = {
     'adminPanel.logs.description': 'Просмотр системных и прикладных логов. (Заглушка интерфейса)',
     'adminPanel.logs.placeholder': 'Записи логов будут отображаться здесь...\n[ИНФО] 2023-10-27 10:00:00 - Приложение запущено.\n[ПРЕДУПР.] 2023-10-27 10:05:23 - Неудачная попытка входа пользователя.\n...',
     'adminPanel.logs.refreshButton': 'Обновить логи',
+    'adminPanel.testVersionManagement.title': 'Управление версиями тестов',
+    'adminPanel.testVersionManagement.description': 'Просмотр и откат тестов к предыдущим сохраненным состояниям. (Заглушка интерфейса)',
+    'adminPanel.testVersionManagement.currentVersion': 'Версия {{version}} (Текущая)',
+    'adminPanel.testVersionManagement.previousVersion': 'Версия {{version}}',
+    'adminPanel.testVersionManagement.rollbackButton': 'Откатить к этой версии',
+    'adminPanel.testVersionManagement.testNameLabel': 'Тест: {{testName}}',
+    'adminPanel.testVersionManagement.savedDateLabel': 'Сохранено: {{date}}',
 
     'questionType.multiple-choice-text': 'Один из многих (Текст)',
     'questionType.multiple-choice-image': 'Один из многих (Изображение)',

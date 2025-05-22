@@ -168,10 +168,7 @@ function NewPageTemplateEditorPageContent() {
                   rows={12}
                 />
                  <p className="text-xs text-muted-foreground mt-1">
-                  You can include &lt;script&gt; tags here for template-specific JavaScript and animations.
-                  Ensure your HTML includes key placeholders like <code>&lt;div id="quiz-content-host"&gt;&lt;/div&gt;</code> 
-                  and a question template block like <code>&lt;div data-quiz-question-id="q_template_id"&gt;...&lt;/div&gt;</code> 
-                  for the quiz logic to function.
+                  {t('pageTemplateEditor.details.htmlHint')}
                 </p>
               </div>
               <div>
@@ -185,7 +182,7 @@ function NewPageTemplateEditorPageContent() {
                   rows={12}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Define your CSS animations and styles here. These will be applied to your HTML structure.
+                   {t('pageTemplateEditor.details.cssHint')}
                 </p>
               </div>
             </CardContent>
@@ -218,4 +215,3 @@ export default function NewPageTemplateEditorPage() {
     </Suspense>
   );
 }
-
