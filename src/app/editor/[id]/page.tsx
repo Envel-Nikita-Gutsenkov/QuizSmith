@@ -23,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-const quizLogicScript = \`
+const quizLogicScript = `
 document.addEventListener('DOMContentLoaded', () => {
   const questionsDataElement = document.getElementById('quiz-data');
   const endMessageElement = document.getElementById('quiz-end-message-text');
@@ -267,7 +267,7 @@ function EditTestEditorPageContent() {
   const [previewContent, setPreviewContent] = useState('');
 
   const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
-  const localStorageKey = `quizsmith-test-draft-${testId}`;
+  const localStorageKey = \`quizsmith-test-draft-\${testId}\`;
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
@@ -275,7 +275,6 @@ function EditTestEditorPageContent() {
   // Load from localStorage or set defaults on mount
   useEffect(() => {
     if (!testId || testId === 'unknown') {
-      // Handle unknown test ID, maybe redirect or show error
       toast({ title: "Error", description: "Test ID not found.", variant: "destructive"});
       setIsInitialLoad(false);
       return;
@@ -291,20 +290,20 @@ function EditTestEditorPageContent() {
         setCssContent(draft.cssContent);
         setQuizEndMessage(draft.quizEndMessage);
         setHasUnsavedDraft(true);
-        toast({ title: "Draft Restored", description: `Unsaved draft for test "${draft.name}" loaded.` });
+        const draftDescriptionDefault = \`Unsaved draft for test "\${draft.name}" loaded.\`;
+        toast({ title: t('editor.toast.draftRestoredTitle', {defaultValue: "Draft Restored"}), description: t('editor.toast.draftRestoredDescriptionExisting', { testName: draft.name, defaultValue: draftDescriptionDefault }) });
       } catch (e) {
         console.error("Failed to parse test draft from localStorage", e);
-        localStorage.removeItem(localStorageKey); // Clear corrupted draft
+        localStorage.removeItem(localStorageKey); 
       }
     } else {
-      // Simulate loading data for an existing test if no draft
-      // In a real app, this would be an API call
-      setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: `Test ${testId}` }));
+      const defaultTestNameValue = "Test " + testId;
+      setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: defaultTestNameValue }));
       const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
       setHtmlContent(defaultTemplate.htmlContent);
       setCssContent(defaultTemplate.cssContent);
       setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: 'Congratulations! Score: {{score}}/{{total}}.'}));
-      setQuestions([]); // Start with no questions if loading "existing" test for first time
+      setQuestions([]); 
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -320,7 +319,6 @@ function EditTestEditorPageContent() {
       const draft: TestDraft = { name: testName, questions, htmlContent, cssContent, quizEndMessage };
       localStorage.setItem(localStorageKey, JSON.stringify(draft));
       setHasUnsavedDraft(true);
-      // console.log(`Test draft ${testId} saved to localStorage`);
     }, 1000);
     setDebounceTimer(timer);
 
@@ -373,7 +371,7 @@ function EditTestEditorPageContent() {
   const handleAddQuestion = () => {
     const newQuestion: Question = {
       id: generateId(), type: 'multiple-choice-text',
-      text: t('editor.newQuestionText', {number: questions.length + 1, defaultValue: `New Question ${questions.length + 1}`}),
+      text: t('editor.newQuestionText', {number: questions.length + 1, defaultValue: "New Question " + (questions.length + 1)}),
       options: [
         { id: generateId(), text: t('editor.optionPlaceholder', {letter: 'A'}), isCorrect: false },
         { id: generateId(), text: t('editor.optionPlaceholder', {letter: 'B'}), isCorrect: false },
@@ -401,7 +399,7 @@ function EditTestEditorPageContent() {
   
   const handleAddOption = (questionId: string) => {
     setQuestions(prev => prev.map(q => q.id === questionId ? {
-      ...q, options: [...q.options, { id: generateId(), text: t('editor.newOptionText', {number: q.options.length + 1}), isCorrect: false, imageUrl: '' }]
+      ...q, options: [...q.options, { id: generateId(), text: t('editor.newOptionText', {number: q.options.length + 1, defaultValue: "New Option " + (q.options.length + 1)}), isCorrect: false, imageUrl: '' }]
     } : q));
   };
 
@@ -464,7 +462,8 @@ function EditTestEditorPageContent() {
   const handleSaveTest = () => {
     const testData = { testId, testName, questions, htmlContent, cssContent, quizEndMessage, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     console.log("Saving test data (existing):", JSON.stringify(testData, null, 2));
-    toast({ title: t('editor.toast.saveSuccessTitleExisting', {defaultValue: "Existing Test Data Logged"}), description: t('editor.toast.saveSuccessDescriptionExisting', {testId: testId, defaultValue: `Test ${testId} config logged to console.`}) });
+    const saveSuccessDescriptionDefault = \`Test \${testId} config logged to console.\`;
+    toast({ title: t('editor.toast.saveSuccessTitleExisting', {defaultValue: "Existing Test Data Logged"}), description: t('editor.toast.saveSuccessDescriptionExisting', {testId: testId, defaultValue: saveSuccessDescriptionDefault}) });
     if (testId && testId !== 'unknown') {
       localStorage.removeItem(localStorageKey);
     }
@@ -483,7 +482,7 @@ function EditTestEditorPageContent() {
           variant: "destructive",
         });
       }
-      setTimeout(() => URL.revokeObjectURL(url), 100); // Clean up
+      setTimeout(() => URL.revokeObjectURL(url), 100); 
     }
   };
 
@@ -594,13 +593,13 @@ function EditTestEditorPageContent() {
                       <CardHeader>
                         <div className="flex justify-between items-start">
                            <div className="flex-grow">
-                            <CardTitle className="text-lg mb-2">{t('editor.questions.questionLabel', {number: qIndex+1, defaultValue: `Question ${qIndex + 1}`})}</CardTitle>
-                            <Label htmlFor={`q-type-${question.id}`}>{t('editor.questions.questionTypeLabel', {defaultValue: 'Question Type'})}</Label>
+                            <CardTitle className="text-lg mb-2">{t('editor.questions.questionLabel', {number: qIndex+1, defaultValue: "Question " + (qIndex + 1)})}</CardTitle>
+                            <Label htmlFor={`q-type-\${question.id}`}>{t('editor.questions.questionTypeLabel', {defaultValue: 'Question Type'})}</Label>
                             <Select
                                 value={question.type}
                                 onValueChange={(value) => handleUpdateQuestion(question.id, 'type', value as QuestionType)}
                             >
-                                <SelectTrigger id={`q-type-${question.id}`} className="mt-1">
+                                <SelectTrigger id={`q-type-\${question.id}`} className="mt-1">
                                 <SelectValue placeholder={t('editor.questions.questionTypeLabel', {defaultValue: 'Select type'})} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -615,8 +614,8 @@ function EditTestEditorPageContent() {
                       </CardHeader>
                       <CardContent className="space-y-3">
                         <div>
-                          <Label htmlFor={`q-text-${question.id}`}>{t('editor.questions.questionTextLabel', {defaultValue: 'Question Text'})}</Label>
-                          <Textarea id={`q-text-${question.id}`} value={question.text} onChange={(e) => handleUpdateQuestion(question.id, 'text', e.target.value)} placeholder={t('editor.questions.questionTextPlaceholder', {defaultValue: 'Enter question text'})} className="mt-1" rows={2}/>
+                          <Label htmlFor={`q-text-\${question.id}`}>{t('editor.questions.questionTextLabel', {defaultValue: 'Question Text'})}</Label>
+                          <Textarea id={`q-text-\${question.id}`} value={question.text} onChange={(e) => handleUpdateQuestion(question.id, 'text', e.target.value)} placeholder={t('editor.questions.questionTextPlaceholder', {defaultValue: 'Enter question text'})} className="mt-1" rows={2}/>
                         </div>
                         
                         {(question.type === 'multiple-choice-text' || question.type === 'multiple-choice-image') && (
