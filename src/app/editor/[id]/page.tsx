@@ -290,7 +290,7 @@ function EditTestEditorPageContent() {
         setCssContent(draft.cssContent);
         setQuizEndMessage(draft.quizEndMessage);
         setHasUnsavedDraft(true);
-        const draftDescriptionDefault = \`Unsaved draft for test "\${draft.name}" loaded.\`;
+        const draftDescriptionDefault = "Unsaved draft for test \"" + draft.name + "\" loaded.";
         toast({ title: t('editor.toast.draftRestoredTitle', {defaultValue: "Draft Restored"}), description: t('editor.toast.draftRestoredDescriptionExisting', { testName: draft.name, defaultValue: draftDescriptionDefault }) });
       } catch (e) {
         console.error("Failed to parse test draft from localStorage", e);
@@ -307,7 +307,7 @@ function EditTestEditorPageContent() {
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId, t, toast, localStorageKey]);
+  }, [testId, t, toast]); // Removed localStorageKey from deps
 
   // Save to localStorage on change (debounced)
   useEffect(() => {
@@ -343,38 +343,41 @@ function EditTestEditorPageContent() {
     
     const finalHtmlBody = doc.body.innerHTML;
     
-    const stylingVariables = \`
+    const stylingVariables = `
       :root {
-        --background: \${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
-        --foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
-        --card: \${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
-        --card-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
-        --primary: \${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
-        --primary-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
-        --secondary: \${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
-        --accent: \${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
-        --accent-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
-        --destructive: \${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
-        --destructive-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
-        --border: \${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
-        --font-geist-sans: \${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
-        --success-bg: \${getComputedStyle(document.documentElement).getPropertyValue('--success-bg').trim()};
-        --success-fg: \${getComputedStyle(document.documentElement).getPropertyValue('--success-fg').trim()};
-        --success-border: \${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
+        --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
+        --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
+        --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
+        --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
+        --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
+        --primary-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
+        --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
+        --accent: ${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
+        --accent-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
+        --destructive: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
+        --destructive-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
+        --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
+        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
+        --success-bg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-bg').trim()};
+        --success-fg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-fg').trim()};
+        --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
       }
-    \`;
+    `;
     setPreviewContent(\`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>\${stylingVariables}\${cssContent}</style></head><body>\${finalHtmlBody}<script>\${quizLogicScript}<\/script></body></html>\`);
   }, [htmlContent, cssContent, testName, questions, quizEndMessage, t]);
 
   useEffect(() => { updatePreview(); }, [updatePreview]);
 
   const handleAddQuestion = () => {
+    const newQuestionTextDefault = "New Question " + (questions.length + 1);
+    const optionADefault = "Option A";
+    const optionBDefault = "Option B";
     const newQuestion: Question = {
       id: generateId(), type: 'multiple-choice-text',
-      text: t('editor.newQuestionText', {number: questions.length + 1, defaultValue: "New Question " + (questions.length + 1)}),
+      text: t('editor.newQuestionText', {number: questions.length + 1, defaultValue: newQuestionTextDefault}),
       options: [
-        { id: generateId(), text: t('editor.optionPlaceholder', {letter: 'A'}), isCorrect: false },
-        { id: generateId(), text: t('editor.optionPlaceholder', {letter: 'B'}), isCorrect: false },
+        { id: generateId(), text: t('editor.optionPlaceholder', {letter: 'A', defaultValue: optionADefault}), isCorrect: false },
+        { id: generateId(), text: t('editor.optionPlaceholder', {letter: 'B', defaultValue: optionBDefault}), isCorrect: false },
       ],
       matchPairs: [], dragItems: [], dropTargets: [],
     };
@@ -398,8 +401,9 @@ function EditTestEditorPageContent() {
   };
   
   const handleAddOption = (questionId: string) => {
+    const newOptionTextDefault = "New Option " + (questions.find(q => q.id === questionId)?.options.length || 0 + 1);
     setQuestions(prev => prev.map(q => q.id === questionId ? {
-      ...q, options: [...q.options, { id: generateId(), text: t('editor.newOptionText', {number: q.options.length + 1, defaultValue: "New Option " + (q.options.length + 1)}), isCorrect: false, imageUrl: '' }]
+      ...q, options: [...q.options, { id: generateId(), text: t('editor.newOptionText', {number: q.options.length + 1, defaultValue: newOptionTextDefault}), isCorrect: false, imageUrl: '' }]
     } : q));
   };
 
@@ -462,7 +466,7 @@ function EditTestEditorPageContent() {
   const handleSaveTest = () => {
     const testData = { testId, testName, questions, htmlContent, cssContent, quizEndMessage, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     console.log("Saving test data (existing):", JSON.stringify(testData, null, 2));
-    const saveSuccessDescriptionDefault = \`Test \${testId} config logged to console.\`;
+    const saveSuccessDescriptionDefault = "Test " + testId + " config logged to console.";
     toast({ title: t('editor.toast.saveSuccessTitleExisting', {defaultValue: "Existing Test Data Logged"}), description: t('editor.toast.saveSuccessDescriptionExisting', {testId: testId, defaultValue: saveSuccessDescriptionDefault}) });
     if (testId && testId !== 'unknown') {
       localStorage.removeItem(localStorageKey);

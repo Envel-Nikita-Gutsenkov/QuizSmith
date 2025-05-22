@@ -310,7 +310,7 @@ function NewTestEditorPageContent() {
           setCssContent(defaultTemplate.cssContent);
           setTestName(t('editor.defaultTestName', {defaultValue: 'My Awesome Quiz'}));
           if (templateId) {
-            const descriptionDefaultValue = `The page style template "${templateId}" was not found. Loaded default blank canvas.`;
+            const descriptionDefaultValue = 'The page style template "' + templateId + '" was not found. Loaded default blank canvas.';
             toast({
                 title: t('editor.toast.templateNotFoundTitle', {defaultValue: 'Page Style Template Not Found'}),
                 description: t('editor.toast.templateNotFoundDescription', {templateId, defaultValue: descriptionDefaultValue}),
@@ -322,7 +322,7 @@ function NewTestEditorPageContent() {
     }
     setIsInitialLoad(false); 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, t, toast, isInitialLoad]);
+  }, [searchParams, t, toast, isInitialLoad]); 
 
   // Save to localStorage on change (debounced)
   useEffect(() => {
@@ -341,7 +341,7 @@ function NewTestEditorPageContent() {
       if (timer) clearTimeout(timer);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testName, questions, htmlContent, cssContent, quizEndMessage, isInitialLoad]);
+  }, [testName, questions, htmlContent, cssContent, quizEndMessage, isInitialLoad]); 
 
 
   const updatePreview = useCallback(() => {
@@ -358,26 +358,26 @@ function NewTestEditorPageContent() {
     
     const finalHtmlBody = doc.body.innerHTML;
     
-    const stylingVariables = \`
+    const stylingVariables = `
       :root {
-        --background: \${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
-        --foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
-        --card: \${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
-        --card-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
-        --primary: \${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
-        --primary-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
-        --secondary: \${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
-        --accent: \${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
-        --accent-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
-        --destructive: \${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
-        --destructive-foreground: \${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
-        --border: \${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
-        --font-geist-sans: \${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
-        --success-bg: \${getComputedStyle(document.documentElement).getPropertyValue('--success-bg').trim()};
-        --success-fg: \${getComputedStyle(document.documentElement).getPropertyValue('--success-fg').trim()};
-        --success-border: \${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
+        --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
+        --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
+        --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
+        --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
+        --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
+        --primary-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
+        --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
+        --accent: ${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
+        --accent-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
+        --destructive: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
+        --destructive-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
+        --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
+        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
+        --success-bg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-bg').trim()};
+        --success-fg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-fg').trim()};
+        --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
       }
-    \`;
+    `;
     setPreviewContent(\`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>\${stylingVariables}\${cssContent}</style></head><body>\${finalHtmlBody}<script>\${quizLogicScript}<\/script></body></html>\`);
   }, [htmlContent, cssContent, testName, questions, quizEndMessage, t]);
 
@@ -385,13 +385,17 @@ function NewTestEditorPageContent() {
   
 
   const handleAddQuestion = () => {
+    const newQuestionTextDefault = "New Question " + (questions.length + 1);
+    const optionADefault = "Option A";
+    const optionBDefault = "Option B";
+
     const newQuestion: Question = {
       id: generateId(), 
       type: 'multiple-choice-text',
-      text: t('editor.newQuestionText', {number: questions.length + 1, defaultValue: "New Question " + (questions.length + 1)}),
+      text: t('editor.newQuestionText', {number: questions.length + 1, defaultValue: newQuestionTextDefault}),
       options: [
-        { id: generateId(), text: t('editor.optionPlaceholder', {letter: 'A', defaultValue: 'Option A'}), isCorrect: false },
-        { id: generateId(), text: t('editor.optionPlaceholder', {letter: 'B', defaultValue: 'Option B'}), isCorrect: false },
+        { id: generateId(), text: t('editor.optionPlaceholder', {letter: 'A', defaultValue: optionADefault}), isCorrect: false },
+        { id: generateId(), text: t('editor.optionPlaceholder', {letter: 'B', defaultValue: optionBDefault}), isCorrect: false },
       ],
       matchPairs: [],
       dragItems: [],
@@ -417,8 +421,9 @@ function NewTestEditorPageContent() {
   };
   
   const handleAddOption = (questionId: string) => {
+    const newOptionTextDefault = "New Option " + (questions.find(q => q.id === questionId)?.options.length || 0 + 1);
     setQuestions(prev => prev.map(q => q.id === questionId ? {
-      ...q, options: [...q.options, { id: generateId(), text: t('editor.newOptionText', {number: q.options.length + 1, defaultValue: "New Option " + (q.options.length + 1)}), isCorrect: false, imageUrl: '' }]
+      ...q, options: [...q.options, { id: generateId(), text: t('editor.newOptionText', {number: q.options.length + 1, defaultValue: newOptionTextDefault}), isCorrect: false, imageUrl: '' }]
     } : q));
   };
 
@@ -613,12 +618,12 @@ function NewTestEditorPageContent() {
                         <div className="flex justify-between items-start">
                           <div className="flex-grow">
                             <CardTitle className="text-lg mb-2">{t('editor.questions.questionLabel', {number: qIndex+1, defaultValue: "Question " + (qIndex + 1)})}</CardTitle>
-                            <Label htmlFor={`q-type-\${question.id}`}>{t('editor.questions.questionTypeLabel', {defaultValue: 'Question Type'})}</Label>
+                            <Label htmlFor={`q-type-${question.id}`}>{t('editor.questions.questionTypeLabel', {defaultValue: 'Question Type'})}</Label>
                             <Select
                                 value={question.type}
                                 onValueChange={(value) => handleUpdateQuestion(question.id, 'type', value as QuestionType)}
                             >
-                                <SelectTrigger id={`q-type-\${question.id}`} className="mt-1">
+                                <SelectTrigger id={`q-type-${question.id}`} className="mt-1">
                                 <SelectValue placeholder={t('editor.questions.questionTypeLabel', {defaultValue: 'Select type'})} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -633,8 +638,8 @@ function NewTestEditorPageContent() {
                       </CardHeader>
                       <CardContent className="space-y-3">
                         <div>
-                          <Label htmlFor={`q-text-\${question.id}`}>{t('editor.questions.questionTextLabel', {defaultValue: 'Question Text'})}</Label>
-                          <Textarea id={`q-text-\${question.id}`} value={question.text} onChange={(e) => handleUpdateQuestion(question.id, 'text', e.target.value)} placeholder={t('editor.questions.questionTextPlaceholder', {defaultValue: 'Enter question text'})} className="mt-1" rows={2}/>
+                          <Label htmlFor={`q-text-${question.id}`}>{t('editor.questions.questionTextLabel', {defaultValue: 'Question Text'})}</Label>
+                          <Textarea id={`q-text-${question.id}`} value={question.text} onChange={(e) => handleUpdateQuestion(question.id, 'text', e.target.value)} placeholder={t('editor.questions.questionTextPlaceholder', {defaultValue: 'Enter question text'})} className="mt-1" rows={2}/>
                         </div>
                         
                         {(question.type === 'multiple-choice-text' || question.type === 'multiple-choice-image') && (
