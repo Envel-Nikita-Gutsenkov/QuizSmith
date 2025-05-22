@@ -113,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
       } else if (question.type === 'matching-text-text') {
-        // Basic rendering for matching
         const promptContainer = document.createElement('div');
         promptContainer.className = 'matching-prompts mb-4 space-y-2';
         question.matchPairs.forEach(pair => {
@@ -132,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const btn = document.createElement('button');
           btn.className = 'option-button w-full text-left p-3 border rounded-md hover:bg-secondary';
           btn.textContent = pair.target;
-          btn.onclick = () => { /* Basic feedback for now */ 
+          btn.onclick = () => { 
             if (feedbackEl) {
                 feedbackEl.textContent = t('quiz.questionType.notImplemented'); 
                 feedbackEl.classList.add('show');
@@ -144,7 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
         optionsContainerEl.appendChild(targetContainer);
 
       } else if (question.type === 'drag-and-drop-text-text') {
-        // Basic rendering for D&D
          const dragItemsDiv = document.createElement('div');
          dragItemsDiv.className = 'drag-items-container mb-4 flex flex-wrap gap-3 justify-center';
          question.dragItems.forEach(item => {
@@ -161,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
            const el = document.createElement('div');
            el.className = 'p-6 border-2 border-dashed border-border rounded-md text-center text-muted-foreground';
            el.textContent = target.text || t('quiz.dragDrop.dropHere');
-            el.onclick = () => { /* Basic feedback for now */
+            el.onclick = () => { 
                 if (feedbackEl) {
                     feedbackEl.textContent = t('quiz.questionType.notImplemented');
                     feedbackEl.classList.add('show');
@@ -322,7 +320,7 @@ function NewTestEditorPageContent() {
         --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
       }
     `;
-    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${cssContent}</style></head><body>${finalHtmlBody}<script>${quizLogicScript}<\/script></body></html>`);
+    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"></script><style>${stylingVariables}${cssContent}</style></head><body>${finalHtmlBody}<script>${quizLogicScript}<\/script></body></html>`);
   }, [htmlContent, cssContent, testName, questions, quizEndMessage, t]);
 
   useEffect(() => { updatePreview(); }, [updatePreview]);
@@ -527,7 +525,7 @@ function NewTestEditorPageContent() {
             <CardHeader className="flex flex-row items-center justify-between">
               <div className="space-y-1.5">
                 <CardTitle className="flex items-center"><HelpCircle className="mr-2 h-5 w-5 text-primary" />{t('editor.questions.title', {defaultValue: 'Questions'})}</CardTitle>
-                <CardDescription>{t('editor.questions.description', {defaultValue: 'Add and manage questions.'})}</CardDescription>
+                <CardDescription>{t('editor.questions.description', {defaultValue: 'Add and manage your questions and answers.'})}</CardDescription>
               </div>
               <Button onClick={handleAddQuestion} size="sm"><PlusCircle className="mr-2 h-4 w-4" /> {t('editor.questions.addQuestion', {defaultValue: 'Add Question'})}</Button>
             </CardHeader>
@@ -661,3 +659,4 @@ export default function NewTestEditorPage() {
     </Suspense>
   );
 }
+

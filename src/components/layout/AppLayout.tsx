@@ -1,4 +1,3 @@
-
 'use client'; // Add this directive
 
 import type { ReactNode } from 'react';
@@ -19,6 +18,13 @@ import {
 import { Logo } from '@/components/icons/Logo';
 import { AppHeader } from './AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useState, useEffect } from 'react';
+
+interface NavItem {
+  href: string;
+  labelKey: string;
+  icon: JSX.Element;
+}
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -26,21 +32,33 @@ interface AppLayoutProps {
   currentPageTitleParams?: Record<string, string | number | undefined>; 
 }
 
+function TranslatedNavItemText({ labelKey }: { labelKey: string }) {
+  const { t, language } = useLanguage();
+  const [text, setText] = useState(labelKey); // Initial render with key or a placeholder
+
+  useEffect(() => {
+    setText(t(labelKey));
+  }, [t, labelKey, language]); // Re-run if language or t function changes
+
+  return <span>{text}</span>;
+}
+
+
 export function AppLayout({ children, currentPageTitleKey, currentPageTitleParams }: AppLayoutProps) {
   const { t } = useLanguage(); 
 
-  const mainNavItems = [
+  const mainNavItems: NavItem[] = [
     { href: '/dashboard', labelKey: 'nav.dashboard', icon: <Home /> },
     { href: '/dashboard/my-tests', labelKey: 'nav.myTests', icon: <FileText /> },
     { href: '/dashboard/my-templates', labelKey: 'nav.myTemplates', icon: <Layers /> },
   ];
 
-  const createNavItems = [
+  const createNavItems: NavItem[] = [
     { href: '/editor/new', labelKey: 'nav.newTest', icon: <PlusCircle /> },
     { href: '/templates/editor/new', labelKey: 'nav.newTemplate', icon: <PlusCircle /> },
   ];
 
-  const secondaryNavItems = [
+  const secondaryNavItems: NavItem[] = [
     { href: '/dashboard/settings', labelKey: 'nav.settings', icon: <Settings /> },
     { href: '/admin', labelKey: 'nav.adminPanel', icon: <Shield /> },
   ];
@@ -64,7 +82,7 @@ export function AppLayout({ children, currentPageTitleKey, currentPageTitleParam
                 <SidebarMenuButton asChild tooltip={t(item.labelKey)}>
                   <Link href={item.href}>
                     {item.icon}
-                    <span>{t(item.labelKey)}</span>
+                    <TranslatedNavItemText labelKey={item.labelKey} />
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -72,7 +90,7 @@ export function AppLayout({ children, currentPageTitleKey, currentPageTitleParam
           </SidebarMenu>
           
           <div className="mt-4 mb-2 px-2 text-xs font-semibold uppercase text-muted-foreground group-data-[collapsible=icon]:hidden">
-            {t('nav.createNew')}
+             <TranslatedNavItemText labelKey='nav.createNew' />
           </div>
           <SidebarMenu>
             {createNavItems.map((item) => (
@@ -80,7 +98,7 @@ export function AppLayout({ children, currentPageTitleKey, currentPageTitleParam
                 <SidebarMenuButton asChild tooltip={t(item.labelKey)}>
                   <Link href={item.href}>
                     {item.icon}
-                    <span>{t(item.labelKey)}</span>
+                    <TranslatedNavItemText labelKey={item.labelKey} />
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -94,7 +112,7 @@ export function AppLayout({ children, currentPageTitleKey, currentPageTitleParam
                 <SidebarMenuButton asChild tooltip={t(item.labelKey)}>
                   <Link href={item.href}>
                     {item.icon}
-                    <span>{t(item.labelKey)}</span>
+                    <TranslatedNavItemText labelKey={item.labelKey} />
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

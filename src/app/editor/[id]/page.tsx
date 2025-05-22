@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return text;
   };
-  const quizTranslations = { 
+  const quizTranslations = {  
     'quiz.feedback.correct': 'Correct!',
     'quiz.feedback.incorrect': 'Incorrect!',
     'quiz.endScreen.title': 'Quiz Complete!',
@@ -311,7 +311,7 @@ function EditTestEditorPageContent() {
         --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
       }
     `;
-    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${cssContent}</style></head><body>${finalHtmlBody}<script>${quizLogicScript}<\/script></body></html>`);
+    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"></script><style>${stylingVariables}${cssContent}</style></head><body>${finalHtmlBody}<script>${quizLogicScript}<\/script></body></html>`);
   }, [htmlContent, cssContent, testName, questions, quizEndMessage, t]);
 
   useEffect(() => { updatePreview(); }, [updatePreview]);
@@ -488,7 +488,7 @@ function EditTestEditorPageContent() {
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{t('editor.config.embedDescription', {defaultValue: 'After saving, embed code will appear here.'})}</p>
                     {/* For existing tests, the embed code can be shown */}
-                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? \`<iframe src="/test/\${testId}/player" width="100%" height="600px" frameborder="0"></iframe>\` : "<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
+                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? `<iframe src="/test/${testId}/player" width="100%" height="600px" frameborder="0"></iframe>` : "<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
                   </CardContent>
                 </Card>
               </CardContent>
@@ -636,3 +636,4 @@ export default function EditTestPage() {
     </Suspense>
   )
 }
+

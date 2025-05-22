@@ -19,7 +19,7 @@ const translations: Translations = {
   en: {
     'appHeader.myAccount': 'My Account',
     'appHeader.profile': 'Profile',
-    'appHeader.settingsLink': 'Settings', 
+    'appHeader.settingsLink': 'Settings',
     'appHeader.logout': 'Log out',
     'appHeader.language': 'Language',
     'appHeader.lang.en': 'English (EN)',
@@ -30,13 +30,13 @@ const translations: Translations = {
 
     'nav.dashboard': 'Dashboard',
     'nav.myTests': 'My Tests',
-    'nav.myTemplates': 'My Templates', 
+    'nav.myTemplates': 'My Templates',
     'nav.newTest': 'New Test',
-    'nav.newPageTemplate': 'New Template', 
+    'nav.newTemplate': 'New Template',
     'nav.settings': 'Settings',
     'nav.adminPanel': 'Admin Panel',
     'nav.createNew': 'Create New',
-    'nav.explorePageTemplates': 'Explore Templates', 
+    'nav.explorePageTemplates': 'Explore Templates',
 
     'dashboard.pageTitle': 'Dashboard',
     'dashboard.myTests.heading': 'My Tests',
@@ -44,13 +44,13 @@ const translations: Translations = {
     'dashboard.myTests.noTests.title': 'No tests created yet',
     'dashboard.myTests.noTests.description': 'Start by creating your first masterpiece!',
     'dashboard.myTests.noTests.button': 'Create Your First Test',
-    'dashboard.myPageTemplates.heading': 'My Page Templates', 
-    'dashboard.myPageTemplates.create': 'Create New Page Template', 
-    'dashboard.myPageTemplates.noPageTemplates.title': 'No page templates created yet', 
-    'dashboard.myPageTemplates.noPageTemplates.description': 'Build reusable page designs for your quizzes.', 
-    'dashboard.myPageTemplates.noPageTemplates.button': 'Create Your First Page Template', 
+    'dashboard.myPageTemplates.heading': 'My Page Templates',
+    'dashboard.myPageTemplates.create': 'Create New Page Template',
+    'dashboard.myPageTemplates.noPageTemplates.title': 'No page templates created yet',
+    'dashboard.myPageTemplates.noPageTemplates.description': 'Build reusable page designs for your quizzes.',
+    'dashboard.myPageTemplates.noPageTemplates.button': 'Create Your First Page Template',
     'dashboard.editTest': 'Edit Test',
-    'dashboard.editPageTemplate': 'Edit Page Template', 
+    'dashboard.editPageTemplate': 'Edit Page Template',
 
 
     'myTests.pageTitle': 'My Tests',
@@ -64,12 +64,12 @@ const translations: Translations = {
     'myTests.statusLabel': 'Status',
     'myTests.lastModifiedLabel': 'Last modified',
 
-    'myPageTemplates.pageTitle': 'My Page Templates', 
-    'myPageTemplates.create': 'Create New Page Template', 
-    'myPageTemplates.noPageTemplates.title': "You haven't created any page templates yet.", 
-    'myPageTemplates.noPageTemplates.description': 'Page templates help you build quizzes faster with consistent page designs.', 
-    'myPageTemplates.noPageTemplates.button': 'Create Your First Page Template', 
-    'myPageTemplates.edit': 'Edit Page Template', 
+    'myPageTemplates.pageTitle': 'My Templates',
+    'myPageTemplates.create': 'Create New Template',
+    'myPageTemplates.noPageTemplates.title': "You haven't created any templates yet.",
+    'myPageTemplates.noPageTemplates.description': 'Page templates help you build quizzes faster with consistent page designs.',
+    'myPageTemplates.noPageTemplates.button': 'Create Your First Template',
+    'myPageTemplates.edit': 'Edit Template',
     'myPageTemplates.usageCountLabel': 'Used',
     'myPageTemplates.timesLabel': 'times',
     'myPageTemplates.lastModifiedLabel': 'Last modified',
@@ -127,7 +127,7 @@ const translations: Translations = {
     'editor.questions.removeDragItem': 'Remove Item',
     'editor.questions.dropTargetsLabel': 'Drop Targets:',
     'editor.questions.addDropTarget': 'Add Target',
-    'editor.questions.dropTargetPlaceholder': 'Drop Target Text',
+    'editor.questions.dropTargetPlaceholder': 'Drop Target Text (optional, for label)',
     'editor.questions.removeDropTarget': 'Remove Target',
     'editor.questions.configNotAvailable': 'Configuration for this question type is not yet fully available.',
 
@@ -144,7 +144,7 @@ const translations: Translations = {
     'editor.toast.templateNotFoundDescription': 'The page template "{{templateId}}" was not found. Loaded default blank canvas.',
 
 
-    'pageTemplateEditor.new.pageTitle': 'New Page Style Template Editor',
+    'pageTemplateEditor.new.pageTitle': 'New Page Style Template',
     'pageTemplateEditor.edit.pageTitle': 'Edit Page Style Template: {{templateIdOrName}}',
     'pageTemplateEditor.updatePreview': 'Update Preview',
     'pageTemplateEditor.saveTemplate': 'Save Page Template',
@@ -167,10 +167,10 @@ const translations: Translations = {
     'pageTemplateEditor.preview.sampleOption1': 'Sample Option 1',
     'pageTemplateEditor.preview.sampleOption2': 'Sample Option 2',
 
-    'pageTemplates.explore.pageTitle': 'Explore Templates', 
-    'pageTemplates.explore.createButton': 'Create New Page Template', 
-    'pageTemplates.explore.useThisTemplate': 'Use This Page Template', 
-    'pageTemplates.explore.preview': 'Preview Page Style', 
+    'pageTemplates.explore.pageTitle': 'Explore Templates',
+    'pageTemplates.explore.createButton': 'Create New Template',
+    'pageTemplates.explore.useThisTemplate': 'Use This Template',
+    'pageTemplates.explore.preview': 'Preview Page Style',
     'pageTemplates.explore.noTemplates.title': 'No Page Templates Available Yet',
     'pageTemplates.explore.noTemplates.description': 'Be the first to create a stunning page template for QuizSmith!',
     'pageTemplates.explore.noTemplates.button': 'Create Your First Page Template',
@@ -216,6 +216,13 @@ const translations: Translations = {
     'questionType.multiple-choice-image': 'Multiple Choice (Image)',
     'questionType.matching-text-text': 'Matching (Text-to-Text)',
     'questionType.drag-and-drop-text-text': 'Drag & Drop (Text-on-Text)',
+    'quiz.feedback.correct': 'Correct!',
+    'quiz.feedback.incorrect': 'Incorrect!',
+    'quiz.endScreen.title': 'Quiz Complete!',
+    'quiz.restartButton': 'Restart Quiz',
+    'quiz.matching.selectPrompt': 'Select a match for:',
+    'quiz.dragDrop.dropHere': 'Drop here',
+    'quiz.questionType.notImplemented': 'This question type is not fully interactive in preview yet.',
 
   },
   ru: {
@@ -231,13 +238,13 @@ const translations: Translations = {
 
     'nav.dashboard': 'Панель',
     'nav.myTests': 'Мои тесты',
-    'nav.myTemplates': 'Мои шаблоны', 
+    'nav.myTemplates': 'Мои шаблоны',
     'nav.newTest': 'Новый тест',
-    'nav.newPageTemplate': 'Новый шаблон', 
+    'nav.newTemplate': 'Новый шаблон',
     'nav.settings': 'Настройки',
     'nav.adminPanel': 'Панель администратора',
     'nav.createNew': 'Создать',
-    'nav.explorePageTemplates': 'Обзор шаблонов', 
+    'nav.explorePageTemplates': 'Обзор шаблонов',
 
     'dashboard.pageTitle': 'Панель',
     'dashboard.myTests.heading': 'Мои тесты',
@@ -245,13 +252,13 @@ const translations: Translations = {
     'dashboard.myTests.noTests.title': 'Тесты еще не созданы',
     'dashboard.myTests.noTests.description': 'Начните с создания вашего первого шедевра!',
     'dashboard.myTests.noTests.button': 'Создать первый тест',
-    'dashboard.myPageTemplates.heading': 'Мои шаблоны страниц', 
-    'dashboard.myPageTemplates.create': 'Создать новый шаблон страницы', 
-    'dashboard.myPageTemplates.noPageTemplates.title': 'Шаблоны страниц еще не созданы', 
-    'dashboard.myPageTemplates.noPageTemplates.description': 'Создавайте многоразовые дизайны страниц для ваших викторин.', 
-    'dashboard.myPageTemplates.noPageTemplates.button': 'Создать первый шаблон страницы', 
+    'dashboard.myPageTemplates.heading': 'Мои шаблоны страниц',
+    'dashboard.myPageTemplates.create': 'Создать новый шаблон страницы',
+    'dashboard.myPageTemplates.noPageTemplates.title': 'Шаблоны страниц еще не созданы',
+    'dashboard.myPageTemplates.noPageTemplates.description': 'Создавайте многоразовые дизайны страниц для ваших викторин.',
+    'dashboard.myPageTemplates.noPageTemplates.button': 'Создать первый шаблон страницы',
     'dashboard.editTest': 'Редактировать тест',
-    'dashboard.editPageTemplate': 'Редактировать шаблон страницы', 
+    'dashboard.editPageTemplate': 'Редактировать шаблон страницы',
 
     'myTests.pageTitle': 'Мои тесты',
     'myTests.create': 'Создать новый тест',
@@ -264,12 +271,12 @@ const translations: Translations = {
     'myTests.statusLabel': 'Статус',
     'myTests.lastModifiedLabel': 'Последнее изменение',
 
-    'myPageTemplates.pageTitle': 'Мои шаблоны страниц', 
-    'myPageTemplates.create': 'Создать новый шаблон страницы', 
-    'myPageTemplates.noPageTemplates.title': 'Вы еще не создали ни одного шаблона страницы.', 
-    'myPageTemplates.noPageTemplates.description': 'Шаблоны страниц помогут вам быстрее создавать викторины с единым дизайном страниц.', 
-    'myPageTemplates.noPageTemplates.button': 'Создать свой первый шаблон страницы', 
-    'myPageTemplates.edit': 'Редактировать шаблон страницы', 
+    'myPageTemplates.pageTitle': 'Мои шаблоны',
+    'myPageTemplates.create': 'Создать новый шаблон',
+    'myPageTemplates.noPageTemplates.title': 'Вы еще не создали ни одного шаблона.',
+    'myPageTemplates.noPageTemplates.description': 'Шаблоны страниц помогут вам быстрее создавать викторины с единым дизайном страниц.',
+    'myPageTemplates.noPageTemplates.button': 'Создать свой первый шаблон',
+    'myPageTemplates.edit': 'Редактировать шаблон',
     'myPageTemplates.usageCountLabel': 'Использовано',
     'myPageTemplates.timesLabel': 'раз',
     'myPageTemplates.lastModifiedLabel': 'Последнее изменение',
@@ -327,7 +334,7 @@ const translations: Translations = {
     'editor.questions.removeDragItem': 'Удалить элемент',
     'editor.questions.dropTargetsLabel': 'Цели для перетаскивания:',
     'editor.questions.addDropTarget': 'Добавить цель',
-    'editor.questions.dropTargetPlaceholder': 'Текст цели для перетаскивания',
+    'editor.questions.dropTargetPlaceholder': 'Текст цели для перетаскивания (необязательно, для метки)',
     'editor.questions.removeDropTarget': 'Удалить цель',
     'editor.questions.configNotAvailable': 'Конфигурация для этого типа вопроса пока недоступна.',
 
@@ -343,7 +350,7 @@ const translations: Translations = {
     'editor.toast.templateNotFoundTitle': 'Шаблон страницы не найден',
     'editor.toast.templateNotFoundDescription': 'Шаблон страницы "{{templateId}}" не найден. Загружен пустой шаблон по умолчанию.',
 
-    'pageTemplateEditor.new.pageTitle': 'Редактор нового шаблона стиля страницы',
+    'pageTemplateEditor.new.pageTitle': 'Новый шаблон стиля страницы',
     'pageTemplateEditor.edit.pageTitle': 'Редактировать шаблон стиля страницы: {{templateIdOrName}}',
     'pageTemplateEditor.updatePreview': 'Обновить предпросмотр',
     'pageTemplateEditor.saveTemplate': 'Сохранить шаблон страницы',
@@ -366,10 +373,10 @@ const translations: Translations = {
     'pageTemplateEditor.preview.sampleOption1': 'Вариант А',
     'pageTemplateEditor.preview.sampleOption2': 'Вариант Б',
 
-    'pageTemplates.explore.pageTitle': 'Обзор шаблонов', 
-    'pageTemplates.explore.createButton': 'Создать новый шаблон страницы', 
-    'pageTemplates.explore.useThisTemplate': 'Использовать этот шаблон страницы', 
-    'pageTemplates.explore.preview': 'Предпросмотр стиля страницы', 
+    'pageTemplates.explore.pageTitle': 'Обзор шаблонов',
+    'pageTemplates.explore.createButton': 'Создать новый шаблон',
+    'pageTemplates.explore.useThisTemplate': 'Использовать этот шаблон',
+    'pageTemplates.explore.preview': 'Предпросмотр стиля страницы',
     'pageTemplates.explore.noTemplates.title': 'Доступных шаблонов страниц пока нет',
     'pageTemplates.explore.noTemplates.description': 'Станьте первым, кто создаст потрясающий шаблон страницы для QuizSmith!',
     'pageTemplates.explore.noTemplates.button': 'Создать свой первый шаблон страницы',
@@ -415,6 +422,13 @@ const translations: Translations = {
     'questionType.multiple-choice-image': 'Один из многих (Изображение)',
     'questionType.matching-text-text': 'Сопоставление (Текст-Текст)',
     'questionType.drag-and-drop-text-text': 'Перетаскивание (Текст-на-Текст)',
+    'quiz.feedback.correct': 'Верно!',
+    'quiz.feedback.incorrect': 'Неверно!',
+    'quiz.endScreen.title': 'Викторина завершена!',
+    'quiz.restartButton': 'Начать заново',
+    'quiz.matching.selectPrompt': 'Выберите пару для:',
+    'quiz.dragDrop.dropHere': 'Перетащите сюда',
+    'quiz.questionType.notImplemented': 'Этот тип вопроса еще не полностью интерактивен в предпросмотре.',
   },
 };
 
@@ -427,7 +441,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('en'); 
+  const [language, setLanguageState] = useState<Language>('en');
 
   const setLanguage = useCallback((lang: Language) => {
     setLanguageState(lang);
@@ -441,7 +455,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
           const value = replacements[placeholder];
           if (value !== undefined) {
              translation = translation.replace(
-               new RegExp(`{{${placeholder}}}`, 'g'),
+               new RegExp(`{{\${placeholder}}}`, 'g'),
                String(value)
              );
           }
