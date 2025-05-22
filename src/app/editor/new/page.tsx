@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   questions.length > 0 ? displayQuestion(currentQuestionIndex) : (questionHost.innerHTML = '<p>No questions added.</p>');
 });
-\`;
+`;
 
 interface TestDraft {
   name: string;
@@ -290,7 +290,6 @@ function NewTestEditorPageContent() {
       }
     }
 
-    // Only proceed with template loading if no draft was loaded and it's the initial load
     if (isInitialLoad) { 
         const templateId = searchParams.get('template') || DEFAULT_TEMPLATE_ID;
         const selectedTemplate = pageTemplates.find(pt => pt.id === templateId);
@@ -310,7 +309,7 @@ function NewTestEditorPageContent() {
           setCssContent(defaultTemplate.cssContent);
           setTestName(t('editor.defaultTestName', {defaultValue: 'My Awesome Quiz'}));
           if (templateId) {
-            const descriptionDefaultValue = 'The page style template "' + templateId + '" was not found. Loaded default blank canvas.';
+            const descriptionDefaultValue = "The page style template \"" + templateId + "\" was not found. Loaded default blank canvas.";
             toast({
                 title: t('editor.toast.templateNotFoundTitle', {defaultValue: 'Page Style Template Not Found'}),
                 description: t('editor.toast.templateNotFoundDescription', {templateId, defaultValue: descriptionDefaultValue}),
@@ -322,7 +321,7 @@ function NewTestEditorPageContent() {
     }
     setIsInitialLoad(false); 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, t, toast, isInitialLoad]); 
+  }, [searchParams, t, toast]); 
 
   // Save to localStorage on change (debounced)
   useEffect(() => {
@@ -378,7 +377,7 @@ function NewTestEditorPageContent() {
         --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
       }
     `;
-    setPreviewContent(\`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>\${stylingVariables}\${cssContent}</style></head><body>\${finalHtmlBody}<script>\${quizLogicScript}<\/script></body></html>\`);
+    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${cssContent}</style></head><body>${finalHtmlBody}<script>${quizLogicScript}<\/script></body></html>`);
   }, [htmlContent, cssContent, testName, questions, quizEndMessage, t]);
 
   useEffect(() => { updatePreview(); }, [updatePreview]);
@@ -421,9 +420,11 @@ function NewTestEditorPageContent() {
   };
   
   const handleAddOption = (questionId: string) => {
-    const newOptionTextDefault = "New Option " + (questions.find(q => q.id === questionId)?.options.length || 0 + 1);
+    const currentQuestion = questions.find(q => q.id === questionId);
+    const newOptionNumber = (currentQuestion?.options.length || 0) + 1;
+    const newOptionTextDefault = "New Option " + newOptionNumber;
     setQuestions(prev => prev.map(q => q.id === questionId ? {
-      ...q, options: [...q.options, { id: generateId(), text: t('editor.newOptionText', {number: q.options.length + 1, defaultValue: newOptionTextDefault}), isCorrect: false, imageUrl: '' }]
+      ...q, options: [...q.options, { id: generateId(), text: t('editor.newOptionText', {number: newOptionNumber, defaultValue: newOptionTextDefault}), isCorrect: false, imageUrl: '' }]
     } : q));
   };
 
@@ -515,7 +516,15 @@ function NewTestEditorPageContent() {
     { value: 'drag-and-drop-text-text', labelKey: 'questionType.drag-and-drop-text-text'},
   ];
 
-  const isEditing = questions.length > 0 || (testName && testName !== t('editor.defaultTestName') && testName !== t('editor.defaultTestNameFromTemplate', {templateName: ''}).substring(0, t('editor.defaultTestNameFromTemplate', {templateName: ''}).indexOf('{{templateName}}')) ) ;
+  const defaultTestNameFromTemplateBase = t('editor.defaultTestNameFromTemplate', {templateName: ''});
+  const defaultTestNameFromTemplatePlaceholderIndex = defaultTestNameFromTemplateBase.indexOf('{{templateName}}');
+  const defaultTestNameFromTemplatePrefix = defaultTestNameFromTemplatePlaceholderIndex !== -1 ? defaultTestNameFromTemplateBase.substring(0, defaultTestNameFromTemplatePlaceholderIndex) : defaultTestNameFromTemplateBase;
+
+  const isEditing = questions.length > 0 || 
+                    (testName && 
+                     testName !== t('editor.defaultTestName') && 
+                     (defaultTestNameFromTemplatePlaceholderIndex === -1 || !testName.startsWith(defaultTestNameFromTemplatePrefix))
+                    );
   const pageTitleKeyToUse = isEditing ? "editor.pageTitleEditing" : "editor.pageTitleNew";
   const pageTitleParamsToUse = isEditing ? { testNameOrId: testName } : undefined;
 

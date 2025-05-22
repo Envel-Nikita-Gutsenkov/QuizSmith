@@ -242,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   questions.length > 0 ? displayQuestion(currentQuestionIndex) : (questionHost.innerHTML = '<p>No questions added.</p>');
 });
-\`;
+`;
 
 interface TestDraft {
   name: string;
@@ -307,7 +307,7 @@ function EditTestEditorPageContent() {
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId, t, toast]); // Removed localStorageKey from deps
+  }, [testId, t, toast]);
 
   // Save to localStorage on change (debounced)
   useEffect(() => {
@@ -363,7 +363,7 @@ function EditTestEditorPageContent() {
         --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
       }
     `;
-    setPreviewContent(\`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>\${stylingVariables}\${cssContent}</style></head><body>\${finalHtmlBody}<script>\${quizLogicScript}<\/script></body></html>\`);
+    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${cssContent}</style></head><body>${finalHtmlBody}<script>${quizLogicScript}<\/script></body></html>`);
   }, [htmlContent, cssContent, testName, questions, quizEndMessage, t]);
 
   useEffect(() => { updatePreview(); }, [updatePreview]);
@@ -401,9 +401,11 @@ function EditTestEditorPageContent() {
   };
   
   const handleAddOption = (questionId: string) => {
-    const newOptionTextDefault = "New Option " + (questions.find(q => q.id === questionId)?.options.length || 0 + 1);
+    const currentQuestion = questions.find(q => q.id === questionId);
+    const newOptionNumber = (currentQuestion?.options.length || 0) + 1;
+    const newOptionTextDefault = "New Option " + newOptionNumber;
     setQuestions(prev => prev.map(q => q.id === questionId ? {
-      ...q, options: [...q.options, { id: generateId(), text: t('editor.newOptionText', {number: q.options.length + 1, defaultValue: newOptionTextDefault}), isCorrect: false, imageUrl: '' }]
+      ...q, options: [...q.options, { id: generateId(), text: t('editor.newOptionText', {number: newOptionNumber, defaultValue: newOptionTextDefault}), isCorrect: false, imageUrl: '' }]
     } : q));
   };
 
@@ -598,12 +600,12 @@ function EditTestEditorPageContent() {
                         <div className="flex justify-between items-start">
                            <div className="flex-grow">
                             <CardTitle className="text-lg mb-2">{t('editor.questions.questionLabel', {number: qIndex+1, defaultValue: "Question " + (qIndex + 1)})}</CardTitle>
-                            <Label htmlFor={`q-type-\${question.id}`}>{t('editor.questions.questionTypeLabel', {defaultValue: 'Question Type'})}</Label>
+                            <Label htmlFor={`q-type-${question.id}`}>{t('editor.questions.questionTypeLabel', {defaultValue: 'Question Type'})}</Label>
                             <Select
                                 value={question.type}
                                 onValueChange={(value) => handleUpdateQuestion(question.id, 'type', value as QuestionType)}
                             >
-                                <SelectTrigger id={`q-type-\${question.id}`} className="mt-1">
+                                <SelectTrigger id={`q-type-${question.id}`} className="mt-1">
                                 <SelectValue placeholder={t('editor.questions.questionTypeLabel', {defaultValue: 'Select type'})} />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -618,8 +620,8 @@ function EditTestEditorPageContent() {
                       </CardHeader>
                       <CardContent className="space-y-3">
                         <div>
-                          <Label htmlFor={`q-text-\${question.id}`}>{t('editor.questions.questionTextLabel', {defaultValue: 'Question Text'})}</Label>
-                          <Textarea id={`q-text-\${question.id}`} value={question.text} onChange={(e) => handleUpdateQuestion(question.id, 'text', e.target.value)} placeholder={t('editor.questions.questionTextPlaceholder', {defaultValue: 'Enter question text'})} className="mt-1" rows={2}/>
+                          <Label htmlFor={`q-text-${question.id}`}>{t('editor.questions.questionTextLabel', {defaultValue: 'Question Text'})}</Label>
+                          <Textarea id={`q-text-${question.id}`} value={question.text} onChange={(e) => handleUpdateQuestion(question.id, 'text', e.target.value)} placeholder={t('editor.questions.questionTextPlaceholder', {defaultValue: 'Enter question text'})} className="mt-1" rows={2}/>
                         </div>
                         
                         {(question.type === 'multiple-choice-text' || question.type === 'multiple-choice-image') && (
