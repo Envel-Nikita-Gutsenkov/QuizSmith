@@ -26,9 +26,9 @@ const translations: Translations = {
 
     'nav.dashboard': 'Dashboard',
     'nav.myTests': 'My Tests',
-    'nav.myTemplates': 'My Templates', // Corrected
+    'nav.myTemplates': 'My Templates',
     'nav.newTest': 'New Test',
-    'nav.newTemplate': 'New Template', // Corrected
+    'nav.newTemplate': 'New Template',
     'nav.settings': 'Settings',
     'nav.adminPanel': 'Admin Panel',
     'nav.createNew': 'Create New',
@@ -113,6 +113,7 @@ const translations: Translations = {
     'editor.questions.optionImageUrlPlaceholder': 'Image URL (optional)',
     'editor.questions.removeOption': 'Remove option',
     'editor.questions.addOption': 'Add Option',
+    'editor.newOptionText': 'New Option {{number}}',
     'editor.questions.matchingPairsLabel': 'Matching Pairs:',
     'editor.questions.addMatchPair': 'Add Pair',
     'editor.questions.matchPromptPlaceholder': 'Prompt Text',
@@ -131,7 +132,6 @@ const translations: Translations = {
     'editor.questions.configNotAvailable': 'Configuration for this question type is not yet fully available.',
     'editor.newQuestionText': 'New Question {{number}}',
     'editor.optionPlaceholder': 'Option {{letter}}',
-    'editor.newOptionText': 'New Option {{number}}',
     'editor.toast.saveSuccessTitle': 'Test Data Logged',
     'editor.toast.saveSuccessDescription': 'Test configuration has been logged to the console.',
     'editor.toast.saveSuccessTitleExisting': 'Existing Test Data Logged',
@@ -245,9 +245,9 @@ const translations: Translations = {
 
     'nav.dashboard': 'Панель',
     'nav.myTests': 'Мои тесты',
-    'nav.myTemplates': 'Мои шаблоны', // Corrected
+    'nav.myTemplates': 'Мои шаблоны',
     'nav.newTest': 'Новый тест',
-    'nav.newTemplate': 'Новый шаблон', // Corrected
+    'nav.newTemplate': 'Новый шаблон',
     'nav.settings': 'Настройки',
     'nav.adminPanel': 'Панель администратора',
     'nav.createNew': 'Создать',
@@ -332,6 +332,7 @@ const translations: Translations = {
     'editor.questions.optionImageUrlPlaceholder': 'URL изображения (необязательно)',
     'editor.questions.removeOption': 'Удалить вариант',
     'editor.questions.addOption': 'Добавить вариант',
+    'editor.newOptionText': 'Новый вариант {{number}}',
     'editor.questions.matchingPairsLabel': 'Пары для сопоставления:',
     'editor.questions.addMatchPair': 'Добавить пару',
     'editor.questions.matchPromptPlaceholder': 'Текст элемента для сопоставления',
@@ -350,7 +351,6 @@ const translations: Translations = {
     'editor.questions.configNotAvailable': 'Конфигурация для этого типа вопроса пока недоступна.',
     'editor.newQuestionText': 'Новый вопрос {{number}}',
     'editor.optionPlaceholder': 'Вариант {{letter}}',
-    'editor.newOptionText': 'Новый вариант {{number}}',
     'editor.toast.saveSuccessTitle': 'Данные теста записаны',
     'editor.toast.saveSuccessDescription': 'Конфигурация теста записана в консоль.',
     'editor.toast.saveSuccessTitleExisting': 'Данные существующего теста записаны',
@@ -401,7 +401,7 @@ const translations: Translations = {
     'pageTemplateEditor.toast.loadErrorTitle': 'Ошибка загрузки',
     'pageTemplateEditor.toast.loadErrorDescription': 'Не удалось загрузить шаблон "{{templateId}}". Загружен пустой шаблон по умолчанию.',
 
-    'pageTemplates.explore.pageTitle': 'Обзор шаблонов стилей страниц', 
+    'pageTemplates.explore.pageTitle': 'Обзор шаблонов', 
     'pageTemplates.explore.createButton': 'Создать новый шаблон', 
     'pageTemplates.explore.useThisTemplate': 'Использовать этот стиль',
     'pageTemplates.explore.preview': 'Редактировать стиль страницы',

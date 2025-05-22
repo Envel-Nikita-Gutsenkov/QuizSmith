@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff, Palette } from 'lucide-react'; // Added Palette
+import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff, Palette } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType, PageTemplate as PageTemplateType, Test } from '@/lib/types';
@@ -21,7 +21,6 @@ import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 
-
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 interface TestDraft {
@@ -31,6 +30,7 @@ interface TestDraft {
   quizEndMessage: string;
 }
 
+const NO_EXPECTED_DRAG_ITEM = "__NONE__";
 
 function EditTestEditorPageContent() {
   const { t } = useLanguage();
@@ -49,7 +49,7 @@ function EditTestEditorPageContent() {
   const [previewContent, setPreviewContent] = useState('');
 
   const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
-  const localStorageKey = \`quizsmith-test-draft-\${testId}\`;
+  const localStorageKey = `quizsmith-test-draft-${testId}`;
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
@@ -266,12 +266,12 @@ function EditTestEditorPageContent() {
         return;
     }
     const testData: Test = { 
-        id: testId, // Use actual testId for existing tests
+        id: testId, 
         name: testName, 
         questions, 
         templateId: selectedTemplateId, 
         quizEndMessage, 
-        createdAt: new Date().toISOString(), // This should be the original creation date if editing
+        createdAt: new Date().toISOString(), 
         updatedAt: new Date().toISOString() 
     };
     console.log("Saving test data (existing):", JSON.stringify(testData, null, 2));
@@ -380,7 +380,7 @@ function EditTestEditorPageContent() {
                   <CardHeader><CardTitle className="text-base flex items-center"><Code className="mr-2 h-4 w-4" /> {t('editor.config.embedTitle')}</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{t('editor.config.embedDescription')}</p>
-                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? \`<iframe src="/test/\${testId}/player" width="100%" height="600px" frameborder="0"></iframe>\` : "<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
+                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? `<iframe src="/test/${testId}/player" width="100%" height="600px" frameborder="0"></iframe>` : "<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
                   </CardContent>
                 </Card>
               </CardContent>
@@ -501,15 +501,18 @@ function EditTestEditorPageContent() {
                                     <div key={target.id} className="grid grid-cols-[1fr_auto] gap-2 items-center p-2 border rounded-md">
                                       <div className="space-y-1">
                                         <Input value={target.text} onChange={(e) => handleUpdateDropTarget(question.id, target.id, 'text', e.target.value)} placeholder={t('editor.questions.dropTargetPlaceholder')} />
-                                         <Select 
-                                          value={target.expectedDragItemId || ''} 
-                                          onValueChange={(value) => handleUpdateDropTarget(question.id, target.id, 'expectedDragItemId', value)}
+                                         <Select
+                                          value={target.expectedDragItemId || NO_EXPECTED_DRAG_ITEM}
+                                          onValueChange={(selectedValue) => {
+                                            const actualValueToStore = selectedValue === NO_EXPECTED_DRAG_ITEM ? '' : selectedValue;
+                                            handleUpdateDropTarget(question.id, target.id, 'expectedDragItemId', actualValueToStore);
+                                          }}
                                         >
                                           <SelectTrigger className="text-xs h-8">
                                             <SelectValue placeholder={t('editor.questions.selectCorrectDragItem')} />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value="">{t('editor.questions.noCorrectDragItem')}</SelectItem>
+                                            <SelectItem value={NO_EXPECTED_DRAG_ITEM}>{t('editor.questions.noCorrectDragItem', {defaultValue: "None (visual only)"})}</SelectItem>
                                             {(question.dragItems || []).map(dItem => (
                                               <SelectItem key={dItem.id} value={dItem.id}>{dItem.text.substring(0,30)}{dItem.text.length > 30 ? '...' : ''}</SelectItem>
                                             ))}

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff, Palette } from 'lucide-react'; // Added Palette
+import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff, Palette } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType, PageTemplate as PageTemplateType, Test } from '@/lib/types';
@@ -21,15 +21,16 @@ import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 
-
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 interface TestDraft {
   name: string;
   questions: Question[];
-  templateId: string; 
+  templateId: string;
   quizEndMessage: string;
 }
+
+const NO_EXPECTED_DRAG_ITEM = "__NONE__";
 
 function NewTestEditorPageContent() {
   const { t } = useLanguage();
@@ -82,24 +83,23 @@ function NewTestEditorPageContent() {
     setSelectedTemplateId(selectedInitialTemplate.id);
     setCurrentTemplate(selectedInitialTemplate);
 
-    const defaultTestNameValue = "Quiz from " + selectedInitialTemplate.name;
+    const defaultTestNameValueFromTemplate = "Quiz from " + selectedInitialTemplate.name;
     if (initialTemplateIdFromUrl && initialTemplateIdFromUrl !== DEFAULT_TEMPLATE_ID) {
-      setTestName(t('editor.defaultTestNameFromTemplate', {templateName: selectedInitialTemplate.name, defaultValue: defaultTestNameValue}));
+      setTestName(t('editor.defaultTestNameFromTemplate', {templateName: selectedInitialTemplate.name, defaultValue: defaultTestNameValueFromTemplate}));
     } else {
       setTestName(t('editor.defaultTestName', { defaultValue: "My Awesome Quiz"}));
     }
     
-    setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: "Congratulations! Score: {{score}}/{{total}}."}));
-    
     const templateIdQueryParam = searchParams.get('template');
     if (templateIdQueryParam && !pageTemplates.find(pt => pt.id === templateIdQueryParam)) {
-        const descriptionDefaultValue = "The page template \"" + templateIdQueryParam + "\" was not found. Loaded default blank canvas.";
+        const descriptionDefaultValue = "The page style template \"" + templateIdQueryParam + "\" was not found. Loaded default blank canvas.";
         toast({
             title: t('editor.toast.templateNotFoundTitle'),
             description: t('editor.toast.templateNotFoundDescription', {templateId: templateIdQueryParam, defaultValue: descriptionDefaultValue}),
             variant: "destructive",
         });
     }
+    setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: "Congratulations! Score: {{score}}/{{total}}."}));
     setIsInitialLoad(false); 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); 
@@ -133,30 +133,20 @@ function NewTestEditorPageContent() {
       setPreviewContent("<html><body><p>No template selected or template not found.</p></body></html>");
       return;
     }
-
-    // Data to be injected into the template's scope
-    // Ensure questions, testName, and quizEndMessage are properly stringified and escaped if necessary
     const questionsJson = JSON.stringify(questions);
-
-    // Create the data injection HTML structure. These elements will be hidden
-    // and their content read by the script within the PageTemplate's htmlContent.
     const injectedDataHtml = `
       <script id="quiz-data" type="application/json">${questionsJson}<\/script>
       <div id="quiz-name-data" style="display:none;">${testName || ''}</div>
       <div id="quiz-end-message-data" style="display:none;">${quizEndMessage}</div>
     `;
 
-    // The template's HTML content now includes its own <script> for quiz logic.
-    // We append our data injection scripts before the closing </body> tag of the template.
     const finalHtmlBody = currentTemplate.htmlContent.replace(
       '</body>',
       `${injectedDataHtml}</body>`
     );
     
-    // Global CSS variables for theming, accessible by the template's CSS
-    // Ensure these are correctly fetched and formatted.
     let stylingVariables = '';
-    if (typeof window !== 'undefined') { // Check if running on client
+    if (typeof window !== 'undefined') {
         const rootStyle = getComputedStyle(document.documentElement);
         stylingVariables = `
           :root {
@@ -293,7 +283,7 @@ function NewTestEditorPageContent() {
         return;
     }
     const testData: Test = { 
-        id: 'new-' + generateId(), // Placeholder ID for new test
+        id: 'new-' + generateId(), 
         name: testName, 
         questions, 
         templateId: selectedTemplateId, 
@@ -319,9 +309,6 @@ function NewTestEditorPageContent() {
           variant: "destructive",
         });
       }
-      // It's good practice to revoke the object URL after it's used,
-      // though for a new window, it might need to persist until the window is closed.
-      // For simplicity, revoking after a short delay.
       setTimeout(() => URL.revokeObjectURL(url), 100); 
     }
   };
@@ -341,7 +328,7 @@ function NewTestEditorPageContent() {
                     (testName && 
                      testName !== t('editor.defaultTestName', {defaultValue: 'My Awesome Quiz'}) && 
                      (defaultTestNameFromTemplatePlaceholderIndex === -1 || !testName.startsWith(defaultTestNameFromTemplatePrefix)) &&
-                     (currentTemplate?.name && testName !== "Quiz from " + currentTemplate.name)
+                     (currentTemplate?.name && testName !== ("Quiz from " + currentTemplate.name))
                     );
 
   const pageTitleKeyToUse = isEditing ? "editor.pageTitleEditing" : "editor.pageTitleNew";
@@ -543,15 +530,18 @@ function NewTestEditorPageContent() {
                                     <div key={target.id} className="grid grid-cols-[1fr_auto] gap-2 items-center p-2 border rounded-md">
                                       <div className="space-y-1">
                                         <Input value={target.text} onChange={(e) => handleUpdateDropTarget(question.id, target.id, 'text', e.target.value)} placeholder={t('editor.questions.dropTargetPlaceholder')} />
-                                        <Select 
-                                          value={target.expectedDragItemId || ''} 
-                                          onValueChange={(value) => handleUpdateDropTarget(question.id, target.id, 'expectedDragItemId', value)}
+                                        <Select
+                                          value={target.expectedDragItemId || NO_EXPECTED_DRAG_ITEM}
+                                          onValueChange={(selectedValue) => {
+                                            const actualValueToStore = selectedValue === NO_EXPECTED_DRAG_ITEM ? '' : selectedValue;
+                                            handleUpdateDropTarget(question.id, target.id, 'expectedDragItemId', actualValueToStore);
+                                          }}
                                         >
                                           <SelectTrigger className="text-xs h-8">
                                             <SelectValue placeholder={t('editor.questions.selectCorrectDragItem')} />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value="">{t('editor.questions.noCorrectDragItem')}</SelectItem>
+                                            <SelectItem value={NO_EXPECTED_DRAG_ITEM}>{t('editor.questions.noCorrectDragItem', {defaultValue: "None (visual only)"})}</SelectItem>
                                             {(question.dragItems || []).map(dItem => (
                                               <SelectItem key={dItem.id} value={dItem.id}>{dItem.text.substring(0,30)}{dItem.text.length > 30 ? '...' : ''}</SelectItem>
                                             ))}
