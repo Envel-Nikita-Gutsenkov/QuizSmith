@@ -8,14 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff } from 'lucide-react';
+import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff, Palette } from 'lucide-react'; // Added Palette
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType, PageTemplate as PageTemplateType } from '@/lib/types';
+import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType, PageTemplate as PageTemplateType, Test } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useParams, useRouter } from 'next/navigation'; // Added useRouter
+import { useParams, useRouter } from 'next/navigation';
 import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -23,8 +23,6 @@ import Link from 'next/link';
 
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
-
-// quizLogicScript is REMOVED from here, as it's now part of the PageTemplate.htmlContent
 
 interface TestDraft {
   name: string;
@@ -37,7 +35,7 @@ interface TestDraft {
 function EditTestEditorPageContent() {
   const { t } = useLanguage();
   const params = useParams();
-  const router = useRouter(); // Added
+  const router = useRouter(); 
   const testId = params?.id as string || 'unknown';
   const { toast } = useToast();
 
@@ -55,18 +53,16 @@ function EditTestEditorPageContent() {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
-  // Effect to set currentTemplate when selectedTemplateId changes
   useEffect(() => {
     const template = pageTemplates.find(pt => pt.id === selectedTemplateId);
     setCurrentTemplate(template || pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!);
   }, [selectedTemplateId]);
 
-  // Load from localStorage or set defaults on mount
   useEffect(() => {
     if (!isInitialLoad) return;
     if (!testId || testId === 'unknown' || testId === 'new') {
       toast({ title: "Error", description: "Invalid Test ID. Redirecting to new test.", variant: "destructive"});
-      router.push('/editor/new'); // Redirect if ID is invalid
+      router.push('/editor/new'); 
       setIsInitialLoad(false);
       return;
     }
@@ -85,29 +81,25 @@ function EditTestEditorPageContent() {
       } catch (e) {
         console.error("Failed to parse test draft from localStorage", e);
         localStorage.removeItem(localStorageKey); 
-        // If draft fails, load defaults for this testId
         const defaultTestNameValue = "Test " + testId;
         setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: defaultTestNameValue }));
         setSelectedTemplateId(DEFAULT_TEMPLATE_ID);
-        setQuizEndMessage(t('editor.defaultEndMessage'));
+        setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: "Congratulations! Score: {{score}}/{{total}}."}));
         setQuestions([]); 
       }
     } else {
-      // No draft, load defaults for this testId (as no real data fetching is implemented)
       const defaultTestNameValue = "Test " + testId;
       setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: defaultTestNameValue }));
-      setSelectedTemplateId(DEFAULT_TEMPLATE_ID); // Default template for existing tests if no draft
-      setQuizEndMessage(t('editor.defaultEndMessage'));
+      setSelectedTemplateId(DEFAULT_TEMPLATE_ID); 
+      setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: "Congratulations! Score: {{score}}/{{total}}."}));
       setQuestions([]); 
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId, t, toast, router]); // Only run on mount and when testId changes
+  }, [testId, t, toast, router]);
 
-  // Save to localStorage on change (debounced)
   useEffect(() => {
-    if (isInitialLoad || !testId || testId === 'unknown' || testId === 'new') return;
-    if (!currentTemplate) return; // Don't save if template not loaded
+    if (isInitialLoad || !testId || testId === 'unknown' || testId === 'new' || !currentTemplate) return;
 
     if (debounceTimer) clearTimeout(debounceTimer);
 
@@ -126,8 +118,10 @@ function EditTestEditorPageContent() {
 
 
   const updatePreview = useCallback(() => {
-    if (!currentTemplate) return;
-
+    if (!currentTemplate) {
+        setPreviewContent("<html><body><p>No template selected or template not found.</p></body></html>");
+        return;
+    }
     const questionsJson = JSON.stringify(questions);
     const injectedDataHtml = `
       <script id="quiz-data" type="application/json">${questionsJson}<\/script>
@@ -140,26 +134,30 @@ function EditTestEditorPageContent() {
       `${injectedDataHtml}</body>`
     );
     
-    const stylingVariables = `
-      :root {
-        --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
-        --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
-        --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
-        --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
-        --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
-        --primary-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
-        --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
-        --accent: ${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
-        --accent-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
-        --destructive: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
-        --destructive-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
-        --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
-        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
-        --success-bg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-bg').trim()};
-        --success-fg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-fg').trim()};
-        --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
-      }
-    `;
+    let stylingVariables = '';
+     if (typeof window !== 'undefined') {
+        const rootStyle = getComputedStyle(document.documentElement);
+        stylingVariables = `
+          :root {
+            --background: ${rootStyle.getPropertyValue('--background').trim()};
+            --foreground: ${rootStyle.getPropertyValue('--foreground').trim()};
+            --card: ${rootStyle.getPropertyValue('--card').trim()};
+            --card-foreground: ${rootStyle.getPropertyValue('--card-foreground').trim()};
+            --primary: ${rootStyle.getPropertyValue('--primary').trim()};
+            --primary-foreground: ${rootStyle.getPropertyValue('--primary-foreground').trim()};
+            --secondary: ${rootStyle.getPropertyValue('--secondary').trim()};
+            --accent: ${rootStyle.getPropertyValue('--accent').trim()};
+            --accent-foreground: ${rootStyle.getPropertyValue('--accent-foreground').trim()};
+            --destructive: ${rootStyle.getPropertyValue('--destructive').trim()};
+            --destructive-foreground: ${rootStyle.getPropertyValue('--destructive-foreground').trim()};
+            --border: ${rootStyle.getPropertyValue('--border').trim()};
+            --font-geist-sans: ${rootStyle.getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
+            --success-bg: ${rootStyle.getPropertyValue('--success-bg').trim()};
+            --success-fg: ${rootStyle.getPropertyValue('--success-fg').trim()};
+            --success-border: ${rootStyle.getPropertyValue('--success-border').trim()};
+          }
+        `;
+    }
     setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${currentTemplate.cssContent}</style></head>${finalHtmlBody}</html>`);
   }, [currentTemplate, testName, questions, quizEndMessage]);
 
@@ -263,7 +261,19 @@ function EditTestEditorPageContent() {
   const handleDeleteQuestion = (questionId: string) => setQuestions((prev) => prev.filter((q) => q.id !== questionId));
 
   const handleSaveTest = () => {
-    const testData = { testId, testName, questions, templateId: selectedTemplateId, quizEndMessage, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    if (!currentTemplate) {
+        toast({title: "Error", description: "No page template selected. Cannot save test.", variant: "destructive"});
+        return;
+    }
+    const testData: Test = { 
+        id: testId, // Use actual testId for existing tests
+        name: testName, 
+        questions, 
+        templateId: selectedTemplateId, 
+        quizEndMessage, 
+        createdAt: new Date().toISOString(), // This should be the original creation date if editing
+        updatedAt: new Date().toISOString() 
+    };
     console.log("Saving test data (existing):", JSON.stringify(testData, null, 2));
     const saveSuccessDescriptionDefault = "Test " + testId + " config logged to console.";
     toast({ title: t('editor.toast.saveSuccessTitleExisting'), description: t('editor.toast.saveSuccessDescriptionExisting', {testId: testId, defaultValue: saveSuccessDescriptionDefault}) });
@@ -339,10 +349,10 @@ function EditTestEditorPageContent() {
                 </div>
                 <Separator />
                 <div>
-                  <Label htmlFor="pageTemplateSelect" className="text-sm font-medium">{t('editor.config.templateLabel', {defaultValue: 'Page Style Template'})}</Label>
+                  <Label htmlFor="pageTemplateSelect" className="text-sm font-medium">{t('editor.config.templateLabel')}</Label>
                   <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
                     <SelectTrigger id="pageTemplateSelect" className="mt-1">
-                      <SelectValue placeholder={t('editor.config.selectTemplatePlaceholder', {defaultValue: "Select a page template"})} />
+                      <SelectValue placeholder={t('editor.config.selectTemplatePlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {pageTemplates.map(template => (
@@ -352,9 +362,9 @@ function EditTestEditorPageContent() {
                   </Select>
                    {currentTemplate && (
                      <p className="text-xs text-muted-foreground mt-1">
-                       {t('editor.config.templateDescriptionHint', {description: currentTemplate.description || 'No description.', defaultValue: 'Description: {{description}}'})}
+                       {t('editor.config.templateDescriptionHint', {description: currentTemplate.description || 'No description.'})}
                        <Link href={`/templates/editor/${currentTemplate.id}`} className="ml-1 text-primary hover:underline text-xs">
-                         ({t('editor.config.editTemplateLink', {defaultValue: 'Edit Style'})})
+                         ({t('editor.config.editTemplateLink')})
                        </Link>
                      </p>
                   )}
@@ -370,7 +380,6 @@ function EditTestEditorPageContent() {
                   <CardHeader><CardTitle className="text-base flex items-center"><Code className="mr-2 h-4 w-4" /> {t('editor.config.embedTitle')}</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{t('editor.config.embedDescription')}</p>
-                    {/* For existing tests, the embed code can be shown */}
                     <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? \`<iframe src="/test/\${testId}/player" width="100%" height="600px" frameborder="0"></iframe>\` : "<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
                   </CardContent>
                 </Card>
@@ -497,10 +506,10 @@ function EditTestEditorPageContent() {
                                           onValueChange={(value) => handleUpdateDropTarget(question.id, target.id, 'expectedDragItemId', value)}
                                         >
                                           <SelectTrigger className="text-xs h-8">
-                                            <SelectValue placeholder={t('editor.questions.selectCorrectDragItem', {defaultValue: 'Correct Draggable Item'})} />
+                                            <SelectValue placeholder={t('editor.questions.selectCorrectDragItem')} />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value="">{t('editor.questions.noCorrectDragItem', {defaultValue: 'None (any is placeholder/visual only)'})}</SelectItem>
+                                            <SelectItem value="">{t('editor.questions.noCorrectDragItem')}</SelectItem>
                                             {(question.dragItems || []).map(dItem => (
                                               <SelectItem key={dItem.id} value={dItem.id}>{dItem.text.substring(0,30)}{dItem.text.length > 30 ? '...' : ''}</SelectItem>
                                             ))}

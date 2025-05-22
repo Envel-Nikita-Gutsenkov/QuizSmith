@@ -8,10 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff } from 'lucide-react';
+import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff, Palette } from 'lucide-react'; // Added Palette
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType, PageTemplate as PageTemplateType } from '@/lib/types';
+import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType, PageTemplate as PageTemplateType, Test } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -19,16 +19,15 @@ import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import Link from 'next/link';
 
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-// quizLogicScript is REMOVED from here, as it's now part of the PageTemplate.htmlContent
-
 interface TestDraft {
   name: string;
   questions: Question[];
-  templateId: string; // Store the ID of the selected PageTemplate
+  templateId: string; 
   quizEndMessage: string;
 }
 
@@ -40,7 +39,6 @@ function NewTestEditorPageContent() {
   const [testName, setTestName] = useState('');
   const [questions, setQuestions] = useState<Question[]>([]);
   
-  // HTML and CSS content are now derived from the selected PageTemplate
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(DEFAULT_TEMPLATE_ID);
   const [currentTemplate, setCurrentTemplate] = useState<PageTemplateType | null>(null);
   
@@ -52,16 +50,13 @@ function NewTestEditorPageContent() {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
-  // Effect to set currentTemplate when selectedTemplateId changes
   useEffect(() => {
     const template = pageTemplates.find(pt => pt.id === selectedTemplateId);
     setCurrentTemplate(template || pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!);
   }, [selectedTemplateId]);
 
-
-  // Load from localStorage or template on mount
   useEffect(() => {
-    if (!isInitialLoad) return; // Only run once on initial load
+    if (!isInitialLoad) return;
 
     const savedDraft = localStorage.getItem(localStorageKey);
     if (savedDraft) {
@@ -69,7 +64,7 @@ function NewTestEditorPageContent() {
         const draft: TestDraft = JSON.parse(savedDraft);
         setTestName(draft.name);
         setQuestions(draft.questions);
-        setSelectedTemplateId(draft.templateId || DEFAULT_TEMPLATE_ID); // Load saved template or default
+        setSelectedTemplateId(draft.templateId || DEFAULT_TEMPLATE_ID); 
         setQuizEndMessage(draft.quizEndMessage);
         setHasUnsavedDraft(true);
         toast({ title: t('editor.toast.draftRestoredTitle'), description: t('editor.toast.draftRestoredDescriptionNew') });
@@ -85,47 +80,44 @@ function NewTestEditorPageContent() {
     const selectedInitialTemplate = pageTemplates.find(pt => pt.id === initialTemplateIdFromUrl) || pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
     
     setSelectedTemplateId(selectedInitialTemplate.id);
-    setCurrentTemplate(selectedInitialTemplate); // Set current template immediately
+    setCurrentTemplate(selectedInitialTemplate);
 
+    const defaultTestNameValue = "Quiz from " + selectedInitialTemplate.name;
     if (initialTemplateIdFromUrl && initialTemplateIdFromUrl !== DEFAULT_TEMPLATE_ID) {
-      const defaultTestNameValue = "Quiz from " + selectedInitialTemplate.name;
       setTestName(t('editor.defaultTestNameFromTemplate', {templateName: selectedInitialTemplate.name, defaultValue: defaultTestNameValue}));
     } else {
-      setTestName(t('editor.defaultTestName'));
+      setTestName(t('editor.defaultTestName', { defaultValue: "My Awesome Quiz"}));
     }
     
-    setQuizEndMessage(t('editor.defaultEndMessage'));
+    setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: "Congratulations! Score: {{score}}/{{total}}."}));
     
-    if (searchParams.get('template') && !pageTemplates.find(pt => pt.id === searchParams.get('template'))) {
-        const descriptionDefaultValue = "The page template \"" + searchParams.get('template') + "\" was not found. Loaded default blank canvas.";
+    const templateIdQueryParam = searchParams.get('template');
+    if (templateIdQueryParam && !pageTemplates.find(pt => pt.id === templateIdQueryParam)) {
+        const descriptionDefaultValue = "The page template \"" + templateIdQueryParam + "\" was not found. Loaded default blank canvas.";
         toast({
             title: t('editor.toast.templateNotFoundTitle'),
-            description: t('editor.toast.templateNotFoundDescription', {templateId: searchParams.get('template')!, defaultValue: descriptionDefaultValue}),
+            description: t('editor.toast.templateNotFoundDescription', {templateId: templateIdQueryParam, defaultValue: descriptionDefaultValue}),
             variant: "destructive",
         });
     }
     setIsInitialLoad(false); 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Removed dependencies that were causing re-runs, only run on mount. searchParams, t, toast are stable.
+  }, []); 
 
-  // Save to localStorage on change (debounced)
   useEffect(() => {
-    if (isInitialLoad) return;
+    if (isInitialLoad || !currentTemplate) return;
 
     if (debounceTimer) clearTimeout(debounceTimer);
 
     const timer = setTimeout(() => {
-      // Ensure currentTemplate is available before saving
-      if (currentTemplate) {
-        const draft: TestDraft = { 
-          name: testName, 
-          questions, 
-          templateId: selectedTemplateId, // Save selected template ID
-          quizEndMessage 
-        };
-        localStorage.setItem(localStorageKey, JSON.stringify(draft));
-        setHasUnsavedDraft(true);
-      }
+      const draft: TestDraft = { 
+        name: testName, 
+        questions, 
+        templateId: selectedTemplateId,
+        quizEndMessage 
+      };
+      localStorage.setItem(localStorageKey, JSON.stringify(draft));
+      setHasUnsavedDraft(true);
     }, 1000);
     setDebounceTimer(timer);
     
@@ -133,47 +125,61 @@ function NewTestEditorPageContent() {
       if (timer) clearTimeout(timer);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testName, questions, selectedTemplateId, quizEndMessage, isInitialLoad, currentTemplate]); // Added currentTemplate
+  }, [testName, questions, selectedTemplateId, quizEndMessage, isInitialLoad, currentTemplate]);
 
 
   const updatePreview = useCallback(() => {
-    if (!currentTemplate) return; // Don't update if template isn't loaded
+    if (!currentTemplate) {
+      setPreviewContent("<html><body><p>No template selected or template not found.</p></body></html>");
+      return;
+    }
 
     // Data to be injected into the template's scope
+    // Ensure questions, testName, and quizEndMessage are properly stringified and escaped if necessary
     const questionsJson = JSON.stringify(questions);
+
+    // Create the data injection HTML structure. These elements will be hidden
+    // and their content read by the script within the PageTemplate's htmlContent.
     const injectedDataHtml = `
       <script id="quiz-data" type="application/json">${questionsJson}<\/script>
       <div id="quiz-name-data" style="display:none;">${testName || ''}</div>
       <div id="quiz-end-message-data" style="display:none;">${quizEndMessage}</div>
     `;
 
-    // The template's HTML content now includes its own <script> for quiz logic
+    // The template's HTML content now includes its own <script> for quiz logic.
+    // We append our data injection scripts before the closing </body> tag of the template.
     const finalHtmlBody = currentTemplate.htmlContent.replace(
       '</body>',
       `${injectedDataHtml}</body>`
     );
     
     // Global CSS variables for theming, accessible by the template's CSS
-    const stylingVariables = `
-      :root {
-        --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background').trim()};
-        --foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim()};
-        --card: ${getComputedStyle(document.documentElement).getPropertyValue('--card').trim()};
-        --card-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--card-foreground').trim()};
-        --primary: ${getComputedStyle(document.documentElement).getPropertyValue('--primary').trim()};
-        --primary-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--primary-foreground').trim()};
-        --secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--secondary').trim()};
-        --accent: ${getComputedStyle(document.documentElement).getPropertyValue('--accent').trim()};
-        --accent-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--accent-foreground').trim()};
-        --destructive: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive').trim()};
-        --destructive-foreground: ${getComputedStyle(document.documentElement).getPropertyValue('--destructive-foreground').trim()};
-        --border: ${getComputedStyle(document.documentElement).getPropertyValue('--border').trim()};
-        --font-geist-sans: ${getComputedStyle(document.documentElement).getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
-        --success-bg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-bg').trim()};
-        --success-fg: ${getComputedStyle(document.documentElement).getPropertyValue('--success-fg').trim()};
-        --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
-      }
-    `;
+    // Ensure these are correctly fetched and formatted.
+    let stylingVariables = '';
+    if (typeof window !== 'undefined') { // Check if running on client
+        const rootStyle = getComputedStyle(document.documentElement);
+        stylingVariables = `
+          :root {
+            --background: ${rootStyle.getPropertyValue('--background').trim()};
+            --foreground: ${rootStyle.getPropertyValue('--foreground').trim()};
+            --card: ${rootStyle.getPropertyValue('--card').trim()};
+            --card-foreground: ${rootStyle.getPropertyValue('--card-foreground').trim()};
+            --primary: ${rootStyle.getPropertyValue('--primary').trim()};
+            --primary-foreground: ${rootStyle.getPropertyValue('--primary-foreground').trim()};
+            --secondary: ${rootStyle.getPropertyValue('--secondary').trim()};
+            --accent: ${rootStyle.getPropertyValue('--accent').trim()};
+            --accent-foreground: ${rootStyle.getPropertyValue('--accent-foreground').trim()};
+            --destructive: ${rootStyle.getPropertyValue('--destructive').trim()};
+            --destructive-foreground: ${rootStyle.getPropertyValue('--destructive-foreground').trim()};
+            --border: ${rootStyle.getPropertyValue('--border').trim()};
+            --font-geist-sans: ${rootStyle.getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
+            --success-bg: ${rootStyle.getPropertyValue('--success-bg').trim()};
+            --success-fg: ${rootStyle.getPropertyValue('--success-fg').trim()};
+            --success-border: ${rootStyle.getPropertyValue('--success-border').trim()};
+          }
+        `;
+    }
+    
     setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${currentTemplate.cssContent}</style></head>${finalHtmlBody}</html>`);
   }, [currentTemplate, testName, questions, quizEndMessage]);
 
@@ -279,12 +285,22 @@ function NewTestEditorPageContent() {
     } : q));
   };
 
-
   const handleDeleteQuestion = (questionId: string) => setQuestions((prev) => prev.filter((q) => q.id !== questionId));
 
   const handleSaveTest = () => {
-    // HTML and CSS are now part of the template, so we save the templateId
-    const testData = { testName, questions, templateId: selectedTemplateId, quizEndMessage, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    if (!currentTemplate) {
+        toast({title: "Error", description: "No page template selected. Cannot save test.", variant: "destructive"});
+        return;
+    }
+    const testData: Test = { 
+        id: 'new-' + generateId(), // Placeholder ID for new test
+        name: testName, 
+        questions, 
+        templateId: selectedTemplateId, 
+        quizEndMessage, 
+        createdAt: new Date().toISOString(), 
+        updatedAt: new Date().toISOString() 
+    };
     console.log("Saving test data:", JSON.stringify(testData, null, 2));
     toast({ title: t('editor.toast.saveSuccessTitle'), description: t('editor.toast.saveSuccessDescription') });
     localStorage.removeItem(localStorageKey);
@@ -303,6 +319,9 @@ function NewTestEditorPageContent() {
           variant: "destructive",
         });
       }
+      // It's good practice to revoke the object URL after it's used,
+      // though for a new window, it might need to persist until the window is closed.
+      // For simplicity, revoking after a short delay.
       setTimeout(() => URL.revokeObjectURL(url), 100); 
     }
   };
@@ -317,12 +336,14 @@ function NewTestEditorPageContent() {
   const defaultTestNameFromTemplateBase = t('editor.defaultTestNameFromTemplate', {templateName: ''});
   const defaultTestNameFromTemplatePlaceholderIndex = defaultTestNameFromTemplateBase.indexOf('{{templateName}}');
   const defaultTestNameFromTemplatePrefix = defaultTestNameFromTemplatePlaceholderIndex !== -1 ? defaultTestNameFromTemplateBase.substring(0, defaultTestNameFromTemplatePlaceholderIndex) : defaultTestNameFromTemplateBase;
-
+  
   const isEditing = questions.length > 0 || 
                     (testName && 
-                     testName !== t('editor.defaultTestName') && 
-                     (defaultTestNameFromTemplatePlaceholderIndex === -1 || !testName.startsWith(defaultTestNameFromTemplatePrefix))
+                     testName !== t('editor.defaultTestName', {defaultValue: 'My Awesome Quiz'}) && 
+                     (defaultTestNameFromTemplatePlaceholderIndex === -1 || !testName.startsWith(defaultTestNameFromTemplatePrefix)) &&
+                     (currentTemplate?.name && testName !== "Quiz from " + currentTemplate.name)
                     );
+
   const pageTitleKeyToUse = isEditing ? "editor.pageTitleEditing" : "editor.pageTitleNew";
   const pageTitleParamsToUse = isEditing ? { testNameOrId: testName } : undefined;
 
@@ -355,7 +376,6 @@ function NewTestEditorPageContent() {
         </header>
 
         <div className="grid md:grid-cols-3 gap-6 flex-1 min-h-0">
-          {/* Configuration Column - Reduced scope as HTML/CSS are now from template */}
           <Card className="md:col-span-1 flex flex-col shadow-lg">
              <CardHeader>
                 <CardTitle className="flex items-center"><Settings2 className="mr-2 h-5 w-5 text-primary" />{t('editor.config.title')}</CardTitle>
@@ -369,10 +389,10 @@ function NewTestEditorPageContent() {
                 </div>
                 <Separator />
                 <div>
-                  <Label htmlFor="pageTemplateSelect" className="text-sm font-medium">{t('editor.config.templateLabel', {defaultValue: 'Page Style Template'})}</Label>
+                  <Label htmlFor="pageTemplateSelect" className="text-sm font-medium">{t('editor.config.templateLabel')}</Label>
                   <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
                     <SelectTrigger id="pageTemplateSelect" className="mt-1">
-                      <SelectValue placeholder={t('editor.config.selectTemplatePlaceholder', {defaultValue: "Select a page template"})} />
+                      <SelectValue placeholder={t('editor.config.selectTemplatePlaceholder')} />
                     </SelectTrigger>
                     <SelectContent>
                       {pageTemplates.map(template => (
@@ -382,9 +402,9 @@ function NewTestEditorPageContent() {
                   </Select>
                   {currentTemplate && (
                      <p className="text-xs text-muted-foreground mt-1">
-                       {t('editor.config.templateDescriptionHint', {description: currentTemplate.description || 'No description.', defaultValue: 'Description: {{description}}'})}
+                       {t('editor.config.templateDescriptionHint', {description: currentTemplate.description || 'No description.'})}
                        <Link href={`/templates/editor/${currentTemplate.id}`} className="ml-1 text-primary hover:underline text-xs">
-                         ({t('editor.config.editTemplateLink', {defaultValue: 'Edit Style'})})
+                         ({t('editor.config.editTemplateLink')})
                        </Link>
                      </p>
                   )}
@@ -528,10 +548,10 @@ function NewTestEditorPageContent() {
                                           onValueChange={(value) => handleUpdateDropTarget(question.id, target.id, 'expectedDragItemId', value)}
                                         >
                                           <SelectTrigger className="text-xs h-8">
-                                            <SelectValue placeholder={t('editor.questions.selectCorrectDragItem', {defaultValue: 'Correct Draggable Item'})} />
+                                            <SelectValue placeholder={t('editor.questions.selectCorrectDragItem')} />
                                           </SelectTrigger>
                                           <SelectContent>
-                                            <SelectItem value="">{t('editor.questions.noCorrectDragItem', {defaultValue: 'None (any is placeholder/visual only)'})}</SelectItem>
+                                            <SelectItem value="">{t('editor.questions.noCorrectDragItem')}</SelectItem>
                                             {(question.dragItems || []).map(dItem => (
                                               <SelectItem key={dItem.id} value={dItem.id}>{dItem.text.substring(0,30)}{dItem.text.length > 30 ? '...' : ''}</SelectItem>
                                             ))}
@@ -546,8 +566,6 @@ function NewTestEditorPageContent() {
                                 <Button variant="outline" size="sm" onClick={() => handleAddDropTarget(question.id)}><PlusCircle className="mr-2 h-4 w-4" /> {t('editor.questions.addDropTarget')}</Button>
                             </>
                         )}
-
-
                       </CardContent>
                     </Card>
                   ))

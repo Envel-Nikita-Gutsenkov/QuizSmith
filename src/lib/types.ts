@@ -11,7 +11,6 @@ export type QuestionType =
   | 'multiple-choice-image' 
   | 'matching-text-text' 
   | 'drag-and-drop-text-text';
-  // Add more as needed, e.g., 'matching-image-text', 'drag-image-on-image'
 
 export interface MatchPair {
   id: string;
@@ -42,26 +41,27 @@ export interface Question {
   dropTargets?: DropTarget[]; // Used for 'drag-and-drop-*' types
 }
 
-export interface Test {
-  id: string;
-  name: string;
-  // htmlContent and cssContent are now part of the chosen PageTemplate
-  questions: Question[];
-  quizEndMessage: string; 
-  templateId?: string; // ID of the PageTemplate used for this test
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
-}
-
+// Represents a Quiz Engine Template - defines the HTML, CSS, and JS logic for a quiz page
 export interface PageTemplate {
   id: string;
   name: string;
   description?: string;
-  htmlContent: string; // This HTML now includes the <script> tag with all quiz logic
+  htmlContent: string; // This HTML *includes* the <script> tag with all template-specific quiz logic
   cssContent: string;
   previewImageUrl?: string; 
   aiHint?: string;
   tags?: string[];
   createdAt?: string; // ISO date string
   updatedAt?: string; // ISO date string
+}
+
+// Represents a user-created Test instance
+export interface Test {
+  id: string;
+  name: string;
+  questions: Question[]; // The data for the questions
+  quizEndMessage: string; // User-configurable end message with placeholders
+  templateId: string; // ID of the PageTemplate (Quiz Engine Template) used for this test
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
 }
