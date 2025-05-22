@@ -6,10 +6,10 @@ import Image from 'next/image';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Eye, Layers } from 'lucide-react';
-import { pageTemplates } from '@/lib/mockPageTemplates'; // Import defined page templates
+import { PlusCircle, Eye, Layers, Copy } from 'lucide-react'; // Added Copy icon
+import { pageTemplates } from '@/lib/mockPageTemplates'; 
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Suspense } from 'react'; // Import Suspense
+import { Suspense } from 'react'; 
 
 function ExplorePageTemplatesContent() {
   const { t } = useLanguage();
@@ -33,9 +33,9 @@ function ExplorePageTemplatesContent() {
                 <Image
                   src={template.previewImageUrl || "https://placehold.co/600x400.png"}
                   alt={template.name}
-                  fill // Changed from layout="fill" and objectFit="cover"
-                  className="rounded-t-md object-cover" // Added object-cover
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" // Example sizes
+                  fill 
+                  className="rounded-t-md object-cover" 
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" 
                   data-ai-hint={template.aiHint || "template style"}
                 />
               </div>
@@ -52,10 +52,15 @@ function ExplorePageTemplatesContent() {
                     </div>
                 )}
               </CardContent>
-              <CardFooter className="gap-2">
+              <CardFooter className="grid grid-cols-3 gap-2"> {/* Changed to 3 columns */}
                 <Button variant="outline" size="sm" asChild className="flex-1">
                   <Link href={`/templates/editor/${template.id}`}>
-                    <Eye className="mr-2 h-4 w-4" /> {t('pageTemplates.explore.preview')}
+                    <Eye className="mr-1 h-4 w-4" /> {t('pageTemplates.explore.preview')}
+                  </Link>
+                </Button>
+                <Button variant="outline" size="sm" asChild className="flex-1"> {/* Duplicate Button */}
+                  <Link href={`/templates/editor/new?from=${template.id}`}>
+                    <Copy className="mr-1 h-4 w-4" /> {t('pageTemplates.explore.duplicate')}
                   </Link>
                 </Button>
                 <Button size="sm" asChild className="flex-1">

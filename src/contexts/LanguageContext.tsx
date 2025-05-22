@@ -142,14 +142,17 @@ const translations: Translations = {
     'editor.toast.popupBlockedDescription': 'Please allow popups for this site to use full screen preview.',
     'editor.toast.templateNotFoundTitle': 'Page Template Not Found',
     'editor.toast.templateNotFoundDescription': 'The page template "{{templateId}}" was not found. Loaded default blank canvas.',
+    'editor.toast.templateLoadErrorTitle': 'Template Load Error',
+    'editor.toast.templateLoadErrorDescription': 'Could not load template "{{templateId}}". Starting with a blank canvas.',
 
 
-    'pageTemplateEditor.new.pageTitle': 'New Page Style Template',
-    'pageTemplateEditor.edit.pageTitle': 'Edit Page Style Template: {{templateIdOrName}}',
+    'pageTemplateEditor.new.pageTitle': 'New Page Template',
+    'pageTemplateEditor.new.pageTitleFromSource': 'New Page Template (from {{sourceName}})',
+    'pageTemplateEditor.edit.pageTitle': 'Edit Page Template: {{templateIdOrName}}',
     'pageTemplateEditor.updatePreview': 'Update Preview',
     'pageTemplateEditor.saveTemplate': 'Save Page Template',
-    'pageTemplateEditor.details.title': 'Page Style Template Details & Design',
-    'pageTemplateEditor.details.description': 'Define the HTML structure and CSS style of your reusable quiz page template.',
+    'pageTemplateEditor.details.title': 'Page Template Details & Design',
+    'pageTemplateEditor.details.description': 'Define the HTML structure and CSS style of your reusable quiz page template. You can include <script> tags in the HTML for template-specific JavaScript.',
     'pageTemplateEditor.details.nameLabel': 'Page Template Name',
     'pageTemplateEditor.details.namePlaceholder': 'e.g., Modern MCQ Page Style',
     'pageTemplateEditor.details.loadedNamePlaceholder': 'Page Template {{templateId}}',
@@ -158,7 +161,7 @@ const translations: Translations = {
     'pageTemplateEditor.details.htmlLabel': 'Page HTML Structure',
     'pageTemplateEditor.details.htmlPlaceholder': 'Enter page template HTML...\n<!-- Ensure it includes placeholders like <div id="quiz-content-host"> for questions -->',
     'pageTemplateEditor.details.cssLabel': 'Page CSS Styles',
-    'pageTemplateEditor.details.cssPlaceholder': 'Enter page template CSS...\n/* Style your page template elements */',
+    'pageTemplateEditor.details.cssPlaceholder': 'Enter page template CSS...\n/* Style your page template elements */\n/* Add your CSS animations here */',
     'pageTemplateEditor.preview.titlePane': 'Page Template Preview',
     'pageTemplateEditor.preview.descriptionPane': 'This is how your page template structure will look with sample content.',
     'pageTemplateEditor.preview.iframeTitle': 'Page Template Preview',
@@ -166,11 +169,17 @@ const translations: Translations = {
     'pageTemplateEditor.preview.sampleQuestion': 'This is where question content would appear.',
     'pageTemplateEditor.preview.sampleOption1': 'Sample Option 1',
     'pageTemplateEditor.preview.sampleOption2': 'Sample Option 2',
+    'pageTemplateEditor.toast.saveSuccessTitle': 'Page Template Saved (Mock)',
+    'pageTemplateEditor.toast.saveSuccessDescription': 'Page Template "{{templateName}}" data logged to console.',
+    'pageTemplateEditor.toast.loadErrorTitle': 'Load Error',
+    'pageTemplateEditor.toast.loadErrorDescription': 'Could not load template "{{templateId}}". Loaded default blank canvas.',
+
 
     'pageTemplates.explore.pageTitle': 'Explore Templates',
     'pageTemplates.explore.createButton': 'Create New Template',
     'pageTemplates.explore.useThisTemplate': 'Use This Template',
-    'pageTemplates.explore.preview': 'Preview Page Style',
+    'pageTemplates.explore.preview': 'Edit Page Style',
+    'pageTemplates.explore.duplicate': 'Duplicate',
     'pageTemplates.explore.noTemplates.title': 'No Page Templates Available Yet',
     'pageTemplates.explore.noTemplates.description': 'Be the first to create a stunning page template for QuizSmith!',
     'pageTemplates.explore.noTemplates.button': 'Create Your First Page Template',
@@ -216,6 +225,7 @@ const translations: Translations = {
     'questionType.multiple-choice-image': 'Multiple Choice (Image)',
     'questionType.matching-text-text': 'Matching (Text-to-Text)',
     'questionType.drag-and-drop-text-text': 'Drag & Drop (Text-on-Text)',
+
     'quiz.feedback.correct': 'Correct!',
     'quiz.feedback.incorrect': 'Incorrect!',
     'quiz.endScreen.title': 'Quiz Complete!',
@@ -349,13 +359,17 @@ const translations: Translations = {
     'editor.toast.popupBlockedDescription': 'Пожалуйста, разрешите всплывающие окна для этого сайта, чтобы использовать полноэкранный предпросмотр.',
     'editor.toast.templateNotFoundTitle': 'Шаблон страницы не найден',
     'editor.toast.templateNotFoundDescription': 'Шаблон страницы "{{templateId}}" не найден. Загружен пустой шаблон по умолчанию.',
+    'editor.toast.templateLoadErrorTitle': 'Ошибка загрузки шаблона',
+    'editor.toast.templateLoadErrorDescription': 'Не удалось загрузить шаблон "{{templateId}}". Загружен пустой холст.',
 
-    'pageTemplateEditor.new.pageTitle': 'Новый шаблон стиля страницы',
-    'pageTemplateEditor.edit.pageTitle': 'Редактировать шаблон стиля страницы: {{templateIdOrName}}',
+
+    'pageTemplateEditor.new.pageTitle': 'Новый шаблон страницы',
+    'pageTemplateEditor.new.pageTitleFromSource': 'Новый шаблон страницы (из {{sourceName}})',
+    'pageTemplateEditor.edit.pageTitle': 'Редактировать шаблон страницы: {{templateIdOrName}}',
     'pageTemplateEditor.updatePreview': 'Обновить предпросмотр',
     'pageTemplateEditor.saveTemplate': 'Сохранить шаблон страницы',
-    'pageTemplateEditor.details.title': 'Детали и дизайн шаблона стиля страницы',
-    'pageTemplateEditor.details.description': 'Определите структуру HTML и стиль CSS вашего многоразового шаблона страницы викторины.',
+    'pageTemplateEditor.details.title': 'Детали и дизайн шаблона страницы',
+    'pageTemplateEditor.details.description': 'Определите структуру HTML и стиль CSS вашего многоразового шаблона страницы викторины. Вы можете включать теги &lt;script&gt; в HTML для специфичного JavaScript шаблона.',
     'pageTemplateEditor.details.nameLabel': 'Название шаблона страницы',
     'pageTemplateEditor.details.namePlaceholder': 'например, Современный стиль страницы MCQ',
     'pageTemplateEditor.details.loadedNamePlaceholder': 'Шаблон страницы {{templateId}}',
@@ -364,7 +378,7 @@ const translations: Translations = {
     'pageTemplateEditor.details.htmlLabel': 'Структура HTML страницы',
     'pageTemplateEditor.details.htmlPlaceholder': 'Введите HTML шаблона страницы...\n<!-- Убедитесь, что он содержит плейсхолдеры, такие как <div id="quiz-content-host"> для вопросов -->',
     'pageTemplateEditor.details.cssLabel': 'Стили CSS страницы',
-    'pageTemplateEditor.details.cssPlaceholder': 'Введите CSS шаблона страницы...\n/* Стилизуйте элементы вашего шаблона страницы */',
+    'pageTemplateEditor.details.cssPlaceholder': 'Введите CSS шаблона страницы...\n/* Стилизуйте элементы вашего шаблона страницы */\n/* Добавьте сюда свои CSS анимации */',
     'pageTemplateEditor.preview.titlePane': 'Предпросмотр шаблона страницы',
     'pageTemplateEditor.preview.descriptionPane': 'Так будет выглядеть структура вашего шаблона страницы с образцом содержимого.',
     'pageTemplateEditor.preview.iframeTitle': 'Предпросмотр шаблона страницы',
@@ -372,11 +386,16 @@ const translations: Translations = {
     'pageTemplateEditor.preview.sampleQuestion': 'Здесь будет отображаться содержимое вопроса.',
     'pageTemplateEditor.preview.sampleOption1': 'Вариант А',
     'pageTemplateEditor.preview.sampleOption2': 'Вариант Б',
+    'pageTemplateEditor.toast.saveSuccessTitle': 'Шаблон страницы сохранен (имитация)',
+    'pageTemplateEditor.toast.saveSuccessDescription': 'Данные шаблона страницы "{{templateName}}" записаны в консоль.',
+    'pageTemplateEditor.toast.loadErrorTitle': 'Ошибка загрузки',
+    'pageTemplateEditor.toast.loadErrorDescription': 'Не удалось загрузить шаблон "{{templateId}}". Загружен пустой шаблон по умолчанию.',
 
     'pageTemplates.explore.pageTitle': 'Обзор шаблонов',
     'pageTemplates.explore.createButton': 'Создать новый шаблон',
     'pageTemplates.explore.useThisTemplate': 'Использовать этот шаблон',
-    'pageTemplates.explore.preview': 'Предпросмотр стиля страницы',
+    'pageTemplates.explore.preview': 'Редактировать стиль страницы',
+    'pageTemplates.explore.duplicate': 'Дублировать',
     'pageTemplates.explore.noTemplates.title': 'Доступных шаблонов страниц пока нет',
     'pageTemplates.explore.noTemplates.description': 'Станьте первым, кто создаст потрясающий шаблон страницы для QuizSmith!',
     'pageTemplates.explore.noTemplates.button': 'Создать свой первый шаблон страницы',
@@ -422,6 +441,7 @@ const translations: Translations = {
     'questionType.multiple-choice-image': 'Один из многих (Изображение)',
     'questionType.matching-text-text': 'Сопоставление (Текст-Текст)',
     'questionType.drag-and-drop-text-text': 'Перетаскивание (Текст-на-Текст)',
+
     'quiz.feedback.correct': 'Верно!',
     'quiz.feedback.incorrect': 'Неверно!',
     'quiz.endScreen.title': 'Викторина завершена!',
@@ -429,6 +449,7 @@ const translations: Translations = {
     'quiz.matching.selectPrompt': 'Выберите пару для:',
     'quiz.dragDrop.dropHere': 'Перетащите сюда',
     'quiz.questionType.notImplemented': 'Этот тип вопроса еще не полностью интерактивен в предпросмотре.',
+
   },
 };
 
@@ -455,7 +476,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
           const value = replacements[placeholder];
           if (value !== undefined) {
              translation = translation.replace(
-               new RegExp(`{{\${placeholder}}}`, 'g'),
+               new RegExp(`{{\\s*${placeholder}\\s*}}`, 'g'), // Added \\s* to allow for spaces around placeholder
                String(value)
              );
           }
@@ -480,10 +501,3 @@ export function useLanguage() {
   }
   return context;
 }
-
-// Helper component for Suspense boundary if needed directly in context consumers, though typically not.
-// export const ClientLanguageConsumer = ({ children }: { children: (value: LanguageContextType) => ReactNode }) => {
-//   const contextValue = useLanguage();
-//   return <>{children(contextValue)}</>;
-// };
-

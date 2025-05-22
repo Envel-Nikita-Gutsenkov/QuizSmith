@@ -1,7 +1,7 @@
 
 'use client'; 
 
-import { useState, useEffect, useCallback } from 'react'; 
+import { useState, useEffect, useCallback, Suspense } from 'react'; 
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,32 +11,54 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Save, Eye, Layers, Palette } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates'; // Import default template
+import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates'; 
 import { useToast } from '@/hooks/use-toast';
+import { useSearchParams } from 'next/navigation'; // Added for query params
 
-
-export default function NewPageTemplateEditorPage() {
+function NewPageTemplateEditorPageContent() {
   const { t } = useLanguage(); 
   const { toast } = useToast();
+  const searchParams = useSearchParams();
 
   const [templateName, setTemplateName] = useState('');
   const [templateDescription, setTemplateDescription] = useState('');
   const [htmlContent, setHtmlContent] = useState('');
   const [cssContent, setCssContent] = useState('');
   const [previewContent, setPreviewContent] = useState('');
+  const [sourceTemplateName, setSourceTemplateName] = useState<string | null>(null);
   
-  const pageTitleKey = "pageTemplateEditor.new.pageTitle"; 
-
   useEffect(() => {
-    // Load the default "Blank Canvas" template initially
-    const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID);
-    if (defaultTemplate) {
-      setHtmlContent(defaultTemplate.htmlContent);
-      setCssContent(defaultTemplate.cssContent);
+    const sourceTemplateId = searchParams.get('from');
+    let initialTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID);
+
+    if (sourceTemplateId) {
+      const foundSourceTemplate = pageTemplates.find(pt => pt.id === sourceTemplateId);
+      if (foundSourceTemplate) {
+        initialTemplate = foundSourceTemplate;
+        setTemplateName(t('pageTemplateEditor.new.pageTitleFromSource', { sourceName: foundSourceTemplate.name, defaultValue: `Copy of ${foundSourceTemplate.name}`}));
+        setTemplateDescription(foundSourceTemplate.description || '');
+        setSourceTemplateName(foundSourceTemplate.name); // For dynamic title
+      } else {
+        toast({
+          title: t('pageTemplateEditor.toast.loadErrorTitle', {defaultValue: 'Load Error'}),
+          description: t('pageTemplateEditor.toast.loadErrorDescription', {templateId: sourceTemplateId, defaultValue: `Could not load template "${sourceTemplateId}" to duplicate. Starting with a blank canvas.`}),
+          variant: 'destructive',
+        });
+        setTemplateName(t('pageTemplateEditor.details.namePlaceholder', {defaultValue: 'My New Page Template'}));
+      }
+    } else {
       setTemplateName(t('pageTemplateEditor.details.namePlaceholder', {defaultValue: 'My New Page Template'}));
     }
+    
+    if (initialTemplate) {
+      setHtmlContent(initialTemplate.htmlContent);
+      setCssContent(initialTemplate.cssContent);
+      if (!sourceTemplateId) { // Only set default description if not duplicating
+          setTemplateDescription(initialTemplate.description || '');
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [t]); // Ensure this runs once on mount based on t
+  }, [searchParams, t, toast]);
 
   const updatePreview = useCallback(() => {
     let processedHtml = htmlContent
@@ -82,18 +104,20 @@ export default function NewPageTemplateEditorPage() {
   }, [updatePreview]);
 
   const handleSaveTemplate = () => {
-    // In a real app, this would save the new template to a backend
     console.log("Saving new page template:", { templateName, templateDescription, htmlContent, cssContent });
-    toast({ title: "New Page Template (Mock Saved)", description: `Page Template '${templateName}' data logged to console.` });
-    // Potentially redirect or clear form
+    toast({ title: t('pageTemplateEditor.toast.saveSuccessTitle'), description: t('pageTemplateEditor.toast.saveSuccessDescription', { templateName }) });
   };
 
+  const pageTitleKey = sourceTemplateName 
+    ? "pageTemplateEditor.new.pageTitleFromSource" 
+    : "pageTemplateEditor.new.pageTitle";
+  const pageTitleParams = sourceTemplateName ? { sourceName: sourceTemplateName } : undefined;
 
   return (
-    <AppLayout currentPageTitleKey={pageTitleKey}>
+    <AppLayout currentPageTitleKey={pageTitleKey} currentPageTitleParams={pageTitleParams}>
       <div className="flex flex-col h-full">
          <header className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-semibold">{t(pageTitleKey, {defaultValue: 'New Page Style Template Editor'})}</h1>
+          <h1 className="text-2xl font-semibold">{t(pageTitleKey, pageTitleParams || {defaultValue: 'New Page Template'})}</h1>
           <div className="space-x-2">
             <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.updatePreview')}</Button>
             <Button onClick={handleSaveTemplate}><Save className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.saveTemplate')}</Button>
@@ -171,5 +195,13 @@ export default function NewPageTemplateEditorPage() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function NewPageTemplateEditorPage() {
+  return (
+    <Suspense fallback={<div>Loading template editor...</div>}>
+      <NewPageTemplateEditorPageContent />
+    </Suspense>
   );
 }
