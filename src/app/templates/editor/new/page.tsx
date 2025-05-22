@@ -29,7 +29,7 @@ function NewPageTemplateEditorPageContent() {
   
   useEffect(() => {
     const sourceTemplateId = searchParams.get('from');
-    let initialTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID);
+    let initialTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID); // Default to Blank Canvas
 
     if (sourceTemplateId) {
       const foundSourceTemplate = pageTemplates.find(pt => pt.id === sourceTemplateId);
@@ -53,12 +53,15 @@ function NewPageTemplateEditorPageContent() {
     if (initialTemplate) {
       setHtmlContent(initialTemplate.htmlContent);
       setCssContent(initialTemplate.cssContent);
-      if (!sourceTemplateId) { // Only set default description if not duplicating
+      // Only set default description if not duplicating and the initial template is the default blank canvas
+      if (!sourceTemplateId && initialTemplate.id === DEFAULT_TEMPLATE_ID) { 
           setTemplateDescription(initialTemplate.description || '');
+      } else if (!sourceTemplateId) { // If starting new (not duplicating) and it's not default blank, clear description
+          setTemplateDescription('');
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, t, toast]);
+  }, [searchParams, t, toast]); // toast dependency for error message
 
   const updatePreview = useCallback(() => {
     let processedHtml = htmlContent
@@ -111,7 +114,8 @@ function NewPageTemplateEditorPageContent() {
   const pageTitleKey = sourceTemplateName 
     ? "pageTemplateEditor.new.pageTitleFromSource" 
     : "pageTemplateEditor.new.pageTitle";
-  const pageTitleParams = sourceTemplateName ? { sourceName: sourceTemplateName } : undefined;
+  const pageTitleParams = sourceTemplateName ? { sourceName: sourceTemplateName } : {defaultValue: t('pageTemplateEditor.new.pageTitle')};
+
 
   return (
     <AppLayout currentPageTitleKey={pageTitleKey} currentPageTitleParams={pageTitleParams}>
@@ -163,6 +167,12 @@ function NewPageTemplateEditorPageContent() {
                   className="mt-1 font-mono text-xs min-h-[250px] resize-y"
                   rows={12}
                 />
+                 <p className="text-xs text-muted-foreground mt-1">
+                  You can include &lt;script&gt; tags here for template-specific JavaScript and animations.
+                  Ensure your HTML includes key placeholders like <code>&lt;div id="quiz-content-host"&gt;&lt;/div&gt;</code> 
+                  and a question template block like <code>&lt;div data-quiz-question-id="q_template_id"&gt;...&lt;/div&gt;</code> 
+                  for the quiz logic to function.
+                </p>
               </div>
               <div>
                 <Label htmlFor="cssContent" className="text-sm font-medium flex items-center"><Palette className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.details.cssLabel')}</Label>
@@ -174,6 +184,9 @@ function NewPageTemplateEditorPageContent() {
                   className="mt-1 font-mono text-xs min-h-[250px] resize-y"
                   rows={12}
                 />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Define your CSS animations and styles here. These will be applied to your HTML structure.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -205,3 +218,4 @@ export default function NewPageTemplateEditorPage() {
     </Suspense>
   );
 }
+

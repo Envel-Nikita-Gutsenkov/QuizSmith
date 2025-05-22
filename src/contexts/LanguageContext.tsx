@@ -36,7 +36,7 @@ const translations: Translations = {
     'nav.settings': 'Settings',
     'nav.adminPanel': 'Admin Panel',
     'nav.createNew': 'Create New',
-    'nav.explorePageTemplates': 'Explore Templates',
+    // 'nav.explorePageTemplates': 'Explore Page Templates', // Kept for reference, but page title key is more specific
 
     'dashboard.pageTitle': 'Dashboard',
     'dashboard.myTests.heading': 'My Tests',
@@ -64,8 +64,8 @@ const translations: Translations = {
     'myTests.statusLabel': 'Status',
     'myTests.lastModifiedLabel': 'Last modified',
 
-    'myPageTemplates.pageTitle': 'My Templates',
-    'myPageTemplates.create': 'Create New Template',
+    'myPageTemplates.pageTitle': 'My Templates', // Changed from "My Page Templates"
+    'myPageTemplates.create': 'Create New Template', // Changed
     'myPageTemplates.noPageTemplates.title': "You haven't created any templates yet.",
     'myPageTemplates.noPageTemplates.description': 'Page templates help you build quizzes faster with consistent page designs.',
     'myPageTemplates.noPageTemplates.button': 'Create Your First Template',
@@ -140,8 +140,8 @@ const translations: Translations = {
     'editor.toast.saveSuccessDescriptionExisting': 'Test {{testId}} configuration logged to console.',
     'editor.toast.popupBlockedTitle': 'Popup Blocked',
     'editor.toast.popupBlockedDescription': 'Please allow popups for this site to use full screen preview.',
-    'editor.toast.templateNotFoundTitle': 'Page Template Not Found',
-    'editor.toast.templateNotFoundDescription': 'The page template "{{templateId}}" was not found. Loaded default blank canvas.',
+    'editor.toast.templateNotFoundTitle': 'Page Style Template Not Found',
+    'editor.toast.templateNotFoundDescription': 'The page style template "{{templateId}}" was not found. Loaded default blank canvas.',
     'editor.toast.templateLoadErrorTitle': 'Template Load Error',
     'editor.toast.templateLoadErrorDescription': 'Could not load template "{{templateId}}". Starting with a blank canvas.',
 
@@ -175,11 +175,11 @@ const translations: Translations = {
     'pageTemplateEditor.toast.loadErrorDescription': 'Could not load template "{{templateId}}". Loaded default blank canvas.',
 
 
-    'pageTemplates.explore.pageTitle': 'Explore Templates',
+    'pageTemplates.explore.pageTitle': 'Explore Templates', // Changed from "Explore Page Style Templates"
     'pageTemplates.explore.createButton': 'Create New Template',
     'pageTemplates.explore.useThisTemplate': 'Use This Template',
     'pageTemplates.explore.preview': 'Edit Page Style',
-    'pageTemplates.explore.duplicate': 'Duplicate',
+    'pageTemplates.explore.duplicate': 'Duplicate', // New Key
     'pageTemplates.explore.noTemplates.title': 'No Page Templates Available Yet',
     'pageTemplates.explore.noTemplates.description': 'Be the first to create a stunning page template for QuizSmith!',
     'pageTemplates.explore.noTemplates.button': 'Create Your First Page Template',
@@ -254,7 +254,7 @@ const translations: Translations = {
     'nav.settings': 'Настройки',
     'nav.adminPanel': 'Панель администратора',
     'nav.createNew': 'Создать',
-    'nav.explorePageTemplates': 'Обзор шаблонов',
+    // 'nav.explorePageTemplates': 'Обзор шаблонов страниц',
 
     'dashboard.pageTitle': 'Панель',
     'dashboard.myTests.heading': 'Мои тесты',
@@ -281,8 +281,8 @@ const translations: Translations = {
     'myTests.statusLabel': 'Статус',
     'myTests.lastModifiedLabel': 'Последнее изменение',
 
-    'myPageTemplates.pageTitle': 'Мои шаблоны',
-    'myPageTemplates.create': 'Создать новый шаблон',
+    'myPageTemplates.pageTitle': 'Мои шаблоны', // Changed
+    'myPageTemplates.create': 'Создать новый шаблон', // Changed
     'myPageTemplates.noPageTemplates.title': 'Вы еще не создали ни одного шаблона.',
     'myPageTemplates.noPageTemplates.description': 'Шаблоны страниц помогут вам быстрее создавать викторины с единым дизайном страниц.',
     'myPageTemplates.noPageTemplates.button': 'Создать свой первый шаблон',
@@ -391,11 +391,11 @@ const translations: Translations = {
     'pageTemplateEditor.toast.loadErrorTitle': 'Ошибка загрузки',
     'pageTemplateEditor.toast.loadErrorDescription': 'Не удалось загрузить шаблон "{{templateId}}". Загружен пустой шаблон по умолчанию.',
 
-    'pageTemplates.explore.pageTitle': 'Обзор шаблонов',
+    'pageTemplates.explore.pageTitle': 'Обзор шаблонов', // Changed
     'pageTemplates.explore.createButton': 'Создать новый шаблон',
     'pageTemplates.explore.useThisTemplate': 'Использовать этот шаблон',
     'pageTemplates.explore.preview': 'Редактировать стиль страницы',
-    'pageTemplates.explore.duplicate': 'Дублировать',
+    'pageTemplates.explore.duplicate': 'Дублировать', // New Key
     'pageTemplates.explore.noTemplates.title': 'Доступных шаблонов страниц пока нет',
     'pageTemplates.explore.noTemplates.description': 'Станьте первым, кто создаст потрясающий шаблон страницы для QuizSmith!',
     'pageTemplates.explore.noTemplates.button': 'Создать свой первый шаблон страницы',
@@ -501,3 +501,4 @@ export function useLanguage() {
   }
   return context;
 }
+

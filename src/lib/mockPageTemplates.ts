@@ -25,7 +25,27 @@ const defaultHtmlContent = `
     - An element with data-quiz-feedback="q_template_id": For displaying "Correct!"/"Incorrect!" feedback.
 
   You can add your own <script> tags here for template-specific animations or JS enhancements.
-  Ensure they don't conflict with the quizLogicScript's DOM manipulations.
+  Example:
+  <script>
+    // This script runs in the context of THIS TEMPLATE in the preview iframe.
+    // You can use it for template-specific animations or DOM manipulations.
+    // Be careful not to interfere with the quizLogicScript's control over #quiz-content-host.
+    // console.log("Custom template script loaded!");
+    // Example: Animate the quiz title if it exists
+    // document.addEventListener('DOMContentLoaded', () => {
+    //   const title = document.querySelector('.quiz-container [data-quiz-title]');
+    //   if (title) {
+    //     title.style.opacity = '0';
+    //     title.style.transform = 'translateY(-20px)';
+    //     setTimeout(() => {
+    //       title.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+    //       title.style.opacity = '1';
+    //       title.style.transform = 'translateY(0)';
+    //     }, 100);
+    //   }
+    // });
+  <\/script>
+
   Use Tailwind CSS classes or your custom CSS in the <style> block below.
 -->
 <div class="quiz-container p-8 rounded-xl shadow-2xl bg-card text-card-foreground max-w-2xl mx-auto my-10">
@@ -57,7 +77,7 @@ const defaultHtmlContent = `
                        transition-all duration-200 ease-in-out transform hover:scale-105">
           Sample Option Text
         </button>
-        <!-- For Matching and D&D, the script will inject different structures into data-quiz-options-for-question -->
+        <!-- For Matching and D&D, the quizLogicScript will inject different structures into data-quiz-options-for-question -->
       </div>
       
       <!-- Feedback message placeholder -->
@@ -264,13 +284,13 @@ body {
 export const pageTemplates: PageTemplate[] = [
   {
     id: DEFAULT_TEMPLATE_ID,
-    name: 'Blank Canvas',
-    description: 'A clean slate with essential quiz structure. Highly customizable for any question type. Ideal for developers or those wanting full control.',
+    name: 'Blank Canvas (Standard)',
+    description: 'A clean slate with essential quiz structure. Highly customizable for any question type. Ideal for developers or those wanting full control. This is your starting point for custom designs.',
     htmlContent: defaultHtmlContent,
     cssContent: defaultCssContent,
     previewImageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'blank canvas',
-    tags: ['Minimal', 'Customizable', 'Developer'],
+    tags: ['Minimal', 'Customizable', 'Developer', 'Standard'],
   },
   {
     id: 'tpl-text-mcq-sleek',
@@ -297,28 +317,31 @@ export const pageTemplates: PageTemplate[] = [
   </div>
   <script id="quiz-data" type="application/json"></script>
   <div id="quiz-end-message-text" style="display:none;"></div>
-  <!-- Template-specific script example:
+  <!-- Template-specific script example: -->
   <script>
+    // This script is part of the 'Sleek Text MCQ' PAGE STYLE TEMPLATE.
+    // It runs when this template is used in the quiz preview.
     document.addEventListener('DOMContentLoaded', () => {
-      // Add template-specific JS animations or interactions here
-      // For example, animate the quiz title on load
       const title = document.querySelector('.sleek-text-mcq [data-quiz-title]');
       if (title) {
+        // Example: A simple fade-in animation for the quiz title
         title.style.opacity = '0';
         title.style.transform = 'translateY(-10px)';
-        setTimeout(() => {
-          title.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-          title.style.opacity = '1';
-          title.style.transform = 'translateY(0)';
-        }, 100);
+        // Ensure this doesn't run if already animated or hidden by quizLogicScript
+        if (getComputedStyle(title).display !== 'none') {
+          setTimeout(() => {
+            title.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            title.style.opacity = '1';
+            title.style.transform = 'translateY(0)';
+          }, 100);
+        }
       }
     });
-  </script>
-  -->
+  <\/script>
 </div>
     `,
     cssContent: `
-    ${defaultCssContent} /* Inherit base styles */
+    ${defaultCssContent.replace('/* Add template-specific JS animations here if needed, or link to external JS files */', `
     .sleek-text-mcq .option-button { 
         letter-spacing: 0.5px; 
         box-shadow: 0 1px 3px rgba(0,0,0,0.03);
@@ -326,10 +349,15 @@ export const pageTemplates: PageTemplate[] = [
     .sleek-text-mcq .option-button:hover {
         box-shadow: 0 3px 8px rgba(0,0,0,0.07);
     }
-    /* Example of a template-specific animation (can be triggered by JS or hover) */
-    .sleek-text-mcq .question-block:hover .text-primary {
-        /* color: hsl(var(--accent)); Simple color change on hover for illustration */
+    /* Example of a template-specific CSS animation for question blocks */
+    .sleek-text-mcq .question-block {
+      animation: sleekFadeIn 0.5s ease-out forwards;
     }
+    @keyframes sleekFadeIn {
+      from { opacity: 0.5; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    `)} 
     `,
     previewImageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'minimalist modern',
@@ -364,7 +392,7 @@ export const pageTemplates: PageTemplate[] = [
 </div>
     `,
     cssContent: `
-    ${defaultCssContent} /* Inherit base styles */
+    ${defaultCssContent.replace('/* Add template-specific JS animations here if needed, or link to external JS files */', `
     .image-grid-mcq .option-button.image-option { 
         min-height: 150px; /* Ensure space for image + text */
         background-color: hsl(var(--background));
@@ -392,6 +420,7 @@ export const pageTemplates: PageTemplate[] = [
         text-overflow: ellipsis;
     }
     .image-grid-mcq .option-button.selected { border-width: 2px; }
+    `)}
     `,
     previewImageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'image gallery quiz',
@@ -421,7 +450,7 @@ export const pageTemplates: PageTemplate[] = [
 </div>
     `,
     cssContent: `
-    ${defaultCssContent} /* Inherit base styles */
+    ${defaultCssContent.replace('/* Add template-specific JS animations here if needed, or link to external JS files */', `
     /* Styles for Matching questions will primarily use default .option-button and feedback styles.
        This template mostly provides a clean shell. Specific styling for how prompts/targets
        are laid out will be handled by the quizLogicScript's generated HTML and the base CSS.
@@ -445,6 +474,7 @@ export const pageTemplates: PageTemplate[] = [
        border-style: solid;
        background-color: hsl(var(--secondary) / 0.5);
     }
+    `)}
     `,
     previewImageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'matching pairs',
@@ -473,7 +503,7 @@ export const pageTemplates: PageTemplate[] = [
 </div>
     `,
     cssContent: `
-    ${defaultCssContent} /* Inherit base styles */
+    ${defaultCssContent.replace('/* Add template-specific JS animations here if needed, or link to external JS files */', `
     /* Styles for Drag & Drop questions. The quizLogicScript generates .drag-items-container
        and .drop-targets-container, which are styled by defaultCssContent.
        This template mainly provides a thematic shell. */
@@ -493,9 +523,11 @@ export const pageTemplates: PageTemplate[] = [
         background-color: hsl(var(--secondary) / 0.5);
         border-color: hsl(var(--primary));
     }
+    `)}
     `,
     previewImageUrl: 'https://placehold.co/600x400.png',
     aiHint: 'drag drop ui',
     tags: ['Drag & Drop', 'Interactive', 'Dynamic'],
   },
 ];
+
