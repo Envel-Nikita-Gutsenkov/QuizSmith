@@ -38,6 +38,9 @@ const defaultHtmlContent = `
   - Modify the HTML structure below as desired.
   - Modify the CSS in the companion CSS editor for this template.
   - Modify or extend the JavaScript engine in the <script> block at the end of this HTML.
+  
+  ACCESSIBILITY NOTE: This template engine uses basic HTML elements. 
+  For production, ensure proper ARIA attributes are added for accessibility.
 -->
 <div class="quiz-engine-container p-4 md:p-8 rounded-xl shadow-2xl bg-card text-card-foreground max-w-3xl mx-auto my-6">
   
@@ -67,6 +70,18 @@ const defaultHtmlContent = `
     <p data-element="end-screen-message" class="text-lg text-foreground mb-6"></p>
     <button data-element="restart-button" class="mt-4 bg-primary text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 transition-colors text-base font-medium shadow-md"></button>
   </div>
+  
+  <!-- 
+    CUSTOM JAVASCRIPT FOR THIS PAGE STYLE TEMPLATE:
+    You can add your own <script> tags here for template-specific animations or JS enhancements
+    that are INDEPENDENT of the core quiz engine below.
+    Example of a simple template-specific script:
+    <script>
+      // document.addEventListener('DOMContentLoaded', () => {
+      //   console.log("Blank Canvas Page Style Template's own JS loaded!");
+      // });
+    <\/script>
+  -->
 
   <!-- THE CORE QUIZ ENGINE JAVASCRIPT FOR THIS TEMPLATE -->
   <script>
@@ -121,14 +136,13 @@ const defaultHtmlContent = `
       // --- RENDER FUNCTIONS ---
       function displayCurrentQuestion() {
         if (activeQuestionElement) {
-          // Animate out old question
           activeQuestionElement.classList.remove('animate-slide-in-right', 'animate-fade-in');
           activeQuestionElement.classList.add('animate-slide-out-left');
           setTimeout(() => { 
             if (activeQuestionElement) activeQuestionElement.remove(); 
             activeQuestionElement = null; 
             proceedToNextStep();
-          }, 500); // Match CSS animation duration
+          }, 500); 
         } else { 
           proceedToNextStep();
         }
@@ -144,14 +158,13 @@ const defaultHtmlContent = `
 
       function renderQuestion(question) {
         activeQuestionElement = questionBlueprint.cloneNode(true);
-        activeQuestionElement.id = 'q-' + question.id; // Unique ID for the question block
-        activeQuestionElement.style.display = 'block'; // Make it visible
+        activeQuestionElement.id = 'q-' + question.id; 
+        activeQuestionElement.style.display = 'block'; 
 
         activeQuestionElement.querySelector('[data-element="question-text"]').textContent = question.text;
         const optionsContainer = activeQuestionElement.querySelector('[data-element="options-container"]');
-        optionsContainer.innerHTML = ''; // Clear previous options
+        optionsContainer.innerHTML = ''; 
 
-        // Render based on question type
         if (question.type === 'multiple-choice-text' || question.type === 'multiple-choice-image') {
           renderMCQ(question, optionsContainer, activeQuestionElement);
         } else if (question.type === 'matching-text-text') {
@@ -162,14 +175,14 @@ const defaultHtmlContent = `
           optionsContainer.innerHTML = '<p>Unsupported question type in this template.</p>';
         }
         
-        contentHost.innerHTML = ''; // Clear previous content
+        contentHost.innerHTML = ''; 
         contentHost.appendChild(activeQuestionElement);
         activeQuestionElement.classList.remove('animate-slide-out-left');
         activeQuestionElement.classList.add('animate-slide-in-right');
       }
 
       function renderMCQ(question, container, questionEl) {
-        question.options.forEach(option => {
+        (question.options || []).forEach(option => {
           const button = document.createElement('button');
           button.className = 'template-option-button w-full text-left p-3.5 border border-input rounded-md text-foreground hover:bg-secondary hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 focus:ring-offset-background transition-all duration-150 ease-in-out transform hover:-translate-y-0.5';
           if (question.type === 'multiple-choice-image' && option.imageUrl) {
@@ -199,25 +212,29 @@ const defaultHtmlContent = `
         const targetsDiv = document.createElement('div');
         targetsDiv.className = 'matching-targets grid grid-cols-1 md:grid-cols-2 gap-3';
 
-        // Store original pairs and shuffle targets for display
-        const originalPairs = question.matchPairs.map(p => ({...p, answered: false, matchedCorrectly: null}));
-        const shuffledTargets = [...originalPairs].sort(() => 0.5 - Math.random());
+        const currentQuestionPairs = (question.matchPairs || []).map(p => ({...p, answered: false, matchedCorrectly: null, originalPromptElement: null, originalTargetElement: null}));
+        const shuffledTargets = [...currentQuestionPairs].sort(() => 0.5 - Math.random());
 
-        originalPairs.forEach(pair => {
+        currentQuestionPairs.forEach(pair => {
           const promptEl = document.createElement('div');
           promptEl.className = 'prompt-item p-3 border rounded-md bg-muted cursor-pointer hover:bg-accent/20 transition-colors';
           promptEl.textContent = pair.prompt;
           promptEl.dataset.pairId = pair.id;
-          promptEl.onclick = () => handleMatchPromptSelect(promptEl, pair, questionEl);
+          promptEl.onclick = () => handleMatchPromptSelect(promptEl, pair, questionEl, currentQuestionPairs);
+          pair.originalPromptElement = promptEl; // Store reference
           promptsDiv.appendChild(promptEl);
         });
 
-        shuffledTargets.forEach(pair => {
+        shuffledTargets.forEach(shuffledPairData => {
           const targetEl = document.createElement('div');
           targetEl.className = 'target-item p-3 border-2 border-dashed border-border rounded-md cursor-pointer hover:border-primary hover:bg-secondary/50 transition-colors';
-          targetEl.textContent = pair.target;
-          targetEl.dataset.targetForPairId = pair.id; 
-          targetEl.onclick = () => handleMatchTargetSelect(targetEl, pair.id, originalPairs, questionEl);
+          targetEl.textContent = shuffledPairData.target; // Display target text
+          targetEl.dataset.targetForPairId = shuffledPairData.id; // This ID is the one whose 'target' text this element displays
+          
+          const originalPairForThisTarget = currentQuestionPairs.find(p => p.id === shuffledPairData.id);
+          if (originalPairForThisTarget) originalPairForThisTarget.originalTargetElement = targetEl; // Store reference
+
+          targetEl.onclick = () => handleMatchTargetSelect(targetEl, shuffledPairData.id, currentQuestionPairs, questionEl);
           targetsDiv.appendChild(targetEl);
         });
         container.appendChild(promptsDiv);
@@ -229,15 +246,15 @@ const defaultHtmlContent = `
         const dragItemsPool = document.createElement('div');
         dragItemsPool.className = 'drag-items-pool mb-4 p-3 border rounded-md bg-muted/50 flex flex-wrap gap-2 justify-center min-h-[50px]';
         
-        question.dragItems.forEach(item => {
+        (question.dragItems || []).forEach(item => {
           const el = document.createElement('div');
-          el.id = \`drag-\${question.id}-\${item.id}\`; // Ensure unique IDs for draggable elements
+          el.id = \`drag-\${question.id}-\${item.id}\`; 
           el.className = 'drag-item p-2 border rounded bg-primary text-primary-foreground cursor-grab shadow-md';
           el.textContent = item.text;
           el.draggable = true;
           el.ondragstart = (event) => {
-            event.dataTransfer.setData('text/plain', item.id); // Store item.id
-            event.dataTransfer.setData('text/questionId', question.id); // Store question id
+            event.dataTransfer.setData('text/plain', item.id); 
+            event.dataTransfer.setData('text/questionId', question.id); 
             event.target.classList.add('dragging');
           };
           el.ondragend = (event) => {
@@ -248,11 +265,11 @@ const defaultHtmlContent = `
         container.appendChild(dragItemsPool);
 
         const dropTargetsContainer = document.createElement('div');
-        dropTargetsContainer.className = 'drop-targets-area grid grid-cols-1 md:grid-cols-${Math.min(3, question.dropTargets.length || 1)} gap-4';
+        dropTargetsContainer.className = \`drop-targets-area grid grid-cols-1 md:grid-cols-\${Math.min(3, (question.dropTargets || []).length || 1)} gap-4\`;
 
-        question.dropTargets.forEach(target => {
+        (question.dropTargets || []).forEach(target => {
           const el = document.createElement('div');
-          el.id = \`drop-\${question.id}-\${target.id}\`; // Ensure unique IDs for drop targets
+          el.id = \`drop-\${question.id}-\${target.id}\`; 
           el.className = 'drop-target p-4 border-2 border-dashed border-border rounded-md min-h-[60px] flex items-center justify-center text-muted-foreground transition-colors';
           el.textContent = target.text || TEXT_DRAG_DROP_HERE; 
           el.dataset.expectedDragItemId = target.expectedDragItemId;
@@ -269,15 +286,14 @@ const defaultHtmlContent = `
             const droppedItemId = event.dataTransfer.getData('text/plain');
             const originatingQuestionId = event.dataTransfer.getData('text/questionId');
             
-            if (originatingQuestionId !== question.id) return; // Item from another question
+            if (originatingQuestionId !== question.id) return; 
 
             const draggedEl = document.getElementById(\`drag-\${question.id}-\${droppedItemId}\`);
             if (draggedEl) {
-              // If target already has an item, move it back to pool
               if(el.firstChild && el.firstChild.classList && el.firstChild.classList.contains('drag-item')) {
                  dragItemsPool.appendChild(el.firstChild);
               }
-              el.innerHTML = ''; // Clear "Drop here" text or previous item
+              el.innerHTML = ''; 
               el.appendChild(draggedEl); 
               draggedEl.classList.remove('dragging');
               el.dataset.droppedItemId = droppedItemId; 
@@ -301,9 +317,8 @@ const defaultHtmlContent = `
           feedbackEl.className = 'feedback-text mt-4 text-center font-medium text-lg correct-feedback';
         } else {
           button.classList.add('incorrect-answer-selected');
-          const correctOptData = questionData.options.find(opt => opt.isCorrect);
+          const correctOptData = (questionData.options || []).find(opt => opt.isCorrect);
           if (correctOptData) {
-            // Find the button corresponding to correctOptData
             const allButtons = Array.from(questionEl.querySelectorAll('.template-option-button'));
             const correctBtn = allButtons.find(btn => {
                 if (questionData.type === 'multiple-choice-image') {
@@ -325,7 +340,8 @@ const defaultHtmlContent = `
         }, 2000);
       }
 
-      function handleMatchPromptSelect(promptElement, pairData, questionEl) {
+      function handleMatchPromptSelect(promptElement, pairData, questionEl, allPairsData) {
+        if (pairData.answered) return;
         if (selectedMatchPromptElement) {
           selectedMatchPromptElement.classList.remove('selected-prompt');
         }
@@ -333,39 +349,43 @@ const defaultHtmlContent = `
         promptElement.classList.add('selected-prompt');
       }
 
-      function handleMatchTargetSelect(targetElement, targetPairId, allPairsData, questionEl) {
-        if (!selectedMatchPromptElement) return; // No prompt selected
+      function handleMatchTargetSelect(targetElement, targetRepresentsPairId, allPairsData, questionEl) {
+        if (!selectedMatchPromptElement) return; 
 
         const selectedPromptPairId = selectedMatchPromptElement.dataset.pairId;
-        const actualPair = allPairsData.find(p => p.id === selectedPromptPairId);
+        const actualPairForSelectedPrompt = allPairsData.find(p => p.id === selectedPromptPairId);
         
-        if (!actualPair || actualPair.answered) return; // Already answered or invalid
+        if (!actualPairForSelectedPrompt || actualPairForSelectedPrompt.answered) return; 
 
-        actualPair.answered = true;
-        targetElement.onclick = null; // Disable target
-        selectedMatchPromptElement.onclick = null; // Disable prompt
+        actualPairForSelectedPrompt.answered = true;
+        targetElement.onclick = null; 
+        selectedMatchPromptElement.onclick = null; 
         selectedMatchPromptElement.classList.remove('selected-prompt');
 
-        if (selectedPromptPairId === targetPairId) { // Correct match
-          actualPair.matchedCorrectly = true;
+        // The targetElement displays the text of the pair with id 'targetRepresentsPairId'.
+        // We need to check if the PROMPT selected (selectedPromptPairId) is supposed to match the TARGET DISPLAYED (targetRepresentsPairId).
+        if (selectedPromptPairId === targetRepresentsPairId) { 
+          actualPairForSelectedPrompt.matchedCorrectly = true;
           selectedMatchPromptElement.classList.add('correct-match');
           targetElement.classList.add('correct-match');
         } else {
-          actualPair.matchedCorrectly = false;
+          actualPairForSelectedPrompt.matchedCorrectly = false;
           selectedMatchPromptElement.classList.add('incorrect-match');
           targetElement.classList.add('incorrect-match');
-          // Optionally, highlight the correct target for the selected prompt
-          const correctTargetForPrompt = questionEl.querySelector(\`.target-item[data-target-for-pair-id="\${selectedPromptPairId}"]\`);
-          if (correctTargetForPrompt) {
-            correctTargetForPrompt.classList.add('always-correct-target-highlight'); // Define this class in CSS
+          
+          // Find the target element that actually corresponds to the selected prompt and highlight it.
+          const correctTargetElementForSelectedPrompt = allPairsData.find(p => p.id === selectedPromptPairId)?.originalTargetElement;
+          if (correctTargetElementForSelectedPrompt) {
+            correctTargetElementForSelectedPrompt.classList.add('always-correct-target-highlight'); 
           }
         }
+        
         selectedMatchPromptElement = null;
 
         const allAnswered = allPairsData.every(p => p.answered);
         if (allAnswered) {
           const correctCount = allPairsData.filter(p => p.matchedCorrectly).length;
-          score += correctCount; // Or some other scoring logic for matching
+          score += correctCount; 
           const feedbackEl = questionEl.querySelector('[data-element="feedback-message"]');
           feedbackEl.textContent = \`Matched \${correctCount} / \${allPairsData.length}\`;
           feedbackEl.className = 'feedback-text mt-4 text-center font-medium text-lg show-feedback';
@@ -397,18 +417,16 @@ const defaultHtmlContent = `
               target.classList.add('incorrect-drop');
               if(droppedItemEl) droppedItemEl.classList.add('incorrect-drop-item');
             }
-            // Disable further dnd on this target and item
             target.ondragover = null;
             target.ondrop = null;
             if(droppedItemEl) droppedItemEl.draggable = false;
           });
           
-          // Move any remaining items in the pool to be un-draggable
-          dragItemsPool.querySelectorAll('.drag-item').forEach(item => item.draggable = false);
+          (dragItemsPool.querySelectorAll('.drag-item') || []).forEach(item => item.draggable = false);
 
           score += correctDrops;
           const feedbackEl = questionEl.querySelector('[data-element="feedback-message"]');
-          feedbackEl.textContent = \`Correct Drops: \${correctDrops} / \${question.dropTargets.length}\`;
+          feedbackEl.textContent = \`Correct Drops: \${correctDrops} / \${(question.dropTargets || []).length}\`;
           feedbackEl.className = 'feedback-text mt-4 text-center font-medium text-lg show-feedback';
           setTimeout(() => {
             currentQuestionIndex++;
@@ -426,7 +444,7 @@ const defaultHtmlContent = `
         
         endScreen.querySelector('[data-element="end-screen-title"]').textContent = TEXT_QUIZ_COMPLETE;
         const finalMessage = rawQuizEndMessage
-                                .replace(/{{score}}/g, score.toString()) // Use regex for global replace
+                                .replace(/{{score}}/g, score.toString()) 
                                 .replace(/{{total}}/g, questions.length.toString());
         endScreen.querySelector('[data-element="end-screen-message"]').textContent = finalMessage;
         
@@ -435,20 +453,18 @@ const defaultHtmlContent = `
         restartBtn.onclick = () => {
           currentQuestionIndex = 0;
           score = 0;
-          // Reset any per-question state if added (e.g., for matching pairs)
-          questions.forEach(q => {
-            if(q.matchPairs) q.matchPairs.forEach(p => { 
+          (questions || []).forEach(q => {
+            if(q.matchPairs) (q.matchPairs || []).forEach(p => { 
                 p.answered = false; 
                 p.matchedCorrectly = null;
             });
-            // No specific reset needed for D&D items as they are re-rendered
           });
           activeQuestionElement = null; 
           displayCurrentQuestion();
         };
         
         contentHost.appendChild(endScreen);
-        endScreen.classList.remove('animate-slide-out-left'); // Ensure no conflicting animation
+        endScreen.classList.remove('animate-slide-out-left'); 
         endScreen.classList.add('animate-fade-in');
       }
 
@@ -468,29 +484,28 @@ const defaultCssContent = `
   QuizSmith ADVANCED Page Template CSS (Blank Canvas - Full Quiz Engine)
   This CSS styles the HTML structure and elements managed by THIS TEMPLATE'S JavaScript.
   Users can fully customize this CSS in the template editor.
+  This CSS uses variables from globals.css for theming (e.g. hsl(var(--primary))).
 */
-body { /* Applied within iframe */
+body { 
   background-color: hsl(var(--background)); 
   color: hsl(var(--foreground));
   font-family: var(--font-geist-sans, sans-serif);
-  margin:0; /* Ensure no body margin in iframe */
+  margin:0; 
 }
 .quiz-engine-container { 
   font-family: var(--font-geist-sans), sans-serif;
-  /* Add any global styles for the quiz container if needed */
 }
 
 /* MCQ Option Button Styling */
 .template-option-button {
   /* Base style for options generated by template script */
-  /* Tailwind classes in HTML provide most styling, add specifics here */
 }
 .template-option-button.image-option {
-  padding: 0.75rem; /* More padding for image options */
+  padding: 0.75rem;
   background-color: hsl(var(--card) / 0.8);
 }
 .template-option-button.image-option img {
-  max-height: 150px; /* Slightly larger images */
+  max-height: 150px; 
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -510,7 +525,7 @@ body { /* Applied within iframe */
   border-color: hsl(var(--success-border)) !important;
   box-shadow: 0 0 0 2px hsl(var(--success-border) / 0.7);
 }
-.drop-target.correct-drop { /* For the drop target itself */
+.drop-target.correct-drop { 
    border-color: hsl(var(--success-border)) !important;
    background-color: hsl(var(--success-bg) / 0.3) !important;
 }
@@ -525,7 +540,7 @@ body { /* Applied within iframe */
   box-shadow: 0 0 0 2px hsl(var(--destructive) / 0.5);
   opacity: 0.9;
 }
-.drop-target.incorrect-drop { /* For the drop target itself */
+.drop-target.incorrect-drop { 
    border-color: hsl(var(--destructive) / 0.7) !important;
    background-color: hsl(var(--destructive) / 0.2) !important;
 }
@@ -540,7 +555,7 @@ body { /* Applied within iframe */
   color: hsl(var(--success-fg)) !important;
   border: 2px solid hsl(var(--success-border)) !important;
 }
-.target-item.always-correct-target-highlight { /* For matching: if selected wrong, highlight correct target */
+.target-item.always-correct-target-highlight {
   border-color: hsl(var(--success-border)) !important;
   box-shadow: 0 0 5px hsl(var(--success-border));
 }
@@ -550,7 +565,7 @@ body { /* Applied within iframe */
   opacity: 0; 
   transform: translateY(10px); 
   transition: opacity 0.3s ease-out, transform 0.3s ease-out; 
-  font-size: 1.1rem; /* Slightly larger feedback text */
+  font-size: 1.1rem; 
 }
 .feedback-text.show-feedback { 
   opacity: 1; 
@@ -562,7 +577,6 @@ body { /* Applied within iframe */
 
 /* Question Transition Animations (applied by template script) */
 .question-block, #quiz-final-screen {
-  /* Base state for animations */
   opacity: 1;
   transform: translateX(0);
 }
@@ -578,14 +592,14 @@ body { /* Applied within iframe */
 
 @keyframes templateSlideOutLeft {
   from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(-60px); } /* Increased slide distance */
+  to { opacity: 0; transform: translateX(-60px); } 
 }
 @keyframes templateSlideInRight { 
-  from { opacity: 0; transform: translateX(60px); } /* Increased slide distance */
+  from { opacity: 0; transform: translateX(60px); } 
   to { opacity: 1; transform: translateX(0); } 
 }
 @keyframes templateFadeIn { 
-  from { opacity: 0; transform: translateY(20px); } /* Fade in with slight upward move */
+  from { opacity: 0; transform: translateY(20px); } 
   to { opacity: 1; transform: translateY(0); } 
 }
 @keyframes templatePopFeedback { 
@@ -595,7 +609,7 @@ body { /* Applied within iframe */
 }
 
 /* Matching Question Specific Styles */
-.prompt-item.selected-prompt, .target-item.selected-target { /* Generic selected state if needed */
+.prompt-item.selected-prompt, .target-item.selected-target { 
   background-color: hsl(var(--accent) / 0.2) !important;
   border-color: hsl(var(--accent)) !important;
   font-weight: 600;
@@ -608,7 +622,7 @@ body { /* Applied within iframe */
 }
 .drag-item.dragging {
   opacity: 0.6;
-  transform: scale(0.92) rotate(-3deg); /* Slight tilt while dragging */
+  transform: scale(0.92) rotate(-3deg); 
   box-shadow: 0 6px 12px rgba(0,0,0,0.25);
 }
 .drop-target.drag-over {
@@ -617,18 +631,13 @@ body { /* Applied within iframe */
   border-style: solid;
   box-shadow: inset 0 0 10px hsl(var(--primary) / 0.3);
 }
-
-/* General button styling from template script if not using Tailwind */
-button[data-element="restart-button"] {
-  /* Styles for restart button if Tailwind is not fully utilized by user in template */
-}
 `;
 
 export const pageTemplates: PageTemplate[] = [
   {
     id: DEFAULT_TEMPLATE_ID,
     name: 'Blank Canvas (Full Quiz Engine)',
-    description: 'A foundational, well-commented starting point. Includes a built-in JavaScript quiz engine supporting multiple question types (MCQ text/image, Text Matching, Text Drag & Drop) and user-customizable HTML/CSS/JS. This template is a complete quiz experience out-of-the-box, demonstrating full customization capabilities.',
+    description: 'A foundational, well-commented starting point. Includes a built-in JavaScript quiz engine supporting multiple question types (MCQ text/image, Text Matching, Text Drag & Drop) and user-customizable HTML/CSS/JS. This template is a complete quiz experience out-of-the-box, demonstrating full customization capabilities. All quiz text (Correct, Incorrect, etc.) is defined within this template\'s JavaScript for full control.',
     htmlContent: defaultHtmlContent,
     cssContent: defaultCssContent,
     previewImageUrl: 'https://placehold.co/600x400.png',
@@ -636,17 +645,254 @@ export const pageTemplates: PageTemplate[] = [
     tags: ['Standard', 'Engine', 'Customizable', 'All Types', 'Base'],
   },
   {
-    id: 'tpl-minimalist-mcq-engine',
-    name: 'Minimalist MCQ Engine',
-    description: 'A clean, focused quiz engine template specifically for text-based and image-based Multiple Choice Questions. Includes its own JavaScript for MCQ logic. (This is an example of a specialized engine).',
-    // For a real specialized template, htmlContent would contain a script focused *only* on MCQs.
-    // For demonstration, it reuses the default engine's structure but implies specialization.
-    htmlContent: defaultHtmlContent.replace(/Blank Canvas \(Full Quiz Engine\)/g, 'Minimalist MCQ Engine').replace('max-w-3xl', 'max-w-xl'), // Example structural tweak
-    cssContent: defaultCssContent.replace('/* QuizSmith ADVANCED Page Template CSS (Blank Canvas - Full Quiz Engine) */', '/* Minimalist MCQ Engine CSS */\n.quiz-engine-container { /* Maybe different padding or font */ }'),
+    id: 'tpl-sleek-mcq',
+    name: 'Sleek Text MCQ',
+    description: 'A clean and modern design focused on text-based Multiple Choice Questions. Uses the default engine but with a different visual style.',
+    htmlContent: `
+<div class="sleek-mcq-container p-6 md:p-10 rounded-lg shadow-xl bg-gradient-to-br from-secondary via-background to-background max-w-2xl mx-auto my-8 text-foreground">
+  <!-- Data injection elements (populated by Test Editor) -->
+  <script id="quiz-data" type="application/json"></script>
+  <div id="quiz-name-data" style="display:none;"></div>
+  <div id="quiz-end-message-data" style="display:none;"></div>
+
+  <h1 id="template-quiz-title" class="text-4xl font-extrabold mb-8 text-primary text-center title-pop-in">Quiz Title Here</h1>
+  
+  <div id="template-quiz-content-host" class="space-y-6">
+    <!-- Questions will be rendered here by the engine from defaultHtmlContent -->
+  </div>
+
+  <!-- Template for a single question (blueprint for the engine) -->
+  <div id="template-question-blueprint" style="display: none;" class="question-block p-6 bg-card/80 backdrop-blur-sm border border-border/30 rounded-xl shadow-lg">
+    <h2 data-element="question-text" class="text-2xl font-semibold mb-6 text-primary-foreground/90"></h2>
+    <div data-element="options-container" class="options-area grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <!-- Option buttons will be styled by .sleek-option-button -->
+    </div>
+    <div data-element="feedback-message" class="feedback-text mt-5 text-center font-semibold text-lg" style="min-height: 30px;"></div>
+  </div>
+
+  <!-- Template for an end screen (blueprint for the engine) -->
+  <div id="template-quiz-end-screen" style="display: none;" class="text-center p-8 bg-card/90 backdrop-blur-sm rounded-xl shadow-2xl">
+    <h2 data-element="end-screen-title" class="text-3xl font-bold mb-5 text-primary"></h2>
+    <p data-element="end-screen-message" class="text-xl text-foreground/90 mb-8"></p>
+    <button data-element="restart-button" class="mt-4 bg-accent text-accent-foreground px-8 py-3 rounded-lg hover:bg-accent/80 transition-colors text-lg font-medium shadow-lg"></button>
+  </div>
+  
+  <!-- This template reuses the CORE QUIZ ENGINE SCRIPT from defaultHtmlContent. -->
+  <!-- For a truly distinct template, you would copy, paste, and modify that script here. -->
+  <!-- The script below is a placeholder for template-specific JS enhancements. -->
+  <script>
+    // Template-specific JS for Sleek Text MCQ (e.g., custom animations)
+    // document.addEventListener('DOMContentLoaded', () => {
+    //   console.log("Sleek Text MCQ template JS enhancements can go here.");
+    //   const title = document.getElementById('template-quiz-title');
+    //   if(title) { /* Add custom animation to title if desired */ }
+    // });
+  <\/script>
+  ${defaultHtmlContent.substring(defaultHtmlContent.indexOf('<script>'), defaultHtmlContent.lastIndexOf('<\/script>') + 9)}
+</div>`,
+    cssContent: `
+/* Sleek Text MCQ CSS - Overrides and additions to default engine styles */
+.sleek-mcq-container { /* Custom container styles */ }
+
+.title-pop-in { 
+  animation: titlePopIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  opacity: 0;
+  transform: translateY(-20px);
+}
+@keyframes titlePopIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Override .template-option-button for this specific template */
+.template-option-button { /* This selector will be used by the shared engine script */
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 1rem 1.5rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid hsl(var(--border) / 0.5);
+  border-radius: var(--radius);
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+  transition: all 0.2s ease-in-out;
+  font-size: 1rem;
+  font-weight: 500;
+}
+.template-option-button:hover {
+  background-color: hsl(var(--primary) / 0.1);
+  border-color: hsl(var(--primary));
+  color: hsl(var(--primary));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px hsl(var(--primary) / 0.1);
+}
+.template-option-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+.template-option-button.correct-answer {
+  background-color: hsl(var(--success-bg)) !important;
+  color: hsl(var(--success-fg)) !important;
+  border-color: hsl(var(--success-border)) !important;
+}
+.template-option-button.incorrect-answer-selected {
+  background-color: hsl(var(--destructive)) !important;
+  color: hsl(var(--destructive-foreground)) !important;
+  border-color: hsl(var(--destructive) / 0.8) !important;
+}
+.template-option-button.always-correct-answer {
+   border: 2px solid hsl(var(--success-border)) !important;
+}
+/* Use default feedback text styling or customize here */
+.feedback-text.correct-feedback { color: hsl(var(--success-fg)); }
+.feedback-text.incorrect-feedback { color: hsl(var(--destructive)); }
+`,
     previewImageUrl: 'https://placehold.co/600x400.png',
-    aiHint: 'simple modern quiz',
-    tags: ['MCQ', 'Minimalist', 'Engine', 'Focused'],
+    aiHint: 'modern quiz sleek',
+    tags: ['MCQ', 'Text', 'Sleek', 'Modern'],
   },
-  // Add more diverse templates here, each with its own full HTML/CSS/JS engine
-  // For example, a template that heavily uses 3D animations, or one with a game-like interface.
+  {
+    id: 'tpl-visual-image-grid',
+    name: 'Visual Image Grid',
+    description: 'Optimized for image-based Multiple Choice Questions, displaying options in a responsive grid. Uses default engine.',
+    htmlContent: `
+<div class="image-grid-container p-4 md:p-6 rounded-md shadow-lg bg-background max-w-4xl mx-auto my-6">
+  <script id="quiz-data" type="application/json"></script>
+  <div id="quiz-name-data" style="display:none;"></div>
+  <div id="quiz-end-message-data" style="display:none;"></div>
+  <h1 id="template-quiz-title" class="text-2xl md:text-3xl font-bold mb-6 text-center text-primary"></h1>
+  <div id="template-quiz-content-host"></div>
+  <div id="template-question-blueprint" style="display: none;" class="question-block p-4 border rounded-md bg-card">
+    <h2 data-element="question-text" class="text-lg md:text-xl font-semibold mb-4"></h2>
+    <div data-element="options-container" class="options-area grid grid-cols-2 gap-3 md:gap-4">
+      <!-- Image options will be styled by .image-grid-option-button -->
+    </div>
+    <div data-element="feedback-message" class="feedback-text mt-3 text-center" style="min-height: 24px;"></div>
+  </div>
+  <div id="template-quiz-end-screen" style="display: none;" class="text-center p-6">
+    <h2 data-element="end-screen-title" class="text-xl font-bold mb-3"></h2>
+    <p data-element="end-screen-message" class="mb-4"></p>
+    <button data-element="restart-button" class="bg-primary text-primary-foreground px-4 py-2 rounded"></button>
+  </div>
+  ${defaultHtmlContent.substring(defaultHtmlContent.indexOf('<script>'), defaultHtmlContent.lastIndexOf('<\/script>') + 9)}
+</div>`,
+    cssContent: `
+.image-grid-option-button { /* Style for .template-option-button when it's an image option in this template */
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.image-grid-option-button img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1; /* Square images */
+  object-fit: cover;
+}
+.image-grid-option-button p {
+  background-color: rgba(0,0,0,0.5);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  text-align: center;
+  position: relative; /* Example, may need adjustments */
+  bottom: 0; left: 0; right: 0;
+}
+.image-grid-option-button:hover {
+  border-color: hsl(var(--primary));
+  transform: scale(1.03);
+}
+.image-grid-option-button.correct-answer { border-color: hsl(var(--success-border)) !important; }
+.image-grid-option-button.incorrect-answer-selected { border-color: hsl(var(--destructive)) !important; }
+.image-grid-option-button.always-correct-answer { border: 3px solid hsl(var(--success-border)) !important; }
+    `,
+    previewImageUrl: 'https://placehold.co/600x400.png',
+    aiHint: 'image grid gallery',
+    tags: ['MCQ', 'Image', 'Visual', 'Grid'],
+  },
+   {
+    id: 'tpl-interactive-matching',
+    name: 'Interactive Matching Zone',
+    description: 'A layout designed for text-to-text matching questions. Uses default engine.',
+    htmlContent: `
+<div class="matching-zone-container p-5 rounded-lg shadow-md bg-secondary/30 max-w-3xl mx-auto my-6">
+  <script id="quiz-data" type="application/json"></script>
+  <div id="quiz-name-data" style="display:none;"></div>
+  <div id="quiz-end-message-data" style="display:none;"></div>
+  <h1 id="template-quiz-title" class="text-2xl font-semibold mb-5 text-center text-primary"></h1>
+  <div id="template-quiz-content-host"></div>
+  <div id="template-question-blueprint" style="display: none;" class="question-block p-5 bg-card rounded-md">
+    <h2 data-element="question-text" class="text-xl font-medium mb-4"></h2>
+    <div data-element="options-container" class="options-area">
+      <!-- Matching elements will be styled by .prompt-item and .target-item from default CSS or overrides here -->
+    </div>
+    <div data-element="feedback-message" class="feedback-text mt-4 text-center" style="min-height: 26px;"></div>
+  </div>
+  <div id="template-quiz-end-screen" style="display: none;" class="text-center p-5">
+    <h2 data-element="end-screen-title" class="text-xl font-bold mb-3"></h2>
+    <p data-element="end-screen-message" class="mb-4"></p>
+    <button data-element="restart-button" class="bg-primary text-primary-foreground px-5 py-2 rounded-md"></button>
+  </div>
+  ${defaultHtmlContent.substring(defaultHtmlContent.indexOf('<script>'), defaultHtmlContent.lastIndexOf('<\/script>') + 9)}
+</div>`,
+    cssContent: `
+/* Styles for .prompt-item and .target-item can be customized here if different from default engine */
+.matching-prompts, .matching-targets { /* From default CSS */
+  /* Add specific layout overrides if needed, e.g., single column for this template */
+}
+.prompt-item { /* From default CSS. Override for this template if desired */
+  /* background-color: hsl(var(--muted) / 0.7); */
+}
+.target-item { /* From default CSS. Override for this template if desired */
+  /* border-style: solid; */
+}
+    `,
+    previewImageUrl: 'https://placehold.co/600x400.png',
+    aiHint: 'matching pairs columns',
+    tags: ['Matching', 'Interactive'],
+  },
+  {
+    id: 'tpl-dynamic-dragdrop',
+    name: 'Dynamic Drag & Drop Arena',
+    description: 'Features clear zones for draggable items and drop targets. Uses default engine.',
+    htmlContent: `
+<div class="dragdrop-arena-container p-5 rounded-lg shadow-lg bg-background max-w-3xl mx-auto my-6">
+  <script id="quiz-data" type="application/json"></script>
+  <div id="quiz-name-data" style="display:none;"></div>
+  <div id="quiz-end-message-data" style="display:none;"></div>
+  <h1 id="template-quiz-title" class="text-2xl font-semibold mb-5 text-center text-primary"></h1>
+  <div id="template-quiz-content-host"></div>
+  <div id="template-question-blueprint" style="display: none;" class="question-block p-5 bg-card rounded-md shadow">
+    <h2 data-element="question-text" class="text-xl font-medium mb-4"></h2>
+    <div data-element="options-container" class="options-area">
+      <!-- Draggable items and drop targets will be styled by .drag-item, .drag-items-pool, .drop-target from default CSS or overrides here -->
+    </div>
+    <div data-element="feedback-message" class="feedback-text mt-4 text-center" style="min-height: 26px;"></div>
+  </div>
+  <div id="template-quiz-end-screen" style="display: none;" class="text-center p-5">
+    <h2 data-element="end-screen-title" class="text-xl font-bold mb-3"></h2>
+    <p data-element="end-screen-message" class="mb-4"></p>
+    <button data-element="restart-button" class="bg-primary text-primary-foreground px-5 py-2 rounded-md"></button>
+  </div>
+  ${defaultHtmlContent.substring(defaultHtmlContent.indexOf('<script>'), defaultHtmlContent.lastIndexOf('<\/script>') + 9)}
+</div>`,
+    cssContent: `
+/* Styles for .drag-items-pool, .drag-item, .drop-target can be customized here */
+.drag-items-pool { /* From default CSS */
+  /* border: 2px dashed hsl(var(--border)); */
+  /* padding: 1rem; */
+}
+.drag-item { /* From default CSS */
+  /* background-color: hsl(var(--primary) / 0.8); */
+  /* color: hsl(var(--primary-foreground)); */
+}
+.drop-target { /* From default CSS */
+  /* background-color: hsl(var(--muted) / 0.5); */
+  /* min-height: 70px; */
+}
+    `,
+    previewImageUrl: 'https://placehold.co/600x400.png',
+    aiHint: 'drag drop interface',
+    tags: ['Drag & Drop', 'Interactive', 'Dynamic'],
+  },
 ];
