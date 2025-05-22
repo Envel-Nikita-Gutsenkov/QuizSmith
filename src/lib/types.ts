@@ -15,19 +15,21 @@ export type QuestionType =
 
 export interface MatchPair {
   id: string;
-  prompt: string; // Text or imageU RL
-  target: string; // Text or image URL
+  prompt: string; 
+  target: string; 
+  userAnsweredCorrectly?: boolean; // Optional: for UI feedback in template script
 }
 
 export interface DraggableItem {
   id: string;
-  text: string; // Or imageUrl
+  text: string; 
 }
 
 export interface DropTarget {
   id: string;
-  text: string; // Or imageUrl, or could be an area
-  correctDragItemId?: string; // For validation if needed
+  text: string; // Label for the drop target
+  expectedDragItemId?: string; // Which dragItem.id is correct for this target
+  droppedItemId?: string | null; // Optional: for UI feedback / state in template script
 }
 
 export interface Question {
@@ -38,18 +40,15 @@ export interface Question {
   matchPairs?: MatchPair[]; // Used for 'matching-*' types
   dragItems?: DraggableItem[]; // Used for 'drag-and-drop-*' types
   dropTargets?: DropTarget[]; // Used for 'drag-and-drop-*' types
-  // For drag-and-drop, might need `targets` or similar
-  // For text-input, `correctAnswer` might be a string or regex
 }
 
 export interface Test {
   id: string;
   name: string;
-  htmlContent: string; // This is the Page Template HTML
-  cssContent: string;  // This is the Page Template CSS
+  // htmlContent and cssContent are now part of the chosen PageTemplate
   questions: Question[];
   quizEndMessage: string; 
-  templateId?: string; 
+  templateId?: string; // ID of the PageTemplate used for this test
   createdAt: string; // ISO date string
   updatedAt: string; // ISO date string
 }
@@ -58,7 +57,7 @@ export interface PageTemplate {
   id: string;
   name: string;
   description?: string;
-  htmlContent: string;
+  htmlContent: string; // This HTML now includes the <script> tag with all quiz logic
   cssContent: string;
   previewImageUrl?: string; 
   aiHint?: string;

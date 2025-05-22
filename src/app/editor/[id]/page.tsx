@@ -11,244 +11,25 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Save, Eye, PlusCircle, Settings2, Palette, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType } from '@/lib/types';
+import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType, PageTemplate as PageTemplateType } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation'; // Added useRouter
 import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates';
 import Image from 'next/image';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import Link from 'next/link';
 
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
-const quizLogicScript = `
-document.addEventListener('DOMContentLoaded', () => {
-  const questionsDataElement = document.getElementById('quiz-data');
-  const endMessageElement = document.getElementById('quiz-end-message-text');
-  if (!questionsDataElement || !endMessageElement) { console.error('Quiz data or end message element not found.'); return; }
-  
-  const t = (key, replacements = {}, defaultValue = '') => { 
-    let text = defaultValue || key; 
-    if (typeof quizTranslations !== 'undefined' && quizTranslations[key]) {
-        text = quizTranslations[key];
-    }
-    for (const placeholder in replacements) {
-        text = text.replace(new RegExp('{{' + placeholder + '}}', 'g'), replacements[placeholder]);
-    }
-    return text;
-  };
-  const quizTranslations = {  
-    'quiz.feedback.correct': 'Correct!',
-    'quiz.feedback.incorrect': 'Incorrect!',
-    'quiz.endScreen.title': 'Quiz Complete!',
-    'quiz.restartButton': 'Restart Quiz',
-    'quiz.matching.selectPrompt': 'Select a match for:',
-    'quiz.dragDrop.dropHere': 'Drop here',
-    'quiz.questionType.notImplemented': 'This question type is not fully interactive in preview yet.'
-  };
-
-  const questions = JSON.parse(questionsDataElement.textContent || '[]');
-  const rawQuizEndMessage = endMessageElement.textContent || t('editor.defaultEndMessage', { score: '{{score}}', total: '{{total}}' }, 'Quiz Finished! Score: {{score}}/{{total}}');
-  
-  const quizContainer = document.querySelector('.quiz-container');
-  const questionHost = document.getElementById('quiz-content-host');
-  const questionTemplateElement = quizContainer?.querySelector('[data-quiz-question-id="q_template_id"]');
-  
-  if (!quizContainer || !questionHost || !questionTemplateElement) { 
-    if (questionHost) questionHost.innerHTML = '<p>Error: Page template structure incomplete. Missing .quiz-container, #quiz-content-host, or [data-quiz-question-id="q_template_id"].</p>'; return; 
-  }
-  questionTemplateElement.style.display = 'none';
-  
-  let currentQuestionIndex = 0; 
-  let score = 0; 
-  let activeQuestionElement = null;
-
-  function displayQuestion(index) {
-    if (activeQuestionElement) {
-      activeQuestionElement.classList.add('animate-slide-out-left');
-      setTimeout(() => { 
-        activeQuestionElement.remove(); 
-        activeQuestionElement = null; 
-        index >= questions.length ? displayEndScreen() : renderQuestion(index); 
-      }, 500);
-    } else { 
-      index >= questions.length ? displayEndScreen() : renderQuestion(index); 
-    }
-  }
-
-  function renderQuestion(index) {
-    const question = questions[index];
-    const newQuestionElement = questionTemplateElement.cloneNode(true);
-    newQuestionElement.style.display = 'block'; 
-    newQuestionElement.setAttribute('data-quiz-question-id', question.id);
-    
-    const questionTextEl = newQuestionElement.querySelector('[data-quiz-question-text]');
-    if (questionTextEl) { 
-      questionTextEl.textContent = question.text; 
-      questionTextEl.setAttribute('data-quiz-question-text', question.id); 
-    }
-    
-    const optionsContainerEl = newQuestionElement.querySelector('[data-quiz-options-for-question]');
-    const feedbackEl = newQuestionElement.querySelector('[data-quiz-feedback]');
-    if (feedbackEl) { feedbackEl.style.display = 'none'; feedbackEl.className = 'feedback-message mt-6 text-center font-medium text-lg'; }
-
-    if (optionsContainerEl) {
-      optionsContainerEl.innerHTML = ''; 
-      
-      if (question.type === 'multiple-choice-text' || question.type === 'multiple-choice-image') {
-        const optionTemplateEl = questionTemplateElement.querySelector('[data-quiz-answer-option]');
-        if (optionTemplateEl) {
-            const templateOptionButton = optionTemplateEl.cloneNode(true);
-            question.options.forEach(option => {
-                const newOptionButton = templateOptionButton.cloneNode(true);
-                newOptionButton.setAttribute('data-quiz-answer-option', \`\${question.id}.\${option.id}\`);
-                if (question.type === 'multiple-choice-image' && option.imageUrl) {
-                    newOptionButton.innerHTML = \`<img src="\${option.imageUrl}" alt="\${option.text}" class="max-h-40 mx-auto mb-2 rounded-md object-contain"><p class="text-center">\${option.text}</p>\`;
-                    newOptionButton.classList.add('image-option');
-                } else {
-                    newOptionButton.textContent = option.text;
-                }
-                newOptionButton.onclick = (event) => handleOptionClick(event.currentTarget, option, question.options, newQuestionElement, feedbackEl);
-                optionsContainerEl.appendChild(newOptionButton);
-            });
-        }
-      } else if (question.type === 'matching-text-text') {
-        const promptContainer = document.createElement('div');
-        promptContainer.className = 'matching-prompts mb-4 space-y-2';
-        question.matchPairs.forEach(pair => {
-          const el = document.createElement('div');
-          el.className = 'p-3 border rounded-md bg-card/80';
-          el.textContent = \`\${t('quiz.matching.selectPrompt')} "\${pair.prompt}"\`;
-          promptContainer.appendChild(el);
-        });
-        optionsContainerEl.appendChild(promptContainer);
-        
-        const targetContainer = document.createElement('div');
-        targetContainer.className = 'matching-targets grid grid-cols-2 gap-3';
-        const shuffledTargets = [...question.matchPairs].sort(() => 0.5 - Math.random()); 
-        shuffledTargets.forEach(pair => {
-          const btn = document.createElement('button');
-          btn.className = 'option-button w-full text-left p-3 border rounded-md hover:bg-secondary';
-          btn.textContent = pair.target;
-          btn.onclick = () => { 
-            if (feedbackEl) {
-                feedbackEl.textContent = t('quiz.questionType.notImplemented'); 
-                feedbackEl.classList.add('show');
-            }
-            setTimeout(() => { currentQuestionIndex++; displayQuestion(currentQuestionIndex); }, 1500);
-          };
-          targetContainer.appendChild(btn);
-        });
-        optionsContainerEl.appendChild(targetContainer);
-
-      } else if (question.type === 'drag-and-drop-text-text') {
-         const dragItemsDiv = document.createElement('div');
-         dragItemsDiv.className = 'drag-items-container mb-4 flex flex-wrap gap-3 justify-center';
-         question.dragItems.forEach(item => {
-           const el = document.createElement('div');
-           el.className = 'p-3 border rounded-md bg-muted cursor-grab';
-           el.textContent = item.text;
-           dragItemsDiv.appendChild(el);
-         });
-         optionsContainerEl.appendChild(dragItemsDiv);
-
-         const dropTargetsDiv = document.createElement('div');
-         dropTargetsDiv.className = 'drop-targets-container mt-4 grid grid-cols-1 md:grid-cols-2 gap-3';
-         question.dropTargets.forEach(target => {
-           const el = document.createElement('div');
-           el.className = 'p-6 border-2 border-dashed border-border rounded-md text-center text-muted-foreground';
-           el.textContent = target.text || t('quiz.dragDrop.dropHere');
-            el.onclick = () => {
-                if (feedbackEl) {
-                    feedbackEl.textContent = t('quiz.questionType.notImplemented');
-                    feedbackEl.classList.add('show');
-                }
-                setTimeout(() => { currentQuestionIndex++; displayQuestion(currentQuestionIndex); }, 1500);
-            };
-           dropTargetsDiv.appendChild(el);
-         });
-         optionsContainerEl.appendChild(dropTargetsDiv);
-      }
-    }
-    questionHost.appendChild(newQuestionElement); 
-    activeQuestionElement = newQuestionElement; 
-    newQuestionElement.classList.add('animate-slide-in-right');
-  }
-
-  function handleOptionClick(selectedButton, selectedOption, allOptions, questionElement, feedbackEl) {
-    const optionButtons = questionElement.querySelectorAll('.option-button');
-    optionButtons.forEach(btn => btn.disabled = true); 
-    
-    const isCorrect = selectedOption.isCorrect;
-    const correctOption = allOptions.find(opt => opt.isCorrect);
-
-    if (feedbackEl) {
-      feedbackEl.style.display = 'block';
-      feedbackEl.classList.remove('correct', 'incorrect', 'show'); 
-    }
-
-    if (isCorrect) {
-      selectedButton.classList.add('correct-answer');
-      if (feedbackEl) {
-        feedbackEl.textContent = t('quiz.feedback.correct');
-        feedbackEl.classList.add('correct', 'show');
-      }
-      score++;
-    } else {
-      selectedButton.classList.add('incorrect-answer-selected');
-      if (feedbackEl) {
-        feedbackEl.textContent = t('quiz.feedback.incorrect');
-        feedbackEl.classList.add('incorrect', 'show');
-      }
-      if (correctOption) {
-        const correctButton = Array.from(optionButtons).find(btn => {
-          const btnOptionId = btn.getAttribute('data-quiz-answer-option');
-          return btnOptionId && btnOptionId.endsWith(correctOption.id);
-        });
-        if (correctButton) {
-          correctButton.classList.add('always-correct-answer'); 
-        }
-      }
-    }
-    
-    setTimeout(() => {
-      currentQuestionIndex++;
-      displayQuestion(currentQuestionIndex);
-    }, 2500);
-  }
-
-  function displayEndScreen() {
-    questionHost.innerHTML = ''; 
-    const finalEndMessage = rawQuizEndMessage.replace('{{score}}', score.toString()).replace('{{total}}', questions.length.toString());
-    const endScreenDiv = document.createElement('div');
-    endScreenDiv.id = 'quiz-end-screen';
-    endScreenDiv.className = 'text-center p-8 bg-card rounded-lg shadow-xl animate-fade-in';
-    endScreenDiv.innerHTML = \`<h2 class="text-2xl font-bold mb-4 text-primary">\${t('quiz.endScreen.title')}</h2><p data-quiz-end-message class="text-lg text-foreground mb-6">\${finalEndMessage}</p><button id="restart-quiz-button" class="mt-4 bg-primary text-primary-foreground px-6 py-3 rounded-md hover:bg-primary/90 transition-colors text-base font-medium shadow-md">\${t('quiz.restartButton')}</button>\`;
-    questionHost.appendChild(endScreenDiv);
-    
-    const restartButton = document.getElementById('restart-quiz-button');
-    if (restartButton) {
-      restartButton.onclick = () => {
-        currentQuestionIndex = 0;
-        score = 0;
-        activeQuestionElement = null;
-        questionHost.innerHTML = '';
-        displayQuestion(currentQuestionIndex);
-      };
-    }
-  }
-  
-  questions.length > 0 ? displayQuestion(currentQuestionIndex) : (questionHost.innerHTML = '<p>No questions added.</p>');
-});
-`;
+// quizLogicScript is REMOVED from here, as it's now part of the PageTemplate.htmlContent
 
 interface TestDraft {
   name: string;
   questions: Question[];
-  htmlContent: string;
-  cssContent: string;
+  templateId: string; 
   quizEndMessage: string;
 }
 
@@ -256,13 +37,16 @@ interface TestDraft {
 function EditTestEditorPageContent() {
   const { t } = useLanguage();
   const params = useParams();
+  const router = useRouter(); // Added
   const testId = params?.id as string || 'unknown';
   const { toast } = useToast();
 
   const [testName, setTestName] = useState(''); 
   const [questions, setQuestions] = useState<Question[]>([]);
-  const [htmlContent, setHtmlContent] = useState('');
-  const [cssContent, setCssContent] = useState('');
+
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(DEFAULT_TEMPLATE_ID);
+  const [currentTemplate, setCurrentTemplate] = useState<PageTemplateType | null>(null);
+
   const [quizEndMessage, setQuizEndMessage] = useState(''); 
   const [previewContent, setPreviewContent] = useState('');
 
@@ -271,11 +55,18 @@ function EditTestEditorPageContent() {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
+  // Effect to set currentTemplate when selectedTemplateId changes
+  useEffect(() => {
+    const template = pageTemplates.find(pt => pt.id === selectedTemplateId);
+    setCurrentTemplate(template || pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!);
+  }, [selectedTemplateId]);
 
   // Load from localStorage or set defaults on mount
   useEffect(() => {
-    if (!testId || testId === 'unknown') {
-      toast({ title: "Error", description: "Test ID not found.", variant: "destructive"});
+    if (!isInitialLoad) return;
+    if (!testId || testId === 'unknown' || testId === 'new') {
+      toast({ title: "Error", description: "Invalid Test ID. Redirecting to new test.", variant: "destructive"});
+      router.push('/editor/new'); // Redirect if ID is invalid
       setIsInitialLoad(false);
       return;
     }
@@ -286,37 +77,42 @@ function EditTestEditorPageContent() {
         const draft: TestDraft = JSON.parse(savedDraft);
         setTestName(draft.name);
         setQuestions(draft.questions);
-        setHtmlContent(draft.htmlContent);
-        setCssContent(draft.cssContent);
+        setSelectedTemplateId(draft.templateId || DEFAULT_TEMPLATE_ID);
         setQuizEndMessage(draft.quizEndMessage);
         setHasUnsavedDraft(true);
         const draftDescriptionDefault = "Unsaved draft for test \"" + draft.name + "\" loaded.";
-        toast({ title: t('editor.toast.draftRestoredTitle', {defaultValue: "Draft Restored"}), description: t('editor.toast.draftRestoredDescriptionExisting', { testName: draft.name, defaultValue: draftDescriptionDefault }) });
+        toast({ title: t('editor.toast.draftRestoredTitle'), description: t('editor.toast.draftRestoredDescriptionExisting', { testName: draft.name, defaultValue: draftDescriptionDefault }) });
       } catch (e) {
         console.error("Failed to parse test draft from localStorage", e);
         localStorage.removeItem(localStorageKey); 
+        // If draft fails, load defaults for this testId
+        const defaultTestNameValue = "Test " + testId;
+        setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: defaultTestNameValue }));
+        setSelectedTemplateId(DEFAULT_TEMPLATE_ID);
+        setQuizEndMessage(t('editor.defaultEndMessage'));
+        setQuestions([]); 
       }
     } else {
+      // No draft, load defaults for this testId (as no real data fetching is implemented)
       const defaultTestNameValue = "Test " + testId;
       setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: defaultTestNameValue }));
-      const defaultTemplate = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
-      setHtmlContent(defaultTemplate.htmlContent);
-      setCssContent(defaultTemplate.cssContent);
-      setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: 'Congratulations! Score: {{score}}/{{total}}.'}));
+      setSelectedTemplateId(DEFAULT_TEMPLATE_ID); // Default template for existing tests if no draft
+      setQuizEndMessage(t('editor.defaultEndMessage'));
       setQuestions([]); 
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId, t, toast]);
+  }, [testId, t, toast, router]); // Only run on mount and when testId changes
 
   // Save to localStorage on change (debounced)
   useEffect(() => {
-    if (isInitialLoad || !testId || testId === 'unknown') return;
+    if (isInitialLoad || !testId || testId === 'unknown' || testId === 'new') return;
+    if (!currentTemplate) return; // Don't save if template not loaded
 
     if (debounceTimer) clearTimeout(debounceTimer);
 
     const timer = setTimeout(() => {
-      const draft: TestDraft = { name: testName, questions, htmlContent, cssContent, quizEndMessage };
+      const draft: TestDraft = { name: testName, questions, templateId: selectedTemplateId, quizEndMessage };
       localStorage.setItem(localStorageKey, JSON.stringify(draft));
       setHasUnsavedDraft(true);
     }, 1000);
@@ -326,22 +122,23 @@ function EditTestEditorPageContent() {
       if (timer) clearTimeout(timer);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testName, questions, htmlContent, cssContent, quizEndMessage, isInitialLoad, localStorageKey]);
+  }, [testName, questions, selectedTemplateId, quizEndMessage, isInitialLoad, localStorageKey, currentTemplate]);
 
 
   const updatePreview = useCallback(() => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, 'text/html');
-    const titleElement = doc.querySelector('[data-quiz-title]');
-    if (titleElement) titleElement.textContent = testName || t('editor.quizTitlePlaceholder', {defaultValue: 'Quiz Title'});
-    
-    const questionsDataScriptTag = doc.getElementById('quiz-data');
-    if (questionsDataScriptTag) questionsDataScriptTag.textContent = JSON.stringify(questions);
-    
-    const endMessageDivTag = doc.getElementById('quiz-end-message-text');
-    if (endMessageDivTag) endMessageDivTag.textContent = quizEndMessage;
-    
-    const finalHtmlBody = doc.body.innerHTML;
+    if (!currentTemplate) return;
+
+    const questionsJson = JSON.stringify(questions);
+    const injectedDataHtml = `
+      <script id="quiz-data" type="application/json">${questionsJson}<\/script>
+      <div id="quiz-name-data" style="display:none;">${testName || ''}</div>
+      <div id="quiz-end-message-data" style="display:none;">${quizEndMessage}</div>
+    `;
+
+    const finalHtmlBody = currentTemplate.htmlContent.replace(
+      '</body>',
+      `${injectedDataHtml}</body>`
+    );
     
     const stylingVariables = `
       :root {
@@ -363,8 +160,8 @@ function EditTestEditorPageContent() {
         --success-border: ${getComputedStyle(document.documentElement).getPropertyValue('--success-border').trim()};
       }
     `;
-    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${cssContent}</style></head><body>${finalHtmlBody}<script>${quizLogicScript}<\/script></body></html>`);
-  }, [htmlContent, cssContent, testName, questions, quizEndMessage, t]);
+    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${currentTemplate.cssContent}</style></head>${finalHtmlBody}</html>`);
+  }, [currentTemplate, testName, questions, quizEndMessage]);
 
   useEffect(() => { updatePreview(); }, [updatePreview]);
 
@@ -449,12 +246,12 @@ function EditTestEditorPageContent() {
   
   const handleAddDropTarget = (questionId: string) => {
      setQuestions(prev => prev.map(q => q.id === questionId ? {
-      ...q, dropTargets: [...(q.dropTargets || []), { id: generateId(), text: ''}]
+      ...q, dropTargets: [...(q.dropTargets || []), { id: generateId(), text: '', expectedDragItemId: ''}]
     } : q));
   };
-  const handleUpdateDropTarget = (questionId: string, targetId: string, value: string) => {
+  const handleUpdateDropTarget = (questionId: string, targetId: string, field: keyof DropTarget, value: string) => {
     setQuestions(prev => prev.map(q => q.id === questionId ? {
-      ...q, dropTargets: (q.dropTargets || []).map(target => target.id === targetId ? { ...target, text: value } : target)
+      ...q, dropTargets: (q.dropTargets || []).map(target => target.id === targetId ? { ...target, [field]: value } : target)
     } : q));
   };
   const handleRemoveDropTarget = (questionId: string, targetId: string) => {
@@ -466,10 +263,10 @@ function EditTestEditorPageContent() {
   const handleDeleteQuestion = (questionId: string) => setQuestions((prev) => prev.filter((q) => q.id !== questionId));
 
   const handleSaveTest = () => {
-    const testData = { testId, testName, questions, htmlContent, cssContent, quizEndMessage, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    const testData = { testId, testName, questions, templateId: selectedTemplateId, quizEndMessage, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     console.log("Saving test data (existing):", JSON.stringify(testData, null, 2));
     const saveSuccessDescriptionDefault = "Test " + testId + " config logged to console.";
-    toast({ title: t('editor.toast.saveSuccessTitleExisting', {defaultValue: "Existing Test Data Logged"}), description: t('editor.toast.saveSuccessDescriptionExisting', {testId: testId, defaultValue: saveSuccessDescriptionDefault}) });
+    toast({ title: t('editor.toast.saveSuccessTitleExisting'), description: t('editor.toast.saveSuccessDescriptionExisting', {testId: testId, defaultValue: saveSuccessDescriptionDefault}) });
     if (testId && testId !== 'unknown') {
       localStorage.removeItem(localStorageKey);
     }
@@ -483,8 +280,8 @@ function EditTestEditorPageContent() {
       const newWindow = window.open(url);
       if (!newWindow) {
         toast({
-          title: t('editor.toast.popupBlockedTitle', { defaultValue: "Popup Blocked" }),
-          description: t('editor.toast.popupBlockedDescription', { defaultValue: "Please allow popups for this site to use full screen preview." }),
+          title: t('editor.toast.popupBlockedTitle'),
+          description: t('editor.toast.popupBlockedDescription'),
           variant: "destructive",
         });
       }
@@ -522,44 +319,57 @@ function EditTestEditorPageContent() {
                   </TooltipContent>
                 </Tooltip>
             )}
-            <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('editor.refreshPreview', {defaultValue: 'Refresh Preview'})}</Button>
-            <Button variant="outline" onClick={handleFullScreenPreview}><ExternalLink className="mr-2 h-4 w-4" /> {t('editor.fullScreenPreview', {defaultValue: 'Full Screen'})}</Button>
-            <Button onClick={handleSaveTest}><Save className="mr-2 h-4 w-4" /> {t('editor.saveTest', {defaultValue: 'Save Test'})}</Button>
+            <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('editor.refreshPreview')}</Button>
+            <Button variant="outline" onClick={handleFullScreenPreview}><ExternalLink className="mr-2 h-4 w-4" /> {t('editor.fullScreenPreview')}</Button>
+            <Button onClick={handleSaveTest}><Save className="mr-2 h-4 w-4" /> {t('editor.saveTest')}</Button>
           </div>
         </header>
 
         <div className="grid md:grid-cols-3 gap-6 flex-1 min-h-0">
           <Card className="md:col-span-1 flex flex-col shadow-lg">
              <CardHeader>
-                <CardTitle className="flex items-center"><Settings2 className="mr-2 h-5 w-5 text-primary" />{t('editor.config.title', {defaultValue: 'Configuration & Page Style'})}</CardTitle>
-                <CardDescription>{t('editor.config.description', {defaultValue: 'Basic settings, page style (HTML/CSS), and embed information.'})}</CardDescription>
+                <CardTitle className="flex items-center"><Settings2 className="mr-2 h-5 w-5 text-primary" />{t('editor.config.title')}</CardTitle>
+                <CardDescription>{t('editor.config.description')}</CardDescription>
               </CardHeader>
             <ScrollArea className="flex-grow">
               <CardContent className="space-y-6 p-4">
                 <div>
-                  <Label htmlFor="testName" className="text-sm font-medium">{t('editor.config.testNameLabel', {defaultValue: 'Test Name'})}</Label>
-                  <Input id="testName" placeholder={t('editor.config.testNamePlaceholder', {defaultValue: 'e.g., General Knowledge'})} value={testName} onChange={(e) => setTestName(e.target.value)} className="mt-1" />
+                  <Label htmlFor="testName" className="text-sm font-medium">{t('editor.config.testNameLabel')}</Label>
+                  <Input id="testName" placeholder={t('editor.config.testNamePlaceholder')} value={testName} onChange={(e) => setTestName(e.target.value)} className="mt-1" />
                 </div>
                 <Separator />
+                <div>
+                  <Label htmlFor="pageTemplateSelect" className="text-sm font-medium">{t('editor.config.templateLabel', {defaultValue: 'Page Style Template'})}</Label>
+                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                    <SelectTrigger id="pageTemplateSelect" className="mt-1">
+                      <SelectValue placeholder={t('editor.config.selectTemplatePlaceholder', {defaultValue: "Select a page template"})} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {pageTemplates.map(template => (
+                        <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                   {currentTemplate && (
+                     <p className="text-xs text-muted-foreground mt-1">
+                       {t('editor.config.templateDescriptionHint', {description: currentTemplate.description || 'No description.', defaultValue: 'Description: {{description}}'})}
+                       <Link href={`/templates/editor/${currentTemplate.id}`} className="ml-1 text-primary hover:underline text-xs">
+                         ({t('editor.config.editTemplateLink', {defaultValue: 'Edit Style'})})
+                       </Link>
+                     </p>
+                  )}
+                </div>
+                 <Separator />
                  <div>
-                  <Label htmlFor="quizEndMessage" className="text-sm font-medium flex items-center"><MessageSquareText className="mr-2 h-4 w-4" /> {t('editor.config.endMessageLabel', {defaultValue: 'Quiz End Message'})}</Label>
-                  <Textarea id="quizEndMessage" placeholder={t('editor.config.endMessagePlaceholder', {defaultValue: 'e.g., Congrats! Score: {{score}}/{{total}}'})} value={quizEndMessage} onChange={(e) => setQuizEndMessage(e.target.value)} className="mt-1" rows={3} />
-                   <p className="text-xs text-muted-foreground mt-1">{t('editor.config.endMessageHint', {defaultValue: "Use {{score}} and {{total}}."})}</p>
-                </div>
-                <Separator />
-                <div>
-                  <Label htmlFor="htmlContent" className="text-sm font-medium flex items-center"><Palette className="mr-2 h-4 w-4" /> {t('editor.config.htmlLabel', {defaultValue: 'Page HTML Structure'})}</Label>
-                  <Textarea id="htmlContent" value={htmlContent} onChange={(e) => setHtmlContent(e.target.value)} className="mt-1 font-mono text-xs min-h-[200px] resize-y" rows={10} />
-                </div>
-                <div>
-                  <Label htmlFor="cssContent" className="text-sm font-medium flex items-center"><Palette className="mr-2 h-4 w-4" /> {t('editor.config.cssLabel', {defaultValue: 'Page CSS Styles'})}</Label>
-                  <Textarea id="cssContent" value={cssContent} onChange={(e) => setCssContent(e.target.value)} className="mt-1 font-mono text-xs min-h-[200px] resize-y" rows={10} />
+                  <Label htmlFor="quizEndMessage" className="text-sm font-medium flex items-center"><MessageSquareText className="mr-2 h-4 w-4" /> {t('editor.config.endMessageLabel')}</Label>
+                  <Textarea id="quizEndMessage" placeholder={t('editor.config.endMessagePlaceholder')} value={quizEndMessage} onChange={(e) => setQuizEndMessage(e.target.value)} className="mt-1" rows={3} />
+                   <p className="text-xs text-muted-foreground mt-1">{t('editor.config.endMessageHint')}</p>
                 </div>
                 <Separator />
                  <Card>
-                  <CardHeader><CardTitle className="text-base flex items-center"><Code className="mr-2 h-4 w-4" /> {t('editor.config.embedTitle', {defaultValue: 'Embed Your Test'})}</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-base flex items-center"><Code className="mr-2 h-4 w-4" /> {t('editor.config.embedTitle')}</CardTitle></CardHeader>
                   <CardContent>
-                    <p className="text-sm text-muted-foreground">{t('editor.config.embedDescription', {defaultValue: 'After saving, embed code will appear here.'})}</p>
+                    <p className="text-sm text-muted-foreground">{t('editor.config.embedDescription')}</p>
                     {/* For existing tests, the embed code can be shown */}
                     <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? \`<iframe src="/test/\${testId}/player" width="100%" height="600px" frameborder="0"></iframe>\` : "<iframe src='...' width='100%' height='600px' frameborder='0'></iframe>"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
                   </CardContent>
@@ -570,8 +380,8 @@ function EditTestEditorPageContent() {
 
           <Card className="md:col-span-1 flex flex-col overflow-hidden shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center"><Eye className="mr-2 h-5 w-5 text-primary" />{t('editor.preview.title', {defaultValue: 'Live Preview'})}</CardTitle>
-              <CardDescription>{t('editor.preview.description', {defaultValue: 'Rendered output of your test. Fully interactive.'})}</CardDescription>
+              <CardTitle className="flex items-center"><Eye className="mr-2 h-5 w-5 text-primary" />{t('editor.preview.title')}</CardTitle>
+              <CardDescription>{t('editor.preview.description')}</CardDescription>
             </CardHeader>
             <CardContent className="flex-grow p-0 m-0">
               <iframe srcDoc={previewContent} title="Test Preview" className="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-popups" />
@@ -581,17 +391,17 @@ function EditTestEditorPageContent() {
           <Card className="md:col-span-1 flex flex-col shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between">
               <div className="space-y-1.5">
-                <CardTitle className="flex items-center"><HelpCircle className="mr-2 h-5 w-5 text-primary" />{t('editor.questions.title', {defaultValue: 'Questions'})}</CardTitle>
-                <CardDescription>{t('editor.questions.description', {defaultValue: 'Add and manage questions.'})}</CardDescription>
+                <CardTitle className="flex items-center"><HelpCircle className="mr-2 h-5 w-5 text-primary" />{t('editor.questions.title')}</CardTitle>
+                <CardDescription>{t('editor.questions.description')}</CardDescription>
               </div>
-              <Button onClick={handleAddQuestion} size="sm"><PlusCircle className="mr-2 h-4 w-4" /> {t('editor.questions.addQuestion', {defaultValue: 'Add Question'})}</Button>
+              <Button onClick={handleAddQuestion} size="sm"><PlusCircle className="mr-2 h-4 w-4" /> {t('editor.questions.addQuestion')}</Button>
             </CardHeader>
             <ScrollArea className="flex-grow">
               <CardContent className="space-y-4 p-4">
                 {questions.length === 0 ? (
                   <div className="text-center text-muted-foreground py-10">
-                    <p>{t('editor.questions.noQuestions', {defaultValue: 'No questions added yet.'})}</p>
-                    <Button variant="outline" className="mt-4" onClick={handleAddQuestion}><PlusCircle className="mr-2 h-4 w-4" /> {t('editor.questions.addFirstQuestion', {defaultValue: 'Add First Question'})}</Button>
+                    <p>{t('editor.questions.noQuestions')}</p>
+                    <Button variant="outline" className="mt-4" onClick={handleAddQuestion}><PlusCircle className="mr-2 h-4 w-4" /> {t('editor.questions.addFirstQuestion')}</Button>
                   </div>
                 ) : (
                   questions.map((question, qIndex) => (
@@ -600,17 +410,17 @@ function EditTestEditorPageContent() {
                         <div className="flex justify-between items-start">
                            <div className="flex-grow">
                             <CardTitle className="text-lg mb-2">{t('editor.questions.questionLabel', {number: qIndex+1, defaultValue: "Question " + (qIndex + 1)})}</CardTitle>
-                            <Label htmlFor={`q-type-${question.id}`}>{t('editor.questions.questionTypeLabel', {defaultValue: 'Question Type'})}</Label>
+                            <Label htmlFor={`q-type-${question.id}`}>{t('editor.questions.questionTypeLabel')}</Label>
                             <Select
                                 value={question.type}
                                 onValueChange={(value) => handleUpdateQuestion(question.id, 'type', value as QuestionType)}
                             >
                                 <SelectTrigger id={`q-type-${question.id}`} className="mt-1">
-                                <SelectValue placeholder={t('editor.questions.questionTypeLabel', {defaultValue: 'Select type'})} />
+                                <SelectValue placeholder={t('editor.questions.questionTypeLabel')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                 {questionTypes.map(qt => (
-                                    <SelectItem key={qt.value} value={qt.value}>{t(qt.labelKey, {defaultValue: qt.value})}</SelectItem>
+                                    <SelectItem key={qt.value} value={qt.value}>{t(qt.labelKey)}</SelectItem>
                                 ))}
                                 </SelectContent>
                             </Select>
@@ -620,23 +430,23 @@ function EditTestEditorPageContent() {
                       </CardHeader>
                       <CardContent className="space-y-3">
                         <div>
-                          <Label htmlFor={`q-text-${question.id}`}>{t('editor.questions.questionTextLabel', {defaultValue: 'Question Text'})}</Label>
-                          <Textarea id={`q-text-${question.id}`} value={question.text} onChange={(e) => handleUpdateQuestion(question.id, 'text', e.target.value)} placeholder={t('editor.questions.questionTextPlaceholder', {defaultValue: 'Enter question text'})} className="mt-1" rows={2}/>
+                          <Label htmlFor={`q-text-${question.id}`}>{t('editor.questions.questionTextLabel')}</Label>
+                          <Textarea id={`q-text-${question.id}`} value={question.text} onChange={(e) => handleUpdateQuestion(question.id, 'text', e.target.value)} placeholder={t('editor.questions.questionTextPlaceholder')} className="mt-1" rows={2}/>
                         </div>
                         
                         {(question.type === 'multiple-choice-text' || question.type === 'multiple-choice-image') && (
                           <>
-                            <p className="text-sm font-medium">{t('editor.questions.optionsLabel', {defaultValue: 'Options:'})}</p>
+                            <p className="text-sm font-medium">{t('editor.questions.optionsLabel')}</p>
                             {question.options.map((option) => (
                               <div key={option.id} className="flex items-center space-x-2 p-2 border rounded-md">
                                 <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary" onClick={() => handleSetCorrectOption(question.id, option.id)} title={option.isCorrect ? t('editor.questions.markIncorrect') : t('editor.questions.markCorrect')}>
                                   {option.isCorrect ? <CheckCircle className="h-5 w-5 text-primary" /> : <Circle className="h-5 w-5" />}
                                 </Button>
                                 <div className="flex-grow space-y-1">
-                                  <Input value={option.text} onChange={(e) => handleUpdateOption(question.id, option.id, 'text', e.target.value)} placeholder={t('editor.questions.optionTextPlaceholder', {defaultValue: 'Option text'})} />
+                                  <Input value={option.text} onChange={(e) => handleUpdateOption(question.id, option.id, 'text', e.target.value)} placeholder={t('editor.questions.optionTextPlaceholder')} />
                                   {question.type === 'multiple-choice-image' && (
                                     <>
-                                    <Input value={option.imageUrl || ''} onChange={(e) => handleUpdateOption(question.id, option.id, 'imageUrl', e.target.value)} placeholder={t('editor.questions.optionImageUrlPlaceholder', {defaultValue: 'Image URL (optional)'})} />
+                                    <Input value={option.imageUrl || ''} onChange={(e) => handleUpdateOption(question.id, option.id, 'imageUrl', e.target.value)} placeholder={t('editor.questions.optionImageUrlPlaceholder')} />
                                     {option.imageUrl && <Image src={option.imageUrl} alt={option.text || 'Option image'} width={48} height={48} className="rounded-sm object-contain mt-1 border" data-ai-hint="quiz option"/>}
                                     </>
                                   )}
@@ -651,7 +461,7 @@ function EditTestEditorPageContent() {
                         )}
                         {question.type === 'matching-text-text' && (
                             <>
-                                <p className="text-sm font-medium">{t('editor.questions.matchingPairsLabel', {defaultValue: 'Matching Pairs:'})}</p>
+                                <p className="text-sm font-medium">{t('editor.questions.matchingPairsLabel')}</p>
                                 {(question.matchPairs || []).map(pair => (
                                     <div key={pair.id} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center p-2 border rounded-md">
                                         <Input value={pair.prompt} onChange={(e) => handleUpdateMatchPair(question.id, pair.id, 'prompt', e.target.value)} placeholder={t('editor.questions.matchPromptPlaceholder')}/>
@@ -666,7 +476,7 @@ function EditTestEditorPageContent() {
                         )}
                         {question.type === 'drag-and-drop-text-text' && (
                             <>
-                                <p className="text-sm font-medium">{t('editor.questions.dragItemsLabel', {defaultValue: 'Draggable Items:'})}</p>
+                                <p className="text-sm font-medium">{t('editor.questions.dragItemsLabel')}</p>
                                 {(question.dragItems || []).map(item => (
                                     <div key={item.id} className="flex items-center space-x-2 p-2 border rounded-md">
                                         <Input value={item.text} onChange={(e) => handleUpdateDragItem(question.id, item.id, e.target.value)} placeholder={t('editor.questions.dragItemPlaceholder')} className="flex-grow"/>
@@ -677,13 +487,29 @@ function EditTestEditorPageContent() {
                                 ))}
                                 <Button variant="outline" size="sm" onClick={() => handleAddDragItem(question.id)} className="mb-2"><PlusCircle className="mr-2 h-4 w-4" /> {t('editor.questions.addDragItem')}</Button>
 
-                                <p className="text-sm font-medium">{t('editor.questions.dropTargetsLabel', {defaultValue: 'Drop Targets:'})}</p>
+                                <p className="text-sm font-medium">{t('editor.questions.dropTargetsLabel')}</p>
                                  {(question.dropTargets || []).map(target => (
-                                    <div key={target.id} className="flex items-center space-x-2 p-2 border rounded-md">
-                                        <Input value={target.text} onChange={(e) => handleUpdateDropTarget(question.id, target.id, e.target.value)} placeholder={t('editor.questions.dropTargetPlaceholder')} className="flex-grow"/>
-                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveDropTarget(question.id, target.id)} title={t('editor.questions.removeDropTarget')}>
-                                            <Trash2 className="h-4 w-4 text-destructive/70 hover:text-destructive" />
-                                        </Button>
+                                    <div key={target.id} className="grid grid-cols-[1fr_auto] gap-2 items-center p-2 border rounded-md">
+                                      <div className="space-y-1">
+                                        <Input value={target.text} onChange={(e) => handleUpdateDropTarget(question.id, target.id, 'text', e.target.value)} placeholder={t('editor.questions.dropTargetPlaceholder')} />
+                                         <Select 
+                                          value={target.expectedDragItemId || ''} 
+                                          onValueChange={(value) => handleUpdateDropTarget(question.id, target.id, 'expectedDragItemId', value)}
+                                        >
+                                          <SelectTrigger className="text-xs h-8">
+                                            <SelectValue placeholder={t('editor.questions.selectCorrectDragItem', {defaultValue: 'Correct Draggable Item'})} />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="">{t('editor.questions.noCorrectDragItem', {defaultValue: 'None (any is placeholder/visual only)'})}</SelectItem>
+                                            {(question.dragItems || []).map(dItem => (
+                                              <SelectItem key={dItem.id} value={dItem.id}>{dItem.text.substring(0,30)}{dItem.text.length > 30 ? '...' : ''}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <Button variant="ghost" size="icon" onClick={() => handleRemoveDropTarget(question.id, target.id)} title={t('editor.questions.removeDropTarget')}>
+                                          <Trash2 className="h-4 w-4 text-destructive/70 hover:text-destructive" />
+                                      </Button>
                                     </div>
                                 ))}
                                 <Button variant="outline" size="sm" onClick={() => handleAddDropTarget(question.id)}><PlusCircle className="mr-2 h-4 w-4" /> {t('editor.questions.addDropTarget')}</Button>

@@ -63,8 +63,8 @@ const translations: Translations = {
     'myTests.statusLabel': 'Status',
     'myTests.lastModifiedLabel': 'Last modified',
 
-    'myPageTemplates.pageTitle': 'My Templates',
-    'myPageTemplates.create': 'Create New Template',
+    'myPageTemplates.pageTitle': 'My Templates', // Corrected
+    'myPageTemplates.create': 'Create New Template', // Corrected
     'myPageTemplates.noPageTemplates.title': "You haven't created any templates yet.",
     'myPageTemplates.noPageTemplates.description': 'Page templates help you build quizzes faster with consistent page designs.',
     'myPageTemplates.noPageTemplates.button': 'Create Your First Template',
@@ -134,14 +134,18 @@ const translations: Translations = {
     'editor.newQuestionText': 'New Question {{number}}',
     'editor.optionPlaceholder': 'Option {{letter}}',
     'editor.newOptionText': 'New Option {{number}}',
+
     'editor.toast.saveSuccessTitle': 'Test Data Logged',
     'editor.toast.saveSuccessDescription': 'Test configuration has been logged to the console.',
     'editor.toast.saveSuccessTitleExisting': 'Existing Test Data Logged',
     'editor.toast.saveSuccessDescriptionExisting': 'Test {{testId}} configuration logged to console.',
+    'editor.toast.draftRestoredTitle': 'Draft Restored',
+    'editor.toast.draftRestoredDescriptionNew': 'Your unsaved new test draft has been loaded.',
+    'editor.toast.draftRestoredDescriptionExisting': 'Unsaved draft for test "{{testName}}" loaded.',
     'editor.toast.popupBlockedTitle': 'Popup Blocked',
     'editor.toast.popupBlockedDescription': 'Please allow popups for this site to use full screen preview.',
-    'editor.toast.templateNotFoundTitle': 'Page Style Template Not Found',
-    'editor.toast.templateNotFoundDescription': 'The page style template "{{templateId}}" was not found. Loaded default blank canvas.',
+    'editor.toast.templateNotFoundTitle': 'Page Template Not Found',
+    'editor.toast.templateNotFoundDescription': 'The page template "{{templateId}}" was not found. Loaded default blank canvas.',
     'editor.toast.templateLoadErrorTitle': 'Template Load Error',
     'editor.toast.templateLoadErrorDescription': 'Could not load template "{{templateId}}". Starting with a blank canvas.',
 
@@ -153,15 +157,15 @@ const translations: Translations = {
     'pageTemplateEditor.saveTemplate': 'Save Page Template',
     'pageTemplateEditor.unsavedDraftTooltip': 'Unsaved local draft exists. Save to clear.',
     'pageTemplateEditor.details.title': 'Page Template Details & Design',
-    'pageTemplateEditor.details.description': 'Define the HTML structure and CSS style of your reusable quiz page template. You can include <script> tags in the HTML for template-specific JavaScript.',
+    'pageTemplateEditor.details.description': 'Define the HTML structure, CSS style, and JavaScript logic of your reusable quiz page template.',
     'pageTemplateEditor.details.nameLabel': 'Page Template Name',
     'pageTemplateEditor.details.namePlaceholder': 'e.g., Modern MCQ Page Style',
     'pageTemplateEditor.details.loadedNamePlaceholder': 'Page Template {{templateId}}',
     'pageTemplateEditor.details.descriptionLabel': 'Description (Optional)',
     'pageTemplateEditor.details.descriptionPlaceholder': 'A brief description of what this page template is best for...',
-    'pageTemplateEditor.details.htmlLabel': 'Page HTML Structure',
-    'pageTemplateEditor.details.htmlPlaceholder': 'Enter page template HTML...\n<!-- Ensure it includes placeholders like <div id="quiz-content-host"> for questions -->',
-    'pageTemplateEditor.details.htmlHint': 'Use {{template_title_placeholder}}, {{question_text_placeholder}}, {{option_text_placeholder_1}}, {{option_text_placeholder_2}} as dynamic placeholders for preview. For quiz functionality, ensure main container, #quiz-content-host, and specific data-quiz-* attributes (like data-quiz-question-id="q_template_id") are present for the quizLogicScript to work. You can include <script> tags here for template-specific JS.',
+    'pageTemplateEditor.details.htmlLabel': 'Page HTML Structure (Includes JS Logic)',
+    'pageTemplateEditor.details.htmlPlaceholder': 'Enter page template HTML, including <script> tags for all quiz logic...',
+    'pageTemplateEditor.details.htmlHint': 'Include <script> tags for all JS quiz logic. Use `document.getElementById(\'quiz-data\').textContent` (JSON string of questions), `document.getElementById(\'quiz-name-data\').textContent` (quiz name), and `document.getElementById(\'quiz-end-message-data\').textContent` (end message) to access test data. Placeholders like {{template_title_placeholder}} can be used for preview here.',
     'pageTemplateEditor.details.cssLabel': 'Page CSS Styles',
     'pageTemplateEditor.details.cssPlaceholder': 'Enter page template CSS...\n/* Style your page template elements */\n/* Add your CSS animations here */',
     'pageTemplateEditor.details.cssHint': 'Your CSS will be injected into the preview. Tailwind CSS is also available there. Use CSS variables from globals.css (e.g., hsl(var(--primary))) for theming.',
@@ -174,12 +178,17 @@ const translations: Translations = {
     'pageTemplateEditor.preview.sampleOption2': 'Sample Option 2',
     'pageTemplateEditor.toast.saveSuccessTitle': 'Page Template Saved (Mock)',
     'pageTemplateEditor.toast.saveSuccessDescription': 'Page Template "{{templateName}}" data logged to console.',
+    'pageTemplateEditor.toast.saveSuccessTitleExisting': 'Existing Page Template Saved (Mock)',
+    'pageTemplateEditor.toast.saveSuccessDescriptionExisting': 'Page Template {{templateName}} data logged to console.',
+    'pageTemplateEditor.toast.draftRestoredTitle': 'Draft Restored',
+    'pageTemplateEditor.toast.draftRestoredDescriptionNew': 'Your unsaved new page template draft has been loaded.',
+    'pageTemplateEditor.toast.draftRestoredDescriptionExisting': 'Unsaved draft for template "{{templateName}}" loaded.',
     'pageTemplateEditor.toast.loadErrorTitle': 'Load Error',
     'pageTemplateEditor.toast.loadErrorDescription': 'Could not load template "{{templateId}}". Loaded default blank canvas.',
 
 
-    'pageTemplates.explore.pageTitle': 'Explore Templates',
-    'pageTemplates.explore.createButton': 'Create New Template',
+    'pageTemplates.explore.pageTitle': 'Explore Page Templates', // Corrected
+    'pageTemplates.explore.createButton': 'Create New Template', // Corrected
     'pageTemplates.explore.useThisTemplate': 'Use This Template',
     'pageTemplates.explore.preview': 'Edit Page Style',
     'pageTemplates.explore.duplicate': 'Duplicate',
@@ -230,14 +239,6 @@ const translations: Translations = {
     'questionType.matching-text-text': 'Matching (Text-to-Text)',
     'questionType.drag-and-drop-text-text': 'Drag & Drop (Text-on-Text)',
 
-    'quiz.feedback.correct': 'Correct!',
-    'quiz.feedback.incorrect': 'Incorrect!',
-    'quiz.endScreen.title': 'Quiz Complete!',
-    'quiz.restartButton': 'Restart Quiz',
-    'quiz.matching.selectPrompt': 'Select a match for:',
-    'quiz.dragDrop.dropHere': 'Drop here',
-    'quiz.questionType.notImplemented': 'This question type is not fully interactive in preview yet.',
-
   },
   ru: {
     'appHeader.myAccount': 'Мой аккаунт',
@@ -252,9 +253,9 @@ const translations: Translations = {
 
     'nav.dashboard': 'Панель',
     'nav.myTests': 'Мои тесты',
-    'nav.myTemplates': 'Мои шаблоны',
+    'nav.myTemplates': 'Мои шаблоны', // Corrected
     'nav.newTest': 'Новый тест',
-    'nav.newTemplate': 'Новый шаблон',
+    'nav.newTemplate': 'Новый шаблон', // Corrected
     'nav.settings': 'Настройки',
     'nav.adminPanel': 'Панель администратора',
     'nav.createNew': 'Создать',
@@ -284,8 +285,8 @@ const translations: Translations = {
     'myTests.statusLabel': 'Статус',
     'myTests.lastModifiedLabel': 'Последнее изменение',
 
-    'myPageTemplates.pageTitle': 'Мои шаблоны',
-    'myPageTemplates.create': 'Создать новый шаблон',
+    'myPageTemplates.pageTitle': 'Мои шаблоны', // Corrected
+    'myPageTemplates.create': 'Создать новый шаблон', // Corrected
     'myPageTemplates.noPageTemplates.title': 'Вы еще не создали ни одного шаблона.',
     'myPageTemplates.noPageTemplates.description': 'Шаблоны страниц помогут вам быстрее создавать викторины с единым дизайном страниц.',
     'myPageTemplates.noPageTemplates.button': 'Создать свой первый шаблон',
@@ -359,6 +360,9 @@ const translations: Translations = {
     'editor.toast.saveSuccessDescription': 'Конфигурация теста записана в консоль.',
     'editor.toast.saveSuccessTitleExisting': 'Данные существующего теста записаны',
     'editor.toast.saveSuccessDescriptionExisting': 'Конфигурация теста {{testId}} записана в консоль.',
+    'editor.toast.draftRestoredTitle': 'Черновик восстановлен',
+    'editor.toast.draftRestoredDescriptionNew': 'Ваш несохраненный черновик нового теста загружен.',
+    'editor.toast.draftRestoredDescriptionExisting': 'Несохраненный черновик теста "{{testName}}" загружен.',
     'editor.toast.popupBlockedTitle': 'Всплывающее окно заблокировано',
     'editor.toast.popupBlockedDescription': 'Пожалуйста, разрешите всплывающие окна для этого сайта, чтобы использовать полноэкранный предпросмотр.',
     'editor.toast.templateNotFoundTitle': 'Шаблон страницы не найден',
@@ -374,15 +378,15 @@ const translations: Translations = {
     'pageTemplateEditor.saveTemplate': 'Сохранить шаблон страницы',
     'pageTemplateEditor.unsavedDraftTooltip': 'Существует несохраненный локальный черновик. Сохраните, чтобы очистить.',
     'pageTemplateEditor.details.title': 'Детали и дизайн шаблона страницы',
-    'pageTemplateEditor.details.description': 'Определите структуру HTML и стиль CSS вашего многоразового шаблона страницы викторины. Вы можете включать теги &lt;script&gt; в HTML для специфичного JavaScript шаблона.',
+    'pageTemplateEditor.details.description': 'Определите структуру HTML, стиль CSS и логику JavaScript вашего многоразового шаблона страницы викторины.',
     'pageTemplateEditor.details.nameLabel': 'Название шаблона страницы',
     'pageTemplateEditor.details.namePlaceholder': 'например, Современный стиль страницы MCQ',
     'pageTemplateEditor.details.loadedNamePlaceholder': 'Шаблон страницы {{templateId}}',
     'pageTemplateEditor.details.descriptionLabel': 'Описание (необязательно)',
     'pageTemplateEditor.details.descriptionPlaceholder': 'Краткое описание, для чего лучше всего подходит этот шаблон страницы...',
-    'pageTemplateEditor.details.htmlLabel': 'Структура HTML страницы',
-    'pageTemplateEditor.details.htmlPlaceholder': 'Введите HTML шаблона страницы...\n<!-- Убедитесь, что он содержит плейсхолдеры, такие как <div id="quiz-content-host"> для вопросов -->',
-    'pageTemplateEditor.details.htmlHint': 'Используйте {{template_title_placeholder}}, {{question_text_placeholder}}, {{option_text_placeholder_1}}, {{option_text_placeholder_2}} как динамические плейсхолдеры для предпросмотра. Для функциональности викторины убедитесь в наличии основного контейнера, #quiz-content-host и специфичных data-quiz-* атрибутов (например, data-quiz-question-id="q_template_id") для работы quizLogicScript. Вы можете включать теги <script> здесь для специфичного JS шаблона.',
+    'pageTemplateEditor.details.htmlLabel': 'Структура HTML страницы (включая JS логику)',
+    'pageTemplateEditor.details.htmlPlaceholder': 'Введите HTML шаблона страницы, включая теги <script> для всей логики викторины...',
+    'pageTemplateEditor.details.htmlHint': 'Включите теги &lt;script&gt; для всей JS логики викторины. Используйте `document.getElementById(\'quiz-data\').textContent` (JSON строка вопросов), `document.getElementById(\'quiz-name-data\').textContent` (название викторины) и `document.getElementById(\'quiz-end-message-data\').textContent` (сообщение об окончании) для доступа к данным теста. Плейсхолдеры вроде {{template_title_placeholder}} можно использовать здесь для предпросмотра.',
     'pageTemplateEditor.details.cssLabel': 'Стили CSS страницы',
     'pageTemplateEditor.details.cssPlaceholder': 'Введите CSS шаблона страницы...\n/* Стилизуйте элементы вашего шаблона страницы */\n/* Добавьте сюда свои CSS анимации */',
     'pageTemplateEditor.details.cssHint': 'Ваш CSS будет внедрен в предпросмотр. Tailwind CSS также доступен там. Используйте CSS переменные из globals.css (например, hsl(var(--primary))) для темизации.',
@@ -395,11 +399,17 @@ const translations: Translations = {
     'pageTemplateEditor.preview.sampleOption2': 'Вариант Б',
     'pageTemplateEditor.toast.saveSuccessTitle': 'Шаблон страницы сохранен (имитация)',
     'pageTemplateEditor.toast.saveSuccessDescription': 'Данные шаблона страницы "{{templateName}}" записаны в консоль.',
+    'pageTemplateEditor.toast.saveSuccessTitleExisting': 'Существующий шаблон страницы сохранен (имитация)',
+    'pageTemplateEditor.toast.saveSuccessDescriptionExisting': 'Данные шаблона страницы {{templateName}} записаны в консоль.',
+    'pageTemplateEditor.toast.draftRestoredTitle': 'Черновик восстановлен',
+    'pageTemplateEditor.toast.draftRestoredDescriptionNew': 'Ваш несохраненный черновик нового шаблона страницы загружен.',
+    'pageTemplateEditor.toast.draftRestoredDescriptionExisting': 'Несохраненный черновик шаблона "{{templateName}}" загружен.',
     'pageTemplateEditor.toast.loadErrorTitle': 'Ошибка загрузки',
     'pageTemplateEditor.toast.loadErrorDescription': 'Не удалось загрузить шаблон "{{templateId}}". Загружен пустой шаблон по умолчанию.',
 
-    'pageTemplates.explore.pageTitle': 'Обзор шаблонов',
-    'pageTemplates.explore.createButton': 'Создать новый шаблон',
+
+    'pageTemplates.explore.pageTitle': 'Обзор шаблонов', // Corrected
+    'pageTemplates.explore.createButton': 'Создать новый шаблон', // Corrected
     'pageTemplates.explore.useThisTemplate': 'Использовать этот шаблон',
     'pageTemplates.explore.preview': 'Редактировать стиль страницы',
     'pageTemplates.explore.duplicate': 'Дублировать',
@@ -448,14 +458,6 @@ const translations: Translations = {
     'questionType.multiple-choice-image': 'Один из многих (Изображение)',
     'questionType.matching-text-text': 'Сопоставление (Текст-Текст)',
     'questionType.drag-and-drop-text-text': 'Перетаскивание (Текст-на-Текст)',
-
-    'quiz.feedback.correct': 'Верно!',
-    'quiz.feedback.incorrect': 'Неверно!',
-    'quiz.endScreen.title': 'Викторина завершена!',
-    'quiz.restartButton': 'Начать заново',
-    'quiz.matching.selectPrompt': 'Выберите пару для:',
-    'quiz.dragDrop.dropHere': 'Перетащите сюда',
-    'quiz.questionType.notImplemented': 'Этот тип вопроса еще не полностью интерактивен в предпросмотре.',
   },
 };
 
@@ -482,7 +484,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
           const value = replacements[placeholder];
           if (value !== undefined) {
              translation = translation.replace(
-               new RegExp(`{{\\s*${placeholder}\\s*}}`, 'g'), // Added \\s* to allow for spaces around placeholder
+               new RegExp(`{{\\s*${placeholder}\\s*}}`, 'g'), 
                String(value)
              );
           }
