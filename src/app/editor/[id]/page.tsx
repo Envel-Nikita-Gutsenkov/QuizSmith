@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff, Palette } from 'lucide-react';
+import { Save, Eye, PlusCircle, Settings2, HelpCircle, Trash2, CheckCircle, Circle, Code, MessageSquareText, ExternalLink, Image as ImageIcon, CloudOff } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, QuestionType, PageTemplate as PageTemplateType, Test } from '@/lib/types';
@@ -55,7 +55,8 @@ function EditTestEditorPageContent() {
 
   useEffect(() => {
     const template = pageTemplates.find(pt => pt.id === selectedTemplateId);
-    setCurrentTemplate(template || pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!);
+    const effectiveTemplate = template || pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID)!;
+    setCurrentTemplate(effectiveTemplate);
   }, [selectedTemplateId]);
 
   useEffect(() => {
@@ -96,10 +97,10 @@ function EditTestEditorPageContent() {
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testId, t, toast, router]);
+  }, [testId, t, toast, router, localStorageKey]); // Added localStorageKey
 
   useEffect(() => {
-    if (isInitialLoad || !testId || testId === 'unknown' || testId === 'new' || !currentTemplate) return;
+    if (isInitialLoad || !testId || testId === 'unknown' || testId === 'new') return;
 
     if (debounceTimer) clearTimeout(debounceTimer);
 
@@ -114,7 +115,7 @@ function EditTestEditorPageContent() {
       if (timer) clearTimeout(timer);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testName, questions, selectedTemplateId, quizEndMessage, isInitialLoad, localStorageKey, currentTemplate]);
+  }, [testName, questions, selectedTemplateId, quizEndMessage, isInitialLoad, localStorageKey]); // currentTemplate removed, we save selectedTemplateId
 
 
   const updatePreview = useCallback(() => {
@@ -129,15 +130,12 @@ function EditTestEditorPageContent() {
       <div id="quiz-end-message-data" style="display:none;">${quizEndMessage}</div>
     `;
 
-    let templateHtml = currentTemplate.htmlContent;
-    if (typeof templateHtml === 'string' && templateHtml.includes('</body>')) {
-        templateHtml = templateHtml.replace(
-            '</body>',
-            `${injectedDataHtml}</body>`
-        );
-    } else if (typeof templateHtml === 'string') {
-        templateHtml += injectedDataHtml;
-    }
+    // currentTemplate.htmlContent is the content FOR the body.
+    // The injectedDataHtml should be part of this body content, typically at the end.
+    const bodyContentWithInjectedData = `
+      ${currentTemplate.htmlContent}
+      ${injectedDataHtml}
+    `;
     
     let stylingVariables = '';
      if (typeof window !== 'undefined') {
@@ -163,11 +161,11 @@ function EditTestEditorPageContent() {
           }
         `;
     }
-    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${currentTemplate.cssContent}</style></head>${templateHtml}</html>`);
-  }, [currentTemplate, testName, questions, quizEndMessage, t]); // Added t to dependencies
+    setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"><\/script><style>${stylingVariables}${currentTemplate.cssContent}</style></head><body>${bodyContentWithInjectedData}</body></html>`);
+  }, [currentTemplate, testName, questions, quizEndMessage, t]); 
 
   useEffect(() => { 
-    if (!isInitialLoad || currentTemplate) {
+    if (currentTemplate && !isInitialLoad) {
       updatePreview();
     }
   }, [updatePreview, isInitialLoad, currentTemplate]);
@@ -280,7 +278,7 @@ function EditTestEditorPageContent() {
         questions, 
         templateId: selectedTemplateId, 
         quizEndMessage, 
-        createdAt: new Date().toISOString(), 
+        createdAt: new Date().toISOString(), // This would be set on actual creation
         updatedAt: new Date().toISOString() 
     };
     console.log("Saving test data (existing):", JSON.stringify(testData, null, 2));
@@ -389,7 +387,7 @@ function EditTestEditorPageContent() {
                   <CardHeader><CardTitle className="text-base flex items-center"><Code className="mr-2 h-4 w-4" /> {t('editor.config.embedTitle')}</CardTitle></CardHeader>
                   <CardContent>
                     <p className="text-sm text-muted-foreground">{t('editor.config.embedDescription')}</p>
-                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? `&lt;iframe src="/test/${testId}/player" width="100%" height="600px" frameborder="0"&gt;&lt;/iframe&gt;` : "&lt;iframe src='...' width='100%' height='600px' frameborder='0'&gt;&lt;/iframe&gt;"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
+                    <Textarea readOnly value={testId !== 'new' && testId !== 'unknown' ? `<iframe src="/test/${testId}/player" width="100%" height="600px" frameborder="0"></iframe>` : "&lt;iframe src='...' width='100%' height='600px' frameborder='0'&gt;&lt;/iframe&gt;"} className="mt-2 font-mono text-xs bg-muted/50" rows={3} />
                   </CardContent>
                 </Card>
               </CardContent>
@@ -556,3 +554,4 @@ export default function EditTestPage() {
     </Suspense>
   )
 }
+
