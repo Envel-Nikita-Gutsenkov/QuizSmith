@@ -10,8 +10,9 @@ import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext'; 
 import type { Test, PageTemplate } from '@/lib/types'; // Changed Template to PageTemplate
 import { useState, useEffect } from 'react'; 
+import withAuth from '@/components/auth/withAuth'; // Added import
 
-export default function DashboardPage() {
+function DashboardPage() {
   const { t } = useLanguage(); 
 
   const [tests, setTests] = useState<Test[]>([]);
@@ -132,3 +133,5 @@ export default function DashboardPage() {
     </AppLayout>
   );
 }
+
+export default withAuth(DashboardPage);

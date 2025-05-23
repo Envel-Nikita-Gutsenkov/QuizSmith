@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
@@ -16,12 +15,25 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useParams, useRouter } from 'next/navigation';
-import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates';
+import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates'; // Still needed for template selection UI
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext';
+import type { TestUpdateData } from '@/services/testService'; // For PUT payload type
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
-
 
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -41,19 +53,22 @@ function EditTestEditorPageContent() {
   const router = useRouter(); 
   const testId = params?.id as string || 'unknown';
   const { toast } = useToast();
+  const { currentUser } = useAuth();
 
   const [testName, setTestName] = useState(''); 
   const [questions, setQuestions] = useState<Question[]>([]);
-
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(DEFAULT_TEMPLATE_ID);
   const [currentTemplate, setCurrentTemplate] = useState<PageTemplateType | null>(null);
-
   const [quizEndMessage, setQuizEndMessage] = useState(''); 
   const [previewContent, setPreviewContent] = useState('');
 
   const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
   const localStorageKey = `quizsmith-test-draft-${testId}`;
+  
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -63,63 +78,66 @@ function EditTestEditorPageContent() {
   }, [selectedTemplateId]);
 
   useEffect(() => {
-    if (!isInitialLoad) return;
     if (!testId || testId === 'unknown' || testId === 'new') {
-      toast({ title: "Error", description: "Invalid Test ID. Redirecting to new test.", variant: "destructive"});
-      router.push('/editor/new'); 
-      setIsInitialLoad(false);
+      toast({ title: "Error", description: "Invalid Test ID.", variant: "destructive"});
+      router.push('/dashboard/my-tests');
       return;
     }
-
-    const savedDraft = localStorage.getItem(localStorageKey);
-    if (savedDraft) {
-      try {
-        const draft: TestDraft = JSON.parse(savedDraft);
-        setTestName(draft.name);
-        setQuestions(draft.questions);
-        setSelectedTemplateId(draft.templateId || DEFAULT_TEMPLATE_ID);
-        setQuizEndMessage(draft.quizEndMessage);
-        setHasUnsavedDraft(true);
-        const draftDescriptionDefault = "Unsaved draft for test \"" + draft.name + "\" loaded.";
-        toast({ title: t('editor.toast.draftRestoredTitle'), description: t('editor.toast.draftRestoredDescriptionExisting', { testName: draft.name, defaultValue: draftDescriptionDefault }) });
-      } catch (e) {
-        console.error("Failed to parse test draft from localStorage", e);
-        localStorage.removeItem(localStorageKey); 
-        const defaultTestNameValue = "Test " + testId;
-        setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: defaultTestNameValue }));
-        setSelectedTemplateId(DEFAULT_TEMPLATE_ID);
-        setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: "Congratulations! Score: {{score}}/{{total}}."}));
-        setQuestions([]); 
-      }
-    } else {
-      const defaultTestNameValue = "Test " + testId;
-      setTestName(t('editor.defaultTestNameExisting', { testId, defaultValue: defaultTestNameValue }));
-      setSelectedTemplateId(DEFAULT_TEMPLATE_ID); 
-      setQuizEndMessage(t('editor.defaultEndMessage', {defaultValue: "Congratulations! Score: {{score}}/{{total}}."}));
-      setQuestions([]); 
+    if (!currentUser) {
+      setIsLoadingData(true); // Keep loading if user isn't available yet
+      return; 
     }
-    setIsInitialLoad(false);
+
+    const loadTestData = async () => {
+      setIsLoadingData(true);
+      try {
+        const response = await fetch(`/api/tests/${testId}`, {
+          headers: { 'x-test-user-id': currentUser.uid } 
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `Failed to fetch test: ${response.statusText}`);
+        }
+        const fetchedTest: Test = await response.json();
+        setTestName(fetchedTest.name);
+        const parsedQuestions = Array.isArray(fetchedTest.questions)
+          ? fetchedTest.questions
+          : []; 
+        setQuestions(parsedQuestions as Question[]);
+        setSelectedTemplateId(fetchedTest.templateId || DEFAULT_TEMPLATE_ID);
+        setQuizEndMessage(fetchedTest.quizEndMessage || t('editor.defaultEndMessage', {defaultValue: "Congratulations! Score: {{score}}/{{total}}."}));
+        
+        const savedDraft = localStorage.getItem(localStorageKey);
+        if (savedDraft) {
+          const draft: TestDraft = JSON.parse(savedDraft);
+          setHasUnsavedDraft(true);
+          toast({ title: t('editor.toast.draftFoundTitle', {defaultValue: "Local Draft Found"}), description: `Unsaved local draft for test "${draft.name || fetchedTest.name}" found. Your current changes will be saved to this draft. If you wish to discard it and use the server version, refresh the page before making edits.`, duration: 7000 });
+        }
+      } catch (error: any) {
+        console.error("Failed to load test data:", error);
+        toast({ title: "Error Loading Test", description: error.message, variant: "destructive" });
+        router.push('/dashboard/my-tests');
+      } finally {
+        setIsLoadingData(false);
+        setIsInitialLoad(false); 
+      }
+    };
+    loadTestData();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run on initial mount for existing test
+  }, [testId, currentUser]); // Removed router, t, toast from deps as they are stable
 
   useEffect(() => {
-    if (isInitialLoad || !testId || testId === 'unknown' || testId === 'new') return;
-
+    if (isInitialLoad || isLoadingData || !testId || testId === 'unknown' || testId === 'new') return;
     if (debounceTimer) clearTimeout(debounceTimer);
-
     const timer = setTimeout(() => {
       const draft: TestDraft = { name: testName, questions, templateId: selectedTemplateId, quizEndMessage };
       localStorage.setItem(localStorageKey, JSON.stringify(draft));
       setHasUnsavedDraft(true);
     }, 1000);
     setDebounceTimer(timer);
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
+    return () => { if (timer) clearTimeout(timer); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [testName, questions, selectedTemplateId, quizEndMessage, isInitialLoad]); 
-
+  }, [testName, questions, selectedTemplateId, quizEndMessage, isInitialLoad, isLoadingData]); 
 
   const updatePreview = useCallback(() => {
     if (!currentTemplate) {
@@ -127,40 +145,17 @@ function EditTestEditorPageContent() {
         return;
     }
     const questionsJson = JSON.stringify(questions).replace(/<\//g, '<\\u002F'); 
-    const injectedDataHtml = `
-      <script id="quiz-data" type="application/json">${questionsJson}</script>
-      <div id="quiz-name-data" style="display:none;">${testName || ''}</div>
-      <div id="quiz-end-message-data" style="display:none;">${quizEndMessage}</div>
-    `;
-    
-    const bodyContentWithInjectedData = `
-      ${currentTemplate.htmlContent}
-      ${injectedDataHtml}
-    `;
-    
+    const injectedDataHtml = `<script id="quiz-data" type="application/json">${questionsJson}</script><div id="quiz-name-data" style="display:none;">${testName || ''}</div><div id="quiz-end-message-data" style="display:none;">${quizEndMessage}</div>`;
+    const bodyContentWithInjectedData = `${currentTemplate.htmlContent}${injectedDataHtml}`;
     let stylingVariables = '';
      if (typeof window !== 'undefined') {
         const rootStyle = getComputedStyle(document.documentElement);
-        stylingVariables = `
-          :root {
-            --background: ${rootStyle.getPropertyValue('--background').trim()};
-            --foreground: ${rootStyle.getPropertyValue('--foreground').trim()};
-            --card: ${rootStyle.getPropertyValue('--card').trim()};
-            --card-foreground: ${rootStyle.getPropertyValue('--card-foreground').trim()};
-            --primary: ${rootStyle.getPropertyValue('--primary').trim()};
-            --primary-foreground: ${rootStyle.getPropertyValue('--primary-foreground').trim()};
-            --secondary: ${rootStyle.getPropertyValue('--secondary').trim()};
-            --accent: ${rootStyle.getPropertyValue('--accent').trim()};
-            --accent-foreground: ${rootStyle.getPropertyValue('--accent-foreground').trim()};
-            --destructive: ${rootStyle.getPropertyValue('--destructive').trim()};
-            --destructive-foreground: ${rootStyle.getPropertyValue('--destructive-foreground').trim()};
-            --border: ${rootStyle.getPropertyValue('--border').trim()};
-            --font-geist-sans: ${rootStyle.getPropertyValue('--font-geist-sans').trim() || 'Arial, sans-serif'};
-            --success-bg: ${rootStyle.getPropertyValue('--success-bg').trim()};
-            --success-fg: ${rootStyle.getPropertyValue('--success-fg').trim()};
-            --success-border: ${rootStyle.getPropertyValue('--success-border').trim()};
-          }
-        `;
+        stylingVariables = Object.keys(rootStyle).reduce((acc, key) => {
+            if (key.startsWith('--')) {
+                return `${acc} ${key}: ${rootStyle.getPropertyValue(key).trim()};`;
+            }
+            return acc;
+        }, ':root {') + ' }';
     }
     setPreviewContent(`<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><script src="https://cdn.tailwindcss.com"></script><style>${stylingVariables}${currentTemplate.cssContent}</style></head><body>${bodyContentWithInjectedData}</body></html>`);
   }, [currentTemplate, testName, questions, quizEndMessage]); 
@@ -171,6 +166,7 @@ function EditTestEditorPageContent() {
     }
   }, [updatePreview, isInitialLoad, currentTemplate]);
 
+  // ... (all other question manipulation handlers: handleAddQuestion, handleUpdateQuestion, etc. remain unchanged) ...
   const handleAddQuestion = () => {
     const newQuestionTextDefault = "New Question " + (questions.length + 1);
     const optionADefault = "Option A";
@@ -297,7 +293,6 @@ function EditTestEditorPageContent() {
     } : q));
   };
 
-  // --- Categorization D&D handlers ---
   const handleAddCategory = (questionId: string) => {
     setQuestions(prev => prev.map(q => q.id === questionId ? {
       ...q, categories: [...(q.categories || []), { id: generateId(), name: '' }]
@@ -316,7 +311,6 @@ function EditTestEditorPageContent() {
     } : q));
   };
 
-  // --- Connect Points Matching handlers ---
   const handleAddConnectPair = (questionId: string) => {
     setQuestions(prev => prev.map(q => q.id === questionId ? {
       ...q, connectPairs: [...(q.connectPairs || []), { id: generateId(), leftItem: '', rightItem: '' }]
@@ -335,27 +329,82 @@ function EditTestEditorPageContent() {
 
   const handleDeleteQuestion = (questionId: string) => setQuestions((prev) => prev.filter((q) => q.id !== questionId));
 
-  const handleSaveTest = () => {
+  const handleSaveTest = async () => {
+    if (!currentUser) {
+      toast({ title: "Authentication Error", description: "You must be logged in to save changes.", variant: "destructive" });
+      return;
+    }
+    if (!testId || testId === 'unknown' || testId === 'new') {
+      toast({ title: "Invalid Test ID", description: "Cannot save: Test ID is invalid.", variant: "destructive"});
+      return;
+    }
     if (!currentTemplate) {
         toast({title: t('editor.toast.templateNotSelectedErrorTitle'), description: t('editor.toast.templateNotSelectedErrorDescription'), variant: "destructive"});
         return;
     }
-    const testData: Test = { 
-        id: testId, 
-        name: testName, 
-        questions, 
-        templateId: selectedTemplateId, 
-        quizEndMessage, 
-        createdAt: new Date().toISOString(), // This would be set on actual creation
-        updatedAt: new Date().toISOString() 
-    };
-    console.log("Saving test data (existing):", JSON.stringify(testData, null, 2));
-    const saveSuccessDescriptionDefault = "Test " + testId + " config logged to console.";
-    toast({ title: t('editor.toast.saveSuccessTitleExisting'), description: t('editor.toast.saveSuccessDescriptionExisting', {testId: testId, defaultValue: saveSuccessDescriptionDefault}) });
-    if (testId && testId !== 'unknown' && testId !== 'new') {
-      localStorage.removeItem(localStorageKey);
+    if (!testName.trim()) {
+      toast({ title: "Missing Test Name", description: "Please provide a name for your test.", variant: "destructive" });
+      return;
     }
-    setHasUnsavedDraft(false);
+    setIsSaving(true);
+    const testUpdatePayload: TestUpdateData = { 
+        name: testName, 
+        questions: questions as any, // Prisma expects JsonValue
+        templateId: selectedTemplateId, 
+        quizEndMessage: quizEndMessage, 
+    };
+    try {
+      const response = await fetch(`/api/tests/${testId}`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-test-user-id': currentUser.uid, 
+        },
+        body: JSON.stringify(testUpdatePayload),
+      });
+      if (!response.ok) {
+        const errorResult = await response.json().catch(() => ({ message: "Failed to save test and parse error response." }));
+        throw new Error(errorResult.message || `HTTP error! status: ${response.status}`);
+      }
+      await response.json(); 
+      toast({ title: t('editor.toast.saveSuccessTitleExisting', {testId}), description: t('editor.toast.saveSuccessDescriptionExisting', { testId, defaultValue: "Test changes saved."}) });
+      localStorage.removeItem(localStorageKey);
+      setHasUnsavedDraft(false);
+    } catch (error: any) {
+      console.error("Failed to save test:", error);
+      toast({ title: "Save Failed", description: error.message || "Could not save the test.", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDeleteTest = async () => {
+    if (!currentUser) {
+      toast({ title: "Authentication Error", description: "You must be logged in to delete this test.", variant: "destructive" });
+      return;
+    }
+    if (!testId || testId === 'unknown' || testId === 'new') {
+      toast({ title: "Invalid Test ID", description: "Cannot delete: Test ID is invalid.", variant: "destructive"});
+      return;
+    }
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/tests/${testId}`, { 
+        method: 'DELETE',
+        headers: { 'x-test-user-id': currentUser.uid } 
+      });
+      if (!response.ok) {
+        const errorResult = await response.json().catch(() => ({ message: "Failed to delete test and parse error response." }));
+        throw new Error(errorResult.message || `HTTP error! status: ${response.status}`);
+      }
+      toast({ title: "Test Deleted", description: `Test "${testName || testId}" has been deleted.` });
+      router.push('/dashboard/my-tests');
+    } catch (error: any) {
+      console.error("Failed to delete test:", error);
+      toast({ title: "Delete Failed", description: error.message, variant: "destructive" });
+    } finally {
+      setIsDeleting(false);
+    }
   };
   
   const handleFullScreenPreview = () => {
@@ -406,12 +455,43 @@ function EditTestEditorPageContent() {
                   </TooltipContent>
                 </Tooltip>
             )}
-            <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('editor.refreshPreview')}</Button>
-            <Button variant="outline" onClick={handleFullScreenPreview}><ExternalLink className="mr-2 h-4 w-4" /> {t('editor.fullScreenPreview')}</Button>
-            <Button onClick={handleSaveTest}><Save className="mr-2 h-4 w-4" /> {t('editor.saveTest')}</Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" disabled={isSaving || isLoadingData || isDeleting}>
+                  <Trash2 className="mr-2 h-4 w-4" /> {t('editor.deleteTest', {defaultValue: 'Delete Test'})}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{t('editor.deleteConfirmTitle', {defaultValue: 'Are you sure?'})}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {t('editor.deleteConfirmDescription', {defaultValue: "This action cannot be undone. This will permanently delete the test."})}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={isDeleting}>{t('common.cancel', {defaultValue: 'Cancel'})}</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeleteTest} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
+                    {isDeleting ? t('editor.deleting', {defaultValue: 'Deleting...'}) : t('common.delete', {defaultValue: 'Delete'})}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Button variant="outline" onClick={updatePreview} disabled={isSaving || isDeleting || isLoadingData}><Eye className="mr-2 h-4 w-4" /> {t('editor.refreshPreview')}</Button>
+            <Button variant="outline" onClick={handleFullScreenPreview} disabled={isSaving || isDeleting || isLoadingData}><ExternalLink className="mr-2 h-4 w-4" /> {t('editor.fullScreenPreview')}</Button>
+            <Button onClick={handleSaveTest} disabled={isSaving || isLoadingData || isDeleting}>
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? t('editor.saving', {defaultValue: 'Saving...'}) : t('editor.saveTest')}
+            </Button>
           </div>
         </header>
-
+        
+        {isLoadingData ? (
+          <div className="grid md:grid-cols-3 gap-6 flex-1 min-h-0">
+            <Card className="md:col-span-1"><CardHeader><Skeleton className="h-6 w-1/2 mb-2"/><Skeleton className="h-4 w-3/4"/></CardHeader><CardContent><Skeleton className="h-40 w-full"/></CardContent></Card>
+            <Card className="md:col-span-1"><CardHeader><Skeleton className="h-6 w-1/2 mb-2"/></CardHeader><CardContent><Skeleton className="h-96 w-full"/></CardContent></Card>
+            <Card className="md:col-span-1"><CardHeader><Skeleton className="h-6 w-1/2 mb-2"/><Skeleton className="h-4 w-3/4"/></CardHeader><CardContent><Skeleton className="h-64 w-full"/></CardContent></Card>
+          </div>
+        ) : (
         <div className="grid md:grid-cols-3 gap-6 flex-1 min-h-0">
          {/* Configuration Pane */}
           <Card className="md:col-span-1 flex flex-col shadow-lg">
@@ -423,12 +503,12 @@ function EditTestEditorPageContent() {
               <CardContent className="space-y-6 p-4">
                 <div>
                   <Label htmlFor="testName" className="text-sm font-medium">{t('editor.config.testNameLabel')}</Label>
-                  <Input id="testName" placeholder={t('editor.config.testNamePlaceholder')} value={testName} onChange={(e) => setTestName(e.target.value)} className="mt-1" />
+                  <Input id="testName" placeholder={t('editor.config.testNamePlaceholder')} value={testName} onChange={(e) => setTestName(e.target.value)} className="mt-1" disabled={isSaving || isDeleting} />
                 </div>
                 <Separator />
                 <div>
                   <Label htmlFor="pageTemplateSelect" className="text-sm font-medium">{t('editor.config.templateLabel')}</Label>
-                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId} disabled={isSaving || isDeleting}>
                     <SelectTrigger id="pageTemplateSelect" className="mt-1">
                       <SelectValue placeholder={t('editor.config.selectTemplatePlaceholder')} />
                     </SelectTrigger>
@@ -450,7 +530,7 @@ function EditTestEditorPageContent() {
                  <Separator />
                  <div>
                   <Label htmlFor="quizEndMessage" className="text-sm font-medium flex items-center"><MessageSquareText className="mr-2 h-4 w-4" /> {t('editor.config.endMessageLabel')}</Label>
-                  <Textarea id="quizEndMessage" placeholder={t('editor.config.endMessagePlaceholder')} value={quizEndMessage} onChange={(e) => setQuizEndMessage(e.target.value)} className="mt-1" rows={3} />
+                  <Textarea id="quizEndMessage" placeholder={t('editor.config.endMessagePlaceholder')} value={quizEndMessage} onChange={(e) => setQuizEndMessage(e.target.value)} className="mt-1" rows={3} disabled={isSaving || isDeleting} />
                    <p className="text-xs text-muted-foreground mt-1">{t('editor.config.endMessageHint')}</p>
                 </div>
                 <Separator />
@@ -673,17 +753,21 @@ function EditTestEditorPageContent() {
                 )}
               </CardContent>
             </ScrollArea>
-          </Card>
+          </Card>        
         </div>
+        )}
       </div>
     </AppLayout>
   );
 }
 
-export default function EditTestPage() {
+function EditTestPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <EditTestEditorPageContent />
     </Suspense>
-  )
+  );
 }
+
+import withAuth from '@/components/auth/withAuth';
+export default withAuth(EditTestPage);

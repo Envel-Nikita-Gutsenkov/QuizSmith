@@ -15,9 +15,10 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
-import { LayoutGrid, LogOut, Settings, User, Globe } from 'lucide-react';
+import { LayoutGrid, LogOut, Settings, User as UserIcon, Globe, LayoutDashboard } from 'lucide-react'; // Added LayoutDashboard, renamed User
 import { useSidebar } from '@/components/ui/sidebar';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext'; // Added useAuth
 import { useState, useEffect } from 'react';
 
 interface AppHeaderProps {
@@ -28,7 +29,14 @@ interface AppHeaderProps {
 export function AppHeader({ titleKey, titleParams }: AppHeaderProps) {
   const { toggleSidebar, isMobile } = useSidebar();
   const { language, setLanguage, t } = useLanguage();
+  const { currentUser, logout, loading: authLoading } = useAuth(); // Added
   const [renderedTitle, setRenderedTitle] = useState<string | undefined>(undefined);
+
+  const getInitials = (email?: string | null, name?: string | null) => {
+    if (name) return name.substring(0, 2).toUpperCase();
+    if (email) return email.substring(0, 2).toUpperCase();
+    return 'QS';
+  };
 
   useEffect(() => {
     if (titleKey) {
@@ -62,6 +70,7 @@ export function AppHeader({ titleKey, titleParams }: AppHeaderProps) {
       
       {/* Right part: Actions */}
       <div className="ml-auto flex items-center gap-2">
+        {/* Language Selector Dropdown - Kept as is */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon" aria-label={t('appHeader.language')}>
@@ -77,39 +86,63 @@ export function AppHeader({ titleKey, titleParams }: AppHeaderProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="https://placehold.co/100x100.png" alt="User avatar" data-ai-hint="person avatar" />
-                <AvatarFallback>QS</AvatarFallback>
-              </Avatar>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>{t('appHeader.myAccount')}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/settings"> 
-                <User className="mr-2 h-4 w-4" />
-                <span>{t('appHeader.profile')}</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href="/dashboard/settings">
-                <Settings className="mr-2 h-4 w-4" />
-                <span>{t('appHeader.settingsLink')}</span>
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/login">
+        {/* Auth Area */}
+        {authLoading ? (
+          <div className="h-8 w-20 animate-pulse rounded-md bg-muted"></div> // Skeleton loader
+        ) : currentUser ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={currentUser.photoURL || undefined} alt={currentUser.displayName || currentUser.email || 'User'} />
+                  <AvatarFallback>{getInitials(currentUser.email, currentUser.displayName)}</AvatarFallback>
+                </Avatar>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">
+                    {currentUser.displayName || currentUser.email?.split('@')[0]}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {currentUser.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  <span>{t('appHeader.dashboardLink', { defaultValue: 'Dashboard' })}</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                 <Link href="/dashboard/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>{t('appHeader.settingsLink', { defaultValue: 'Settings' })}</span>
+                </Link>
+              </DropdownMenuItem>
+              {/* The existing profile link also pointed to settings, so this is fine. */}
+              {/* <DropdownMenuItem asChild>
+                <Link href="/dashboard/settings"> 
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  <span>{t('appHeader.profile', {defaultValue: 'Profile'})}</span>
+                </Link>
+              </DropdownMenuItem> */}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={logout} className="cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>{t('appHeader.logout')}</span>
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                <span>{t('appHeader.logout', { defaultValue: 'Log out' })}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button asChild variant="ghost">
+            <Link href="/login">{t('appHeader.login', { defaultValue: 'Login' })}</Link>
+          </Button>
+          // Sign up is admin managed, so no direct link here.
+        )}
       </div>
     </header>
   );

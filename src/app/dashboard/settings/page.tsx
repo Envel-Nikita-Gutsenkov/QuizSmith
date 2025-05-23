@@ -11,8 +11,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User, Bell, Shield } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast'; // Added
+import withAuth from '@/components/auth/withAuth'; // Added import
 
-export default function SettingsPage() {
+function SettingsPage() {
   const { t } = useLanguage();
   const { toast } = useToast(); // Added
 
@@ -113,3 +114,5 @@ export default function SettingsPage() {
     </AppLayout>
   );
 }
+
+export default withAuth(SettingsPage);

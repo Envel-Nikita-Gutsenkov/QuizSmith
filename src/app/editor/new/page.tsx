@@ -15,9 +15,11 @@ import type { Question, QuestionOption, MatchPair, DraggableItem, DropTarget, Qu
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates';
+import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates'; // Assuming pageTemplates is needed for template selection UI
 import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext'; // Added useAuth
+import type { TestCreateData } from '@/services/testService'; // For API payload type
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -53,7 +55,9 @@ function NewTestEditorPageContent() {
   const [hasUnsavedDraft, setHasUnsavedDraft] = useState(false);
   const localStorageKey = 'quizsmith-test-draft-new';
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isSaving, setIsSaving] = useState(false); // Added for save state
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const { currentUser } = useAuth(); // Added
 
   useEffect(() => {
     const template = pageTemplates.find(pt => pt.id === selectedTemplateId);
@@ -372,26 +376,61 @@ function NewTestEditorPageContent() {
 
   const handleDeleteQuestion = (questionId: string) => setQuestions((prev) => prev.filter((q) => q.id !== questionId));
 
-  const handleSaveTest = () => {
+  const handleSaveTest = async () => {
+    if (!currentUser) {
+      toast({ title: "Authentication Error", description: "You must be logged in to save a test.", variant: "destructive" });
+      return;
+    }
     if (!currentTemplate) {
         toast({title: t('editor.toast.templateNotSelectedErrorTitle'), description: t('editor.toast.templateNotSelectedErrorDescription'), variant: "destructive"});
         return;
     }
-    const newTestId = 'new-' + generateId(); 
-    const testData: Test = { 
-        id: newTestId, 
+    if (!testName.trim()) {
+      toast({ title: "Missing Test Name", description: "Please provide a name for your test.", variant: "destructive" });
+      return;
+    }
+    if (!selectedTemplateId) {
+      toast({ title: "Missing Template ID", description: "A page template must be selected.", variant: "destructive" });
+      return;
+    }
+
+    setIsSaving(true);
+    const testDataPayload: TestCreateData = { 
         name: testName, 
-        questions, 
+        questions: questions as any, // Prisma expects JsonValue; ensure questions structure is compatible or cast
         templateId: selectedTemplateId, 
-        quizEndMessage, 
-        createdAt: new Date().toISOString(), 
-        updatedAt: new Date().toISOString() 
+        quizEndMessage: quizEndMessage, 
+        userId: currentUser.uid, // Add userId from authenticated user
+        // createdAt and updatedAt are handled by Prisma
     };
-    console.log("Saving test data (new):", JSON.stringify(testData, null, 2));
-    toast({ title: t('editor.toast.saveSuccessTitle'), description: t('editor.toast.saveSuccessDescription') });
-    localStorage.removeItem(localStorageKey);
-    setHasUnsavedDraft(false);
-    router.push(`/editor/${newTestId}`); 
+
+    try {
+      const response = await fetch('/api/tests', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          // Include the test user ID header for the placeholder auth utility
+          'x-test-user-id': currentUser.uid, 
+        },
+        body: JSON.stringify(testDataPayload),
+      });
+
+      if (!response.ok) {
+        const errorResult = await response.json().catch(() => ({ message: "Failed to save test and parse error response." }));
+        throw new Error(errorResult.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      const newTest = await response.json(); // API returns the created test
+      toast({ title: t('editor.toast.saveSuccessTitle'), description: t('editor.toast.saveSuccessDescription') });
+      localStorage.removeItem(localStorageKey);
+      setHasUnsavedDraft(false);
+      router.push(`/editor/${newTest.id}`); // Redirect to the new test's edit page
+    } catch (error: any) {
+      console.error("Failed to save test:", error);
+      toast({ title: "Save Failed", description: error.message || "Could not save the test.", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
   };
   
   const handleFullScreenPreview = () => {
@@ -453,9 +492,12 @@ function NewTestEditorPageContent() {
                   </TooltipContent>
                 </Tooltip>
             )}
-            <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('editor.refreshPreview')}</Button>
-            <Button variant="outline" onClick={handleFullScreenPreview}><ExternalLink className="mr-2 h-4 w-4" /> {t('editor.fullScreenPreview')}</Button>
-            <Button onClick={handleSaveTest}><Save className="mr-2 h-4 w-4" /> {t('editor.saveTest')}</Button>
+            <Button variant="outline" onClick={updatePreview} disabled={isSaving}><Eye className="mr-2 h-4 w-4" /> {t('editor.refreshPreview')}</Button>
+            <Button variant="outline" onClick={handleFullScreenPreview} disabled={isSaving}><ExternalLink className="mr-2 h-4 w-4" /> {t('editor.fullScreenPreview')}</Button>
+            <Button onClick={handleSaveTest} disabled={isSaving}>
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? t('editor.saving', {defaultValue: 'Saving...'}) : t('editor.saveTest')}
+            </Button>
           </div>
         </header>
 
@@ -470,12 +512,12 @@ function NewTestEditorPageContent() {
               <CardContent className="space-y-6 p-4">
                 <div>
                   <Label htmlFor="testName" className="text-sm font-medium">{t('editor.config.testNameLabel')}</Label>
-                  <Input id="testName" placeholder={t('editor.config.testNamePlaceholder')} value={testName} onChange={(e) => setTestName(e.target.value)} className="mt-1" />
+                  <Input id="testName" placeholder={t('editor.config.testNamePlaceholder')} value={testName} onChange={(e) => setTestName(e.target.value)} className="mt-1" disabled={isSaving} />
                 </div>
                 <Separator />
                 <div>
                   <Label htmlFor="pageTemplateSelect" className="text-sm font-medium">{t('editor.config.templateLabel')}</Label>
-                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                  <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId} disabled={isSaving}>
                     <SelectTrigger id="pageTemplateSelect" className="mt-1">
                       <SelectValue placeholder={t('editor.config.selectTemplatePlaceholder')} />
                     </SelectTrigger>
@@ -497,7 +539,7 @@ function NewTestEditorPageContent() {
                  <Separator />
                  <div>
                   <Label htmlFor="quizEndMessage" className="text-sm font-medium flex items-center"><MessageSquareText className="mr-2 h-4 w-4" /> {t('editor.config.endMessageLabel')}</Label>
-                  <Textarea id="quizEndMessage" placeholder={t('editor.config.endMessagePlaceholder')} value={quizEndMessage} onChange={(e) => setQuizEndMessage(e.target.value)} className="mt-1" rows={3} />
+                  <Textarea id="quizEndMessage" placeholder={t('editor.config.endMessagePlaceholder')} value={quizEndMessage} onChange={(e) => setQuizEndMessage(e.target.value)} className="mt-1" rows={3} disabled={isSaving} />
                    <p className="text-xs text-muted-foreground mt-1">{t('editor.config.endMessageHint')}</p>
                 </div>
                 <Separator />
@@ -728,10 +770,13 @@ function NewTestEditorPageContent() {
   );
 }
 
-export default function NewTestEditorPage() {
+function NewTestEditorPage() {
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <NewTestEditorPageContent />
     </Suspense>
   );
 }
+
+import withAuth from '@/components/auth/withAuth';
+export default withAuth(NewTestEditorPage);

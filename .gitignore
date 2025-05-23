@@ -43,3 +43,14 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# Prisma
+node_modules/.prisma/client
+prisma/dev.db
+prisma/dev.db-journal
+prisma/migrations/*/*.sql
+
+# Environment variables
+# .env* (already present above)
+!.env.example
+# If you want to commit an example env file, uncomment above line and create .env.example

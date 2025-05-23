@@ -6,14 +6,100 @@ import Image from 'next/image';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlusCircle, Eye, Layers, Copy } from 'lucide-react'; // Added Copy icon
-import { pageTemplates } from '@/lib/mockPageTemplates'; 
+import { PlusCircle, Eye, Layers, Copy } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Suspense } from 'react'; 
+import { Suspense, useState, useEffect } from 'react';
+// Removed: import { getAllPageTemplates } from '@/lib/firestoreTemplates';
+import type { PageTemplate } from '@/lib/types'; // Type import remains
+import { Skeleton } from '@/components/ui/skeleton';
 
 function ExplorePageTemplatesContent() {
   const { t } = useLanguage();
+  const [templates, setTemplates] = useState<PageTemplate[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch('/api/templates');
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ message: 'Failed to load templates and parse error response.' }));
+          throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+        const fetchedTemplates: PageTemplate[] = await response.json();
+        // If tags are received as string and need to be an array for display:
+        // const processedTemplates = fetchedTemplates.map(t => ({
+        //   ...t,
+        //   tags: t.tags && typeof t.tags === 'string' ? t.tags.split(',').map(tag => tag.trim()).filter(tag => tag) : []
+        // }));
+        // setTemplates(processedTemplates);
+        // For now, assuming client handles string tags or API provides them as string arrays if needed by PageTemplate type.
+        // The PageTemplate type currently expects tags: String[] or String? depending on version.
+        // Prisma schema uses String? for tags. The service passes this through.
+        // The API route also passes this through. So PageTemplate type should expect String? for tags.
+        // If lib/types.ts PageTemplate.tags is String[], it needs fixing there or conversion here.
+        // Assuming PageTemplate.tags is String? (or String if non-nullable) as per Prisma schema.
+        setTemplates(fetchedTemplates);
+      } catch (err: any) {
+        console.error("Failed to fetch templates:", err);
+        setError(err.message || "An unknown error occurred while fetching templates.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchTemplates();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <AppLayout currentPageTitleKey="pageTemplates.explore.pageTitle">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-semibold tracking-tight">{t('pageTemplates.explore.pageTitle')}</h1>
+          <Skeleton className="h-10 w-36" /> {/* Skeleton for create button */}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => ( // Show a few skeleton cards
+            <Card key={i} className="flex flex-col overflow-hidden shadow-md">
+              <Skeleton className="aspect-[16/9] w-full rounded-t-md" />
+              <CardHeader className="pt-4">
+                <Skeleton className="h-6 w-3/4 mb-2" />
+                <Skeleton className="h-12 w-full" />
+              </CardHeader>
+              <CardContent className="flex-grow">
+                <Skeleton className="h-4 w-1/2" />
+              </CardContent>
+              <CardFooter className="grid grid-cols-3 gap-2">
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
+              </CardFooter>
+            </Card>
+          ))}
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppLayout currentPageTitleKey="pageTemplates.explore.pageTitle">
+         <h1 className="text-3xl font-semibold tracking-tight mb-8">{t('pageTemplates.explore.pageTitle')}</h1>
+        <div className="text-center py-20 text-destructive">
+          <Layers className="mx-auto h-16 w-16 mb-6" /> {/* Consider an error icon */}
+          <h2 className="text-2xl font-semibold mb-2">{t('pageTemplates.explore.errorLoading.title', {defaultValue: 'Error Loading Templates'})}</h2>
+          <p>{error}</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            {t('pageTemplates.explore.errorLoading.retry', {defaultValue: 'Retry'})}
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
+  
+  // Original rendering logic using 'templates' state
   return (
     <AppLayout currentPageTitleKey="pageTemplates.explore.pageTitle">
       <div className="flex justify-between items-center mb-8">
@@ -25,10 +111,11 @@ function ExplorePageTemplatesContent() {
         </Button>
       </div>
 
-      {pageTemplates.length > 0 ? (
+      {templates.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {pageTemplates.map((template) => (
+          {templates.map((template) => ( // Use 'templates' state here
             <Card key={template.id} className="flex flex-col overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 ease-in-out">
+              {/* ... rest of the card rendering as before, using template.previewImageUrl etc. ... */}
               <div className="relative aspect-[16/9] w-full">
                 <Image
                   src={template.previewImageUrl || "https://placehold.co/600x400.png"}
@@ -44,21 +131,22 @@ function ExplorePageTemplatesContent() {
                 <CardDescription className="h-12 overflow-hidden text-ellipsis">{template.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-grow">
-                {template.tags && template.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
-                    {template.tags.map(tag => (
-                        <span key={tag} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">{tag}</span>
+                {/* Adjusting tag rendering based on 'tags' being a string from DB */}
+                {template.tags && typeof template.tags === 'string' && template.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {template.tags.split(',').map(tag => tag.trim()).filter(tag => tag).map(tag => (
+                      <span key={tag} className="text-xs bg-secondary text-secondary-foreground px-2 py-1 rounded-full">{tag}</span>
                     ))}
-                    </div>
+                  </div>
                 )}
               </CardContent>
-              <CardFooter className="grid grid-cols-3 gap-2"> {/* Changed to 3 columns */}
+              <CardFooter className="grid grid-cols-3 gap-2">
                 <Button variant="outline" size="sm" asChild className="flex-1">
                   <Link href={`/templates/editor/${template.id}`}>
                     <Eye className="mr-1 h-4 w-4" /> {t('pageTemplates.explore.preview')}
                   </Link>
                 </Button>
-                <Button variant="outline" size="sm" asChild className="flex-1"> {/* Duplicate Button */}
+                <Button variant="outline" size="sm" asChild className="flex-1">
                   <Link href={`/templates/editor/new?from=${template.id}`}>
                     <Copy className="mr-1 h-4 w-4" /> {t('pageTemplates.explore.duplicate')}
                   </Link>

@@ -1,0 +1,78 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql" // Changed to mysql
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @unique // Corresponds to Firebase Auth UID
+  email     String   @unique
+  name      String?
+  // passwordHash String? // Only if not relying solely on Firebase Auth for password management
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pageTemplates PageTemplate[]
+  tests         Test[]
+
+  @@map("users") // Explicit table name
+}
+
+model PageTemplate {
+  id              String   @id @default(uuid())
+  name            String
+  description     String?
+  htmlContent     String   @db.LongText // Explicitly for MySQL for very long text
+  cssContent      String   @db.LongText // Explicitly for MySQL for very long text
+  previewImageUrl String?
+  tags            String?  // Remains String, will be VARCHAR or TEXT in MySQL
+  aiHint          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  userId String? // Optional: if templates can be global or user-specific
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade) // onDelete: Cascade means if user is deleted, their templates are deleted
+
+  tests Test[] // A template can be used in many tests
+
+  @@index([userId])
+  @@map("page_templates") // Explicit table name
+}
+
+model Test {
+  id             String   @id @default(uuid())
+  name           String
+  questions      Json // Storing complex question structures as JSON
+  quizEndMessage String?  @db.LongText // Explicitly for MySQL
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  templateId String
+  template   PageTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict) // Prevent deleting template if tests use it
+
+  @@index([userId])
+  @@index([templateId])
+  @@map("tests") // Explicit table name
+}
+
+// This model helps store which DB is active and its configuration if needed,
+// especially for SQLite path or if we need to confirm active DB programmatically.
+// For MySQL, connection string is typically managed via ENV.
+model AdminSetting {
+  id        String @id @default(uuid())
+  key       String @unique // e.g., "active_database_type", "sqlite_path"
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("admin_settings")
+}

@@ -10,9 +10,10 @@ import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext'; 
 import type { PageTemplate } from '@/lib/types'; // Changed from Template to PageTemplate
 import { useState, useEffect } from 'react';
+import withAuth from '@/components/auth/withAuth'; // Added import
 
 
-export default function MyPageTemplatesPage() { // Renamed component
+function MyPageTemplatesPage() { // Renamed component
   const { t } = useLanguage(); 
   const [pageTemplates, setPageTemplates] = useState<PageTemplate[]>([]); // Changed state name
 
@@ -83,3 +84,5 @@ export default function MyPageTemplatesPage() { // Renamed component
     </AppLayout>
   );
 }
+
+export default withAuth(MyPageTemplatesPage);

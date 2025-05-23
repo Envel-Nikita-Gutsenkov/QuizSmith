@@ -72,6 +72,7 @@ export interface PageTemplate { // Renamed from Template to PageTemplate for cla
   tags?: string[];
   createdAt?: string; 
   updatedAt?: string; 
+  userId?: string; // Optional: associate with a user/creator
 }
 
 export interface Test {

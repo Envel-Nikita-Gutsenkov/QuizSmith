@@ -11,11 +11,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Save, Eye, Layers, Palette, CloudOff } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates'; 
+// Removed mock import: import { pageTemplates, DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates'; 
+import { DEFAULT_TEMPLATE_ID } from '@/lib/mockPageTemplates'; // Keep for default content if needed
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams, useRouter } from 'next/navigation'; // Added useRouter
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-
+// Removed: import { addPageTemplate, NewPageTemplateData } from '@/lib/firestoreTemplates';
+import type { PageTemplateCreateData } from '@/services/templateService'; // Import type for API payload
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PageTemplateDraft {
   name: string;
@@ -41,6 +44,8 @@ function NewPageTemplateEditorPageContent() {
   const localStorageKey = 'quizsmith-new-template-draft';
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isSaving, setIsSaving] = useState(false); // Added
+  const { currentUser } = useAuth(); // Added
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -48,7 +53,14 @@ function NewPageTemplateEditorPageContent() {
 
     const savedDraft = localStorage.getItem(localStorageKey);
     const sourceTemplateId = searchParams.get('from');
-    let templateToLoad: typeof pageTemplates[0] | undefined = undefined;
+    // Use a temporary variable for mockPageTemplates if needed for duplication logic,
+    // but avoid direct import of the full mock data if it's large or not always needed.
+    // For now, direct usage of DEFAULT_TEMPLATE_ID related mock data.
+    // This part needs to be careful if pageTemplates (mock) was used extensively.
+    // Assuming pageTemplates was only used here to find a template by ID.
+    // If it was, we might need a way to fetch a single mock template if needed.
+    // For now, we'll assume DEFAULT_TEMPLATE_ID's content is known or accessible.
+    let templateToLoad: { id: string; name: string; description?: string; htmlContent: string; cssContent: string; } | undefined = undefined;
     let isDuplicating = false;
 
     if (savedDraft) {
@@ -68,43 +80,60 @@ function NewPageTemplateEditorPageContent() {
       }
     }
     
+    // The logic for duplicating from mock templates needs to be adjusted
+    // as we are removing the direct import of `pageTemplates`.
+    // For now, this part will only work if `DEFAULT_TEMPLATE_ID` is the source,
+    // or if `sourceTemplateId` is null.
+    // A proper solution for duplicating arbitrary existing templates would involve
+    // fetching that template from Firestore first.
+    // This subtask focuses on saving *new* templates and listing all templates.
+    // The "duplicate" functionality might be revisited later.
+
     if (sourceTemplateId) {
-      templateToLoad = pageTemplates.find(pt => pt.id === sourceTemplateId);
-      isDuplicating = true;
-      if (templateToLoad) {
-        const newNameDefault = "Copy of " + templateToLoad.name;
-        setTemplateName(t('pageTemplateEditor.new.pageTitleFromSource', { sourceName: templateToLoad.name, defaultValue: newNameDefault }));
-        setTemplateDescription(templateToLoad.description || '');
-        setSourceTemplateName(templateToLoad.name); 
-        setHtmlContent(templateToLoad.htmlContent);
-        setCssContent(templateToLoad.cssContent);
-        setHasUnsavedDraft(true); 
-      } else {
-        const loadErrorDescDefault = "Could not load template \"" + sourceTemplateId + "\" to duplicate. Starting with a blank canvas.";
-        toast({
-          title: t('pageTemplateEditor.toast.loadErrorTitle'),
-          description: t('pageTemplateEditor.toast.loadErrorDescription', {templateId: sourceTemplateId, defaultValue: loadErrorDescDefault}),
-          variant: 'destructive',
-        });
-        templateToLoad = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID);
-      }
+        // Placeholder: If duplication from arbitrary existing templates is needed,
+        // it would require fetching `sourceTemplateId` from Firestore here.
+        // For now, we'll assume this only happens if a user clicks "duplicate" on a mock template
+        // that might still be listed if this page isn't updated first.
+        // Or, we only allow duplicating the DEFAULT_TEMPLATE_ID effectively.
+        const mockDefaultTemplate = { htmlContent: "<div>Hello World</div>", cssContent: "div { color: blue; }", name: "Default Template", description: "A basic template."}; // Simplified mock
+        if (sourceTemplateId === DEFAULT_TEMPLATE_ID) {
+             templateToLoad = {id: DEFAULT_TEMPLATE_ID, ...mockDefaultTemplate};
+        }
+        
+        isDuplicating = true;
+        if (templateToLoad) {
+            const newNameDefault = "Copy of " + templateToLoad.name;
+            setTemplateName(t('pageTemplateEditor.new.pageTitleFromSource', { sourceName: templateToLoad.name, defaultValue: newNameDefault }));
+            setTemplateDescription(templateToLoad.description || '');
+            setSourceTemplateName(templateToLoad.name); 
+            setHtmlContent(templateToLoad.htmlContent);
+            setCssContent(templateToLoad.cssContent);
+            setHasUnsavedDraft(true); 
+        } else {
+            const loadErrorDescDefault = `Could not load template "${sourceTemplateId}" to duplicate. Starting with a blank canvas.`;
+            toast({
+                title: t('pageTemplateEditor.toast.loadErrorTitle'),
+                description: t('pageTemplateEditor.toast.loadErrorDescription', {templateId: sourceTemplateId, defaultValue: loadErrorDescDefault}),
+                variant: 'destructive',
+            });
+            // Fallback to a very basic default if source not found
+            templateToLoad = {id: DEFAULT_TEMPLATE_ID, htmlContent: "<div></div>", cssContent: "", name: "New Template"};
+        }
     } else {
-      templateToLoad = pageTemplates.find(pt => pt.id === DEFAULT_TEMPLATE_ID);
-      setTemplateName(t('pageTemplateEditor.details.namePlaceholder', {defaultValue: 'My New Quiz Engine Template'}));
+      // Default content for a brand new template (not duplicating)
+      const basicDefaultContent = {htmlContent: "<div>Start here</div>", cssContent: "/* Add your CSS */", name: t('pageTemplateEditor.details.namePlaceholder', {defaultValue: 'My New Quiz Engine Template'}), description: ""};
+      templateToLoad = {id: DEFAULT_TEMPLATE_ID, ...basicDefaultContent };
+      setTemplateName(templateToLoad.name);
     }
     
     if (templateToLoad && !isDuplicating) { 
-      setHtmlContent(templateToLoad.htmlContent);
-      setCssContent(templateToLoad.cssContent);
-      if (templateToLoad.id === DEFAULT_TEMPLATE_ID || !templateToLoad.description) { 
-          setTemplateDescription(templateToLoad.description || '');
-      } else {
-          setTemplateDescription(''); // Clear description for non-default duplicated templates
-      }
+        setHtmlContent(templateToLoad.htmlContent);
+        setCssContent(templateToLoad.cssContent);
+        setTemplateDescription(templateToLoad.description || '');
     }
     setIsInitialLoad(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, t, toast]); // isInitialLoad removed from deps
+  }, []); // Removed dependencies to ensure it runs once, review if searchParams changes need re-trigger
 
   // Save to localStorage on change (debounced)
   useEffect(() => {
@@ -176,16 +205,58 @@ function NewPageTemplateEditorPageContent() {
     updatePreview();
   }, [updatePreview]);
 
-  const handleSaveTemplate = () => {
-    const newTemplateId = 'tpl-' + generateId();
-    // In a real app, this would save to a backend. For now, it's a mock save.
-    console.log("Saving new page template:", { id: newTemplateId, templateName, templateDescription, htmlContent, cssContent });
-    toast({ title: t('pageTemplateEditor.toast.saveSuccessTitle'), description: t('pageTemplateEditor.toast.saveSuccessDescription', { templateName }) });
-    localStorage.removeItem(localStorageKey);
-    setHasUnsavedDraft(false);
-    // Navigate to the edit page of the "saved" template
-    router.push(`/templates/editor/${newTemplateId}`);
+  const handleSaveTemplate = async () => {
+    if (!currentUser) {
+      toast({ title: "Authentication Error", description: "You must be logged in to save a template.", variant: "destructive" });
+      return;
+    }
+    if (!templateName.trim() || !htmlContent.trim()) {
+       toast({ title: "Missing Fields", description: "Template Name and HTML Content are required.", variant: "destructive" });
+       return;
+    }
+
+    setIsSaving(true);
+    // Ensure PageTemplateCreateData matches what the API endpoint and subsequently the service expects.
+    // The service expects PageTemplateCreateData which omits id, createdAt, updatedAt.
+    // PageTemplate itself has userId as optional.
+    // The API POST route takes PageTemplateCreateData.
+    const apiPayload: PageTemplateCreateData & { userId: string; tags?: string } = { // Explicitly add userId
+      name: templateName,
+      description: templateDescription,
+      htmlContent: htmlContent,
+      cssContent: cssContent,
+      userId: currentUser.uid, // Add userId here
+      // tags: if tags are managed in state as an array: tagsArray.join(','), else if string: tagsString
+      // Since 'tags' is not in component state, it will be undefined here, which is fine if optional.
+      // The API route handles if data.tags is an array or string.
+    };
+
+    try {
+      const response = await fetch('/api/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(apiPayload),
+      });
+
+      if (!response.ok) {
+        const errorResult = await response.json().catch(() => ({ message: "Failed to save template and parse error response." }));
+        throw new Error(errorResult.message || `HTTP error! status: ${response.status}`);
+      }
+      
+      const newTemplate = await response.json(); // API returns the created template
+      toast({ title: "Template Saved!", description: "Your new page template has been saved successfully." });
+      localStorage.removeItem(localStorageKey);
+      setHasUnsavedDraft(false);
+      router.push(`/templates/editor/${newTemplate.id}`); // Redirect to the new template's edit page
+    } catch (error: any) {
+      console.error("Failed to save template:", error);
+      toast({ title: "Save Failed", description: error.message || "Could not save the template.", variant: "destructive" });
+    } finally {
+      setIsSaving(false);
+    }
   };
+  
+  const generateId = () => Math.random().toString(36).substr(2, 9); // Kept if needed for other local ops, but not for Firestore ID
 
   const pageTitleKey = sourceTemplateName 
     ? "pageTemplateEditor.new.pageTitleFromSource" 
@@ -209,8 +280,11 @@ function NewPageTemplateEditorPageContent() {
                 </TooltipContent>
               </Tooltip>
             )}
-            <Button variant="outline" onClick={updatePreview}><Eye className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.updatePreview')}</Button>
-            <Button onClick={handleSaveTemplate}><Save className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.saveTemplate')}</Button>
+            <Button variant="outline" onClick={updatePreview} disabled={isSaving}><Eye className="mr-2 h-4 w-4" /> {t('pageTemplateEditor.updatePreview')}</Button>
+            <Button onClick={handleSaveTemplate} disabled={isSaving}>
+              <Save className="mr-2 h-4 w-4" /> 
+              {isSaving ? t('pageTemplateEditor.saving', { defaultValue: 'Saving...'}) : t('pageTemplateEditor.saveTemplate')}
+            </Button>
           </div>
         </header>
 
@@ -229,6 +303,7 @@ function NewPageTemplateEditorPageContent() {
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
                   className="mt-1"
+                  disabled={isSaving}
                 />
               </div>
               <div>
@@ -240,6 +315,7 @@ function NewPageTemplateEditorPageContent() {
                   onChange={(e) => setTemplateDescription(e.target.value)}
                   className="mt-1"
                   rows={3}
+                  disabled={isSaving}
                 />
               </div>
               <Separator/>
@@ -252,6 +328,7 @@ function NewPageTemplateEditorPageContent() {
                   onChange={(e) => setHtmlContent(e.target.value)}
                   className="mt-1 font-mono text-xs min-h-[250px] resize-y"
                   rows={12}
+                  disabled={isSaving}
                 />
                  <p className="text-xs text-muted-foreground mt-1">
                   {t('pageTemplateEditor.details.htmlHint')}
@@ -266,6 +343,7 @@ function NewPageTemplateEditorPageContent() {
                   onChange={(e) => setCssContent(e.target.value)}
                   className="mt-1 font-mono text-xs min-h-[250px] resize-y"
                   rows={12}
+                  disabled={isSaving}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                    {t('pageTemplateEditor.details.cssHint')}
@@ -294,10 +372,13 @@ function NewPageTemplateEditorPageContent() {
   );
 }
 
-export default function NewPageTemplateEditorPage() {
+function NewPageTemplateEditorPage() {
   return (
     <Suspense fallback={<div>Loading template editor...</div>}>
       <NewPageTemplateEditorPageContent />
     </Suspense>
   );
 }
+
+import withAuth from '@/components/auth/withAuth';
+export default withAuth(NewPageTemplateEditorPage);
